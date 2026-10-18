@@ -25,6 +25,11 @@ namespace cAlgo
 
             ResetState();
 
+            Chart.ScrollChanged += OnChartScrollChanged;
+            Chart.ZoomChanged += OnChartZoomChanged;
+            Chart.SizeChanged += OnChartSizeChanged;
+            Chart.PriceScaleChanged += OnChartPriceScaleChanged;
+
             if (LoadHistoryToLookback && LookbackBars > 0 && Bars.Count < LookbackBars + 50)
             {
                 _histLoading = true;
@@ -41,6 +46,10 @@ namespace cAlgo
             {
                 Bars.HistoryLoaded -= OnBarsHistoryLoaded;
                 Bars.Reloaded -= OnBarsHistoryLoaded;
+                Chart.ScrollChanged -= OnChartScrollChanged;
+                Chart.ZoomChanged -= OnChartZoomChanged;
+                Chart.SizeChanged -= OnChartSizeChanged;
+                Chart.PriceScaleChanged -= OnChartPriceScaleChanged;
                 RemoveOwnObjects();
             }
             catch (Exception)
@@ -215,13 +224,26 @@ namespace cAlgo
                     _renderDirty = true;
                 }
 
-                if (index == Bars.Count - 1 && _renderDirty && _lastProcessed >= _startIdx)
+                if (index == Bars.Count - 1
+                    && (_renderDirty || _viewportDirty)
+                    && _lastProcessed >= _startIdx)
                 {
                     long t1 = Stopwatch.GetTimestamp();
-                    RenderAll();
+                    bool fullRender = _renderDirty;
+                    if (fullRender)
+                    {
+                        RenderAll();
+                    }
+                    else
+                    {
+                        RenderZones();
+                        RenderStatus();
+                    }
+
                     _renderTicks += Stopwatch.GetTimestamp() - t1;
                     _renderCount++;
                     _renderDirty = false;
+                    _viewportDirty = false;
 
                     if (_renderCount == 1)
                         PrintSummary();
@@ -230,6 +252,50 @@ namespace cAlgo
             catch (Exception ex)
             {
                 LogError("Calculate(" + index + ")", ex);
+            }
+        }
+
+        private void OnChartScrollChanged(ChartScrollEventArgs args)
+        {
+            RefreshZoneViewport();
+        }
+
+        private void OnChartZoomChanged(ChartZoomEventArgs args)
+        {
+            RefreshZoneViewport();
+        }
+
+        private void OnChartSizeChanged(ChartSizeEventArgs args)
+        {
+            RefreshZoneViewport();
+        }
+
+        private void OnChartPriceScaleChanged(ChartPriceScaleEventArgs args)
+        {
+            RefreshZoneViewport();
+        }
+
+        private void RefreshZoneViewport()
+        {
+            if (_histLoading || _rebuildPending || _lastProcessed < 0 || _lastProcessed < _startIdx)
+            {
+                _viewportDirty = true;
+                return;
+            }
+
+            long t0 = Stopwatch.GetTimestamp();
+            try
+            {
+                RenderZones();
+                RenderStatus();
+                _renderTicks += Stopwatch.GetTimestamp() - t0;
+                _renderCount++;
+                _viewportDirty = false;
+            }
+            catch (Exception ex)
+            {
+                _viewportDirty = true;
+                LogError("RefreshZoneViewport", ex);
             }
         }
 

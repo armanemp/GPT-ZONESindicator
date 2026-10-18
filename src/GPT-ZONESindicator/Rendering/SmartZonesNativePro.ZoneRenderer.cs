@@ -82,10 +82,10 @@ namespace cAlgo
 
         private DateTime ZoneEndTime(Zone zone)
         {
-            DateTime end = zone.State == SznpState.Broken
-                ? zone.BreakTime
-                : (zone.State == SznpState.Filled ? zone.FillTime : _futureTime);
-
+            // Presentation endpoint: every displayed zone reaches the same forty-bar
+            // right margin, including zones whose lifecycle state changed on a recent bar.
+            // The logical FillTime/BreakTime remains stored separately for detection/status.
+            DateTime end = _futureTime;
             return end <= zone.StartTime ? zone.StartTime.Add(_barSpan) : end;
         }
 
@@ -432,10 +432,10 @@ namespace cAlgo
             // a subtle 12%. Keep line opacity configurable and the 1px dashed
             // style subtle so the midpoint is legible without competing with candles.
             Color source = ZoneColor(zone);
-            ZoneMidlineRgb darker = ZoneMidlineColorEvaluator.Darken(
+            ZoneMidlineRgb lighter = ZoneMidlineColorEvaluator.Lighten(
                 source.R, source.G, source.B);
             byte alpha = (byte)Math.Max(0, Math.Min(255, Math.Round(MidlineOpacity * 2.55)));
-            return Color.FromArgb(alpha, darker.R, darker.G, darker.B);
+            return Color.FromArgb(alpha, lighter.R, lighter.G, lighter.B);
         }
 
         private static string KindTag(Zone zone)
@@ -535,7 +535,7 @@ namespace cAlgo
                         labelText,
                         end,
                         (zone.Upper + zone.Lower) * 0.5,
-                        WithOpacity(color, 100));
+                        LightenForVisibility(WithOpacity(color, 100)));
                     label.FontSize = Math.Max(11, LabelFontSize + 2);
                     label.FontFamily = "Segoe UI Light";
                     label.IsBold = false;
@@ -581,7 +581,7 @@ namespace cAlgo
                 if (zone.Mid != null && zone.Mid.IsAlive)
                     zone.Mid.Color = ZoneMidlineColor(zone);
                 if (zone.Lbl != null && zone.Lbl.IsAlive)
-                    zone.Lbl.Color = WithOpacity(color, 100);
+                    zone.Lbl.Color = LightenForVisibility(WithOpacity(color, 100));
             }
 
             if (commentChanged)

@@ -512,6 +512,11 @@ namespace ZoneIntervalIndexSmoke
             Assert(regularFortyBars == TimeSpan.FromMinutes(200),
                 "Forty M5 bar intervals must extend the zone by exactly 200 nominal minutes.");
 
+            DateTime lastBarOpen = new DateTime(2026, 10, 18, 18, 0, 0);
+            Assert(FutureBarTimeEvaluator.GetFortyBarEnd(lastBarOpen, fiveMinutes)
+                    == lastBarOpen.AddMinutes(200),
+                "The visual right edge must be exactly forty M5 bar intervals after the latest candle.");
+
             // A large historical span can contain weekend/session gaps. It must not
             // change this forty-nominal-candle future margin.
             TimeSpan afterSessionGap = FutureBarTimeEvaluator.GetFortyBarSpan(fiveMinutes);
@@ -522,7 +527,7 @@ namespace ZoneIntervalIndexSmoke
             Assert(minimal == TimeSpan.FromTicks(40),
                 "A missing nominal interval must remain safe and positive.");
 
-            Console.WriteLine("PASS: active zones use a deterministic forty-bar future extension.");
+            Console.WriteLine("PASS: zone, line and label projection uses an exact forty-bar future endpoint.");
         }
 
 
@@ -558,21 +563,21 @@ namespace ZoneIntervalIndexSmoke
 
         private static void VerifyZoneMidlineColor()
         {
-            ZoneMidlineRgb source = ZoneMidlineColorEvaluator.Darken(22, 160, 166);
-            Assert(source.R < 22 && source.G < 160 && source.B < 166,
-                "Midline RGB channels must be darker than the current zone base color.");
-            Assert(source.R == 19 && source.G == 141 && source.B == 146,
-                "Midline should apply the updated subtle 12% darkening deterministically.");
+            ZoneMidlineRgb source = ZoneMidlineColorEvaluator.Lighten(22, 160, 166);
+            Assert(source.R > 22 && source.G > 160 && source.B > 166,
+                "Midline RGB channels must be lighter than the current zone base color.");
+            Assert(source.R == 55 && source.G == 173 && source.B == 178,
+                "Midline should apply the updated subtle 14% lightening deterministically.");
 
-            ZoneMidlineRgb neutral = ZoneMidlineColorEvaluator.Darken(128, 128, 128);
-            Assert(neutral.R == 113 && neutral.G == 113 && neutral.B == 113,
+            ZoneMidlineRgb neutral = ZoneMidlineColorEvaluator.Lighten(128, 128, 128);
+            Assert(neutral.R == 146 && neutral.G == 146 && neutral.B == 146,
                 "The midline transform must also preserve neutral/grayscale hues.");
 
-            ZoneMidlineRgb black = ZoneMidlineColorEvaluator.Darken(0, 0, 0);
-            Assert(black.R == 0 && black.G == 0 && black.B == 0,
-                "Darkening black must remain black without overflow.");
+            ZoneMidlineRgb black = ZoneMidlineColorEvaluator.Lighten(0, 0, 0);
+            Assert(black.R == 36 && black.G == 36 && black.B == 36,
+                "Lightening black must remain in range without overflow.");
 
-            Console.WriteLine("PASS: midlines retain zone hue and darken the RGB channels subtly by 12%.");
+            Console.WriteLine("PASS: midlines retain zone hue and brighten RGB channels by 14%.");
         }
 
 

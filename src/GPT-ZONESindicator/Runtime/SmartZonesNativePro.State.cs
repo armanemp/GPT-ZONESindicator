@@ -129,8 +129,6 @@ namespace cAlgo
             public int Cur = -1, Keep = 1;
             public bool ShowHL, ShowMid, ShowOpen;
             public Color Col;
-            public List<Item> Current;
-            public readonly Queue<List<Item>> Groups = new Queue<List<Item>>();
         }
 
         private sealed class SessionTrack
@@ -142,8 +140,6 @@ namespace cAlgo
             public Color Col;
             public DateTime WinStart = DateTime.MinValue;
             public double Hi, Lo;
-            public Item HiItem, LoItem;
-            public readonly Queue<Item[]> Past = new Queue<Item[]>();
         }
 
         private Func<int, double> _highPriceAt, _lowPriceAt, _openPriceAt, _closePriceAt;

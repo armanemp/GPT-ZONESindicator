@@ -66,16 +66,44 @@ namespace cAlgo
             public readonly List<HtfTrack> Tracks = new List<HtfTrack>();
         }
 
+        private sealed class HigherTimeframeReferenceRenderState
+        {
+            public List<Item> Current;
+            public readonly Queue<List<Item>> Groups = new Queue<List<Item>>();
+        }
+
+        private sealed class HigherTimeframeReferenceRenderingFeatureState
+        {
+            public readonly Dictionary<HtfTrack, HigherTimeframeReferenceRenderState> ByTrack =
+                new Dictionary<HtfTrack, HigherTimeframeReferenceRenderState>();
+        }
+
         private sealed class SessionRangeFeatureState
         {
             public readonly List<SessionTrack> Sessions = new List<SessionTrack>();
         }
 
+        private sealed class SessionRangeRenderState
+        {
+            public Item HiItem, LoItem;
+            public readonly Queue<Item[]> Past = new Queue<Item[]>();
+        }
+
+        private sealed class SessionRangeRenderingFeatureState
+        {
+            public readonly Dictionary<SessionTrack, SessionRangeRenderState> BySession =
+                new Dictionary<SessionTrack, SessionRangeRenderState>();
+        }
+
         private sealed class PsychologicalLevelFeatureState
         {
-            public readonly Dictionary<long, Item> Items = new Dictionary<long, Item>();
             public long Center = long.MinValue;
             public double StepUsed;
+        }
+
+        private sealed class PsychologicalLevelRenderingFeatureState
+        {
+            public readonly Dictionary<long, Item> Items = new Dictionary<long, Item>();
         }
 
         private sealed class ChartViewportFeatureState
@@ -124,8 +152,11 @@ namespace cAlgo
         private readonly HigherTimeframeFeatureState _higherTimeframeState = new HigherTimeframeFeatureState();
         private readonly ReferenceLevelRenderingFeatureState _referenceLevelRenderingState = new ReferenceLevelRenderingFeatureState();
         private readonly HigherTimeframeReferenceFeatureState _higherTimeframeReferenceState = new HigherTimeframeReferenceFeatureState();
+        private readonly HigherTimeframeReferenceRenderingFeatureState _higherTimeframeReferenceRenderingState = new HigherTimeframeReferenceRenderingFeatureState();
         private readonly SessionRangeFeatureState _sessionRangeState = new SessionRangeFeatureState();
+        private readonly SessionRangeRenderingFeatureState _sessionRangeRenderingState = new SessionRangeRenderingFeatureState();
         private readonly PsychologicalLevelFeatureState _psychologicalLevelState = new PsychologicalLevelFeatureState();
+        private readonly PsychologicalLevelRenderingFeatureState _psychologicalLevelRenderingState = new PsychologicalLevelRenderingFeatureState();
         private readonly ChartViewportFeatureState _chartViewportState = new ChartViewportFeatureState();
         private readonly ZoneRenderingFeatureState _zoneRenderingState = new ZoneRenderingFeatureState();
         private readonly MarketStructureRenderingFeatureState _marketStructureRenderingState = new MarketStructureRenderingFeatureState();

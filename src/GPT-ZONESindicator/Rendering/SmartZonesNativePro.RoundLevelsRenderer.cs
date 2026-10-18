@@ -11,7 +11,7 @@ namespace cAlgo
         {
             if (!ShowRoundLevels)
             {
-                foreach (KeyValuePair<long, Item> entry in _psychologicalLevelState.Items)
+                foreach (KeyValuePair<long, Item> entry in _psychologicalLevelRenderingState.Items)
                     SyncItem(entry.Value, false);
                 return;
             }
@@ -19,7 +19,7 @@ namespace cAlgo
             double price = _lastClose;
             if (price <= 0)
             {
-                foreach (KeyValuePair<long, Item> entry in _psychologicalLevelState.Items)
+                foreach (KeyValuePair<long, Item> entry in _psychologicalLevelRenderingState.Items)
                     SyncItem(entry.Value, false);
                 return;
             }
@@ -42,7 +42,7 @@ namespace cAlgo
                 _psychologicalLevelState.StepUsed = step;
 
                 List<long> remove = new List<long>();
-                foreach (KeyValuePair<long, Item> entry in _psychologicalLevelState.Items)
+                foreach (KeyValuePair<long, Item> entry in _psychologicalLevelRenderingState.Items)
                 {
                     if (stepChanged || entry.Key < center - radius || entry.Key > center + radius)
                         remove.Add(entry.Key);
@@ -51,16 +51,16 @@ namespace cAlgo
                 for (int k = 0; k < remove.Count; k++)
                 {
                     long key = remove[k];
-                    SyncItem(_psychologicalLevelState.Items[key], false);
-                    _psychologicalLevelState.Items.Remove(key);
+                    SyncItem(_psychologicalLevelRenderingState.Items[key], false);
+                    _psychologicalLevelRenderingState.Items.Remove(key);
                 }
 
                 for (long key = center - radius; key <= center + radius; key++)
                 {
-                    if (key <= 0 || _psychologicalLevelState.Items.ContainsKey(key))
+                    if (key <= 0 || _psychologicalLevelRenderingState.Items.ContainsKey(key))
                         continue;
 
-                    _psychologicalLevelState.Items[key] = new Item
+                    _psychologicalLevelRenderingState.Items[key] = new Item
                     {
                         Name = _prefix + "RN" + key.ToString(CultureInfo.InvariantCulture),
                         T1 = Bars.OpenTimes[0],
@@ -74,7 +74,7 @@ namespace cAlgo
                 }
             }
 
-            foreach (KeyValuePair<long, Item> entry in _psychologicalLevelState.Items)
+            foreach (KeyValuePair<long, Item> entry in _psychologicalLevelRenderingState.Items)
             {
                 long key = entry.Key;
                 Item item = entry.Value;

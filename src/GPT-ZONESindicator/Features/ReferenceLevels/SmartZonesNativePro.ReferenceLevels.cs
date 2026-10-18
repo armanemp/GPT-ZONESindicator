@@ -9,6 +9,7 @@ namespace cAlgo
         private void SetupHtf()
         {
             _higherTimeframeReferenceState.Tracks.Clear();
+            _higherTimeframeReferenceRenderingState.ByTrack.Clear();
             AddHtfTrack("PD", "Day Open", TimeFrame.Daily, ShowPrevDay, ShowPrevDayMid, ShowDayOpen, DailyPeriodsKept, _cPrevDay);
             AddHtfTrack("PW", "Week Open", TimeFrame.Weekly, ShowPrevWeek, ShowPrevWeekMid, ShowWeekOpen, WeeklyPeriodsKept, _cPrevWeek);
             AddHtfTrack("PM", "Month Open", TimeFrame.Monthly, ShowPrevMonth, ShowPrevMonthMid, ShowMonthOpen, MonthlyPeriodsKept, _cPrevMonth);
@@ -55,6 +56,7 @@ namespace cAlgo
         private void SetupSessions()
         {
             _sessionRangeState.Sessions.Clear();
+            _sessionRangeRenderingState.BySession.Clear();
             _sessionRangeState.Sessions.Add(new SessionTrack
             {
                 Name = "Asia", Enabled = ShowAsia, StartH = AsiaStartHour, EndH = AsiaEndHour,
@@ -86,6 +88,28 @@ namespace cAlgo
                 if (_sessionRangeState.Sessions[k].Enabled)
                     UpdateSession(_sessionRangeState.Sessions[k], index);
             }
+        }
+
+        private HigherTimeframeReferenceRenderState GetHtfRenderState(HtfTrack track)
+        {
+            HigherTimeframeReferenceRenderState state;
+            if (_higherTimeframeReferenceRenderingState.ByTrack.TryGetValue(track, out state))
+                return state;
+
+            state = new HigherTimeframeReferenceRenderState();
+            _higherTimeframeReferenceRenderingState.ByTrack.Add(track, state);
+            return state;
+        }
+
+        private SessionRangeRenderState GetSessionRenderState(SessionTrack session)
+        {
+            SessionRangeRenderState state;
+            if (_sessionRangeRenderingState.BySession.TryGetValue(session, out state))
+                return state;
+
+            state = new SessionRangeRenderState();
+            _sessionRangeRenderingState.BySession.Add(session, state);
+            return state;
         }
 
         private Item NewRefItem(string label, double price, DateTime start, Color color, LineStyle style, bool follow)
@@ -132,9 +156,10 @@ namespace cAlgo
                 return;
 
             DateTime periodStart = data.OpenTimes[current];
-            if (track.Current != null)
+            HigherTimeframeReferenceRenderState renderState = GetHtfRenderState(track);
+            if (renderState.Current != null)
             {
-                foreach (Item item in track.Current)
+                foreach (Item item in renderState.Current)
                 {
                     item.T2 = periodStart;
                     item.Follow = false;
@@ -175,12 +200,12 @@ namespace cAlgo
                     true));
             }
 
-            track.Current = group;
-            track.Groups.Enqueue(group);
+            renderState.Current = group;
+            renderState.Groups.Enqueue(group);
 
-            while (track.Groups.Count > track.Keep)
+            while (renderState.Groups.Count > track.Keep)
             {
-                List<Item> old = track.Groups.Dequeue();
+                List<Item> old = renderState.Groups.Dequeue();
                 foreach (Item item in old)
                     item.Dead = true;
             }
@@ -218,12 +243,13 @@ namespace cAlgo
 
         private void StartSession(SessionTrack session, DateTime windowStart, DateTime windowEnd, int index)
         {
-            if (session.HiItem != null)
-                session.Past.Enqueue(new[] { session.HiItem, session.LoItem });
+            SessionRangeRenderState renderState = GetSessionRenderState(session);
+            if (renderState.HiItem != null)
+                renderState.Past.Enqueue(new[] { renderState.HiItem, renderState.LoItem });
 
-            while (session.Past.Count > Math.Max(0, SessionsKept - 1))
+            while (renderState.Past.Count > Math.Max(0, SessionsKept - 1))
             {
-                Item[] old = session.Past.Dequeue();
+                Item[] old = renderState.Past.Dequeue();
                 old[0].Dead = true;
                 old[1].Dead = true;
             }
@@ -238,7 +264,7 @@ namespace cAlgo
             session.Hi = H(index);
             session.Lo = L(index);
 
-            session.HiItem = new Item
+            renderState.HiItem = new Item
             {
                 Name = NextName("L"),
                 Y = session.Hi,
@@ -254,7 +280,7 @@ namespace cAlgo
                 LabelV = VerticalAlignment.Bottom
             };
 
-            session.LoItem = new Item
+            renderState.LoItem = new Item
             {
                 Name = NextName("L"),
                 Y = session.Lo,
@@ -270,8 +296,8 @@ namespace cAlgo
                 LabelV = VerticalAlignment.Top
             };
 
-            _referenceLevelRenderingState.Items.Add(session.HiItem);
-            _referenceLevelRenderingState.Items.Add(session.LoItem);
+            _referenceLevelRenderingState.Items.Add(renderState.HiItem);
+            _referenceLevelRenderingState.Items.Add(renderState.LoItem);
         }
 
         /// <summary>Only bars inside the active session window contribute to its range.</summary>
@@ -287,18 +313,19 @@ namespace cAlgo
             double high = H(index);
             double low = L(index);
 
+            SessionRangeRenderState renderState = GetSessionRenderState(session);
             if (high > session.Hi)
             {
                 session.Hi = high;
-                session.HiItem.Y = high;
-                session.HiItem.LabelY = high;
+                renderState.HiItem.Y = high;
+                renderState.HiItem.LabelY = high;
             }
 
             if (low < session.Lo)
             {
                 session.Lo = low;
-                session.LoItem.Y = low;
-                session.LoItem.LabelY = low;
+                renderState.LoItem.Y = low;
+                renderState.LoItem.LabelY = low;
             }
         }
     }

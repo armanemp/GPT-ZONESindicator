@@ -176,16 +176,24 @@ namespace cAlgo
             foreach (HtfTrack tr in _higherTimeframeReferenceState.Tracks)
             {
                 tr.Cur = -1;
-                tr.Current = null;
-                tr.Groups.Clear();
+                HigherTimeframeReferenceRenderState renderState;
+                if (_higherTimeframeReferenceRenderingState.ByTrack.TryGetValue(tr, out renderState))
+                {
+                    renderState.Current = null;
+                    renderState.Groups.Clear();
+                }
             }
 
             foreach (SessionTrack session in _sessionRangeState.Sessions)
             {
                 session.WinStart = DateTime.MinValue;
-                session.HiItem = null;
-                session.LoItem = null;
-                session.Past.Clear();
+                SessionRangeRenderState renderState;
+                if (_sessionRangeRenderingState.BySession.TryGetValue(session, out renderState))
+                {
+                    renderState.HiItem = null;
+                    renderState.LoItem = null;
+                    renderState.Past.Clear();
+                }
             }
 
             int n = Bars.Count;

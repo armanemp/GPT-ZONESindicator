@@ -125,6 +125,17 @@ namespace cAlgo
             return Color.FromArgb((byte)alpha, color.R, color.G, color.B);
         }
 
+        /// <summary>Lightens chart lines and their labels and slightly increases opacity.</summary>
+        private static Color LightenForVisibility(Color color)
+        {
+            const double amount = 0.16;
+            byte red = (byte)Math.Round(color.R + (255 - color.R) * amount);
+            byte green = (byte)Math.Round(color.G + (255 - color.G) * amount);
+            byte blue = (byte)Math.Round(color.B + (255 - color.B) * amount);
+            byte alpha = (byte)Math.Min(255, Math.Round(color.A * 1.08));
+            return Color.FromArgb(alpha, red, green, blue);
+        }
+
         private static bool SameColor(Color a, Color b)
         {
             return a.A == b.A && a.R == b.R && a.G == b.G && a.B == b.B;

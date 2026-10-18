@@ -35,7 +35,8 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 
 - [ ] Test major and internal pivot confirmation delay.
 - [ ] Test BOS vs CHoCH classification from neutral, bullish and bearish trend states.
-- [ ] Test equal-high/equal-low clustering, range cleanliness, sweeps and duplicate sweep suppression.
+- [ ] Test equal-high/equal-low clustering, range cleanliness and duplicate sweep suppression.
+- [x] Extract and test high/low sweep predicates for Wick/Body measurement, minimum penetration, close-back return and exact threshold behavior (CI execution pending).
 - [ ] Test order-block source filters and oversize/body fallback behavior.
 
 ## Phase 4 — Reference levels and time handling

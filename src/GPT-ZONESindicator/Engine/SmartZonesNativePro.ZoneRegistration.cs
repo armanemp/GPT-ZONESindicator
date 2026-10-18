@@ -54,6 +54,7 @@ namespace cAlgo
 
             _zones.Add(zone);
             _alive.Add(zone);
+            RegisterZoneForLifecycle(zone);
 
             if (FilterDuplicateZones)
             {

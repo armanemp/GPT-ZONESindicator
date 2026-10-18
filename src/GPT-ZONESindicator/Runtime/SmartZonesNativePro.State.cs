@@ -126,6 +126,7 @@ namespace cAlgo
             public readonly Queue<Item[]> Past = new Queue<Item[]>();
         }
 
+        private Func<int, double> _highPriceAt, _lowPriceAt;
         private string _prefix = "SZNP_";
         private double _pip = 0.01, _tick = 0.01;
         private TimeSpan _barSpan = TimeSpan.FromMinutes(5);

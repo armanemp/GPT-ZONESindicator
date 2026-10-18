@@ -433,6 +433,59 @@ namespace ZoneIntervalIndexSmoke
             Assert(rejectedBounds, "Breaker specs must reject non-positive-width bounds.");
         }
 
+
+        private static void VerifyPivotConfirmationAndTieRules()
+        {
+            double[] highs = { 5, 8, 10, 8, 10, 7, 6 };
+            double[] lows  = { 6, 4, 2, 4, 2, 5, 7 };
+            Func<int, double> highAt = delegate (int index) { return highs[index]; };
+            Func<int, double> lowAt = delegate (int index) { return lows[index]; };
+
+            PivotEvaluation beforeConfirmation = PivotEvaluator.Evaluate(
+                2, 2, 2, 3, 0, highAt, lowAt);
+            Assert(!beforeConfirmation.IsReady,
+                "A pivot must not be confirmed before its right-hand bars close.");
+
+            PivotEvaluation confirmed = PivotEvaluator.Evaluate(
+                2, 2, 2, 4, 0, highAt, lowAt);
+            Assert(confirmed.IsReady && confirmed.PivotIndex == 2,
+                "A pivot must become eligible exactly when the configured right bars are closed.");
+            Assert(confirmed.IsHigh,
+                "A pivot high must preserve the existing right-side equal-high rule.");
+            Assert(confirmed.IsLow,
+                "A pivot low must preserve the existing right-side equal-low rule.");
+
+            double[] tiedLeftHighs = { 10, 8, 10, 8, 7 };
+            double[] ordinaryLows = { 7, 8, 9, 8, 7 };
+            PivotEvaluation leftHighTie = PivotEvaluator.Evaluate(
+                2, 2, 2, 4, 0,
+                delegate (int index) { return tiedLeftHighs[index]; },
+                delegate (int index) { return ordinaryLows[index]; });
+            Assert(leftHighTie.IsReady && !leftHighTie.IsHigh,
+                "An equal high to the left must disqualify a pivot high.");
+
+            double[] ordinaryHighs = { 7, 8, 9, 8, 7 };
+            double[] tiedLeftLows = { 2, 4, 2, 4, 5 };
+            PivotEvaluation leftLowTie = PivotEvaluator.Evaluate(
+                2, 2, 2, 4, 0,
+                delegate (int index) { return ordinaryHighs[index]; },
+                delegate (int index) { return tiedLeftLows[index]; });
+            Assert(leftLowTie.IsReady && !leftLowTie.IsLow,
+                "An equal low to the left must disqualify a pivot low.");
+
+            PivotEvaluation outsideLookback = PivotEvaluator.Evaluate(
+                1, 2, 2, 4, 2, highAt, lowAt);
+            Assert(!outsideLookback.IsReady,
+                "Pivots before the configured lookback start must be rejected.");
+
+            PivotEvaluation missingLeftHistory = PivotEvaluator.Evaluate(
+                1, 2, 1, 4, 0, highAt, lowAt);
+            Assert(!missingLeftHistory.IsReady,
+                "A pivot without enough left-hand history must be rejected.");
+
+            Console.WriteLine("PASS: pivot confirmation delay, lookback eligibility, and asymmetric equal-high/low tie rules.");
+        }
+
         private static void VerifyStructureBreakClassification()
         {
             Assert(!StructureBreakEvaluator.IsLevelCrossed(true, 100.0, 100.0),
@@ -902,6 +955,7 @@ namespace ZoneIntervalIndexSmoke
                 VerifyLifecycleSequenceAndTouchCounts();
                 VerifyInvalidLifecycleInput();
                 VerifyBreakerFactory();
+                VerifyPivotConfirmationAndTieRules();
                 VerifyStructureBreakClassification();
                 VerifyLiquiditySweepPredicates();
 

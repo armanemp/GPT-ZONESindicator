@@ -17,34 +17,22 @@ namespace cAlgo
         private void ScanPivots(Engine engine, int index, double atr)
         {
             int pivot = index - engine.Right;
-            if (pivot - engine.Left < 0 || pivot < _startIdx)
+            PivotEvaluation evaluation = PivotEvaluator.Evaluate(
+                pivot,
+                engine.Left,
+                engine.Right,
+                index,
+                _startIdx,
+                _highPriceAt,
+                _lowPriceAt);
+
+            if (!evaluation.IsReady)
                 return;
 
-            double high = H(pivot);
-            double low = L(pivot);
-            bool isHigh = true;
-            bool isLow = true;
-
-            for (int k = 1; k <= engine.Left && (isHigh || isLow); k++)
-            {
-                if (H(pivot - k) >= high)
-                    isHigh = false;
-                if (L(pivot - k) <= low)
-                    isLow = false;
-            }
-
-            for (int k = 1; k <= engine.Right && (isHigh || isLow); k++)
-            {
-                if (H(pivot + k) > high)
-                    isHigh = false;
-                if (L(pivot + k) < low)
-                    isLow = false;
-            }
-
-            if (isHigh)
-                AddSwing(engine, pivot, index, true, atr);
-            if (isLow)
-                AddSwing(engine, pivot, index, false, atr);
+            if (evaluation.IsHigh)
+                AddSwing(engine, evaluation.PivotIndex, index, true, atr);
+            if (evaluation.IsLow)
+                AddSwing(engine, evaluation.PivotIndex, index, false, atr);
         }
 
         private void AddSwing(Engine engine, int pivot, int confirmedAt, bool high, double atr)

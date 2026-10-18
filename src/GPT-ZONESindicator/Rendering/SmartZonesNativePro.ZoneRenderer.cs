@@ -347,7 +347,7 @@ namespace cAlgo
 
                 _tmp.Sort(CompareScoreDesc);
                 for (int k = limit; k < _tmp.Count; k++)
-                    _tmp[k].Want = false;
+                    GetZoneRenderState(_tmp[k]).Want = false;
             }
         }
 

@@ -34,6 +34,7 @@ namespace cAlgo
 
         private void RemoveItem(Item item)
         {
+            UntrackLineLabel(item);
             if (item.Line != null)
                 KillObject(item.Line, item.Name);
             if (item.Txt != null)
@@ -60,6 +61,7 @@ namespace cAlgo
             if (hasLabel && !item.TextOnly)
             {
                 TrackLineLabel(item);
+                item.LabelH = HorizontalAlignment.Left;
                 item.RenderLabelTime = LineLabelAnchorTime();
                 item.RenderLabelY = ResolveLineLabelY(item.LabelY);
             }
@@ -206,8 +208,10 @@ namespace cAlgo
             for (int index = 0; index < items.Length; index++)
             {
                 Item item = items[index];
-                if (item == null || !item.Shown || item.TextOnly
-                    || string.IsNullOrEmpty(item.Label))
+                if (item == null)
+                    continue;
+
+                if (!item.Shown || item.TextOnly || string.IsNullOrEmpty(item.Label))
                 {
                     UntrackLineLabel(item);
                     continue;

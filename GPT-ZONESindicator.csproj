@@ -33,7 +33,7 @@
           Condition="'$(AlgoBuild)' == 'true' and '$(DesignTimeBuild)' != 'true'">
     <PropertyGroup>
       <_CanonicalAlgoPath>$(TargetDir)$(IndicatorArtifactName).algo</_CanonicalAlgoPath>
-      <_IndicatorPublishDir>$([System.IO.Path]::Combine($([System.Environment]::GetFolderPath('MyDocuments')), 'cAlgo/Sources/Indicators'))</_IndicatorPublishDir>
+      <_IndicatorPublishDir>$([System.IO.Path]::Combine($([System.Environment]::GetFolderPath(SpecialFolder.MyDocuments)), 'cAlgo/Sources/Indicators'))</_IndicatorPublishDir>
     </PropertyGroup>
 
     <ItemGroup>

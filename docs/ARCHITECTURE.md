@@ -15,7 +15,7 @@ The indicator is a single cTrader Automate type, `cAlgo.SmartZonesNativePro`. Th
 | `Runtime/SmartZonesNativePro.Lifecycle.cs` | Initialize/destroy, history loading/rebuild, closed-bar scheduling, independent feature execution |
 | `Runtime/SmartZonesNativePro.FeatureModules.cs` | Pipeline composition and viewport calculation; keeps ordering/fault boundaries, not detector rules |
 | `Engine/FeatureModulePipeline.cs` | Ordered closed-bar and render modules, each executed within its own exception boundary |
-| `Features/MarketStructure/` | Pivot and BOS/CHoCH processing; pure pivot/break evaluators; emits value-only signal snapshots |
+| `Features/MarketStructure/` | Pivot and BOS/CHoCH processing; pure pivot, break, swing-distance and visibility evaluators; validates finite, well-formed High/Low samples; emits value-only signal snapshots |
 | `Features/OrderBlocks/` | M5 order-block handler/rules/candidate search and independent M15 order-block adapter |
 | `Features/FairValueGaps/` | M5 FVG adapter, pure FVG detector evaluator and M15 FVG adapter |
 | `Features/PriceGaps/` | M5 price-gap adapter, pure price-gap evaluator and M15 gap adapter |

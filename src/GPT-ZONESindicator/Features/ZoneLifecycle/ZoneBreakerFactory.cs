@@ -10,8 +10,8 @@ namespace cAlgo
         public int ExistingChildId;
         public bool ParentBull, Major;
         public double Lower, Upper;
-        public int OriginIndex, ConfirmationIndex;
-        public DateTime ConfirmationTime;
+        public int OriginIndex, ParentConfirmationIndex, ConfirmationIndex;
+        public DateTime ParentConfirmationTime, ConfirmationTime;
         public double Atr, Momentum, StructFactor;
     }
 
@@ -45,11 +45,15 @@ namespace cAlgo
             if (input.ExistingChildId > 0)
                 throw new InvalidOperationException("The parent order block already has a breaker child.");
 
-            if (input.OriginIndex < 0 || input.ConfirmationIndex <= input.OriginIndex)
-                throw new ArgumentException("Breaker confirmation must occur after the parent zone origin.", nameof(input));
+            if (input.OriginIndex < 0
+                || input.ParentConfirmationIndex < input.OriginIndex
+                || input.ConfirmationIndex <= input.ParentConfirmationIndex)
+                throw new ArgumentException("A breaker can only be confirmed after its parent order block was confirmed.", nameof(input));
 
-            if (input.ConfirmationTime == DateTime.MinValue)
-                throw new ArgumentException("Breaker confirmation time must be present.", nameof(input));
+            if (input.ParentConfirmationTime == DateTime.MinValue
+                || input.ConfirmationTime == DateTime.MinValue
+                || input.ConfirmationTime <= input.ParentConfirmationTime)
+                throw new ArgumentException("Breaker confirmation time must be later than the parent order-block confirmation time.", nameof(input));
 
             if (double.IsNaN(input.Lower) || double.IsInfinity(input.Lower)
                 || double.IsNaN(input.Upper) || double.IsInfinity(input.Upper)
@@ -78,3 +82,23 @@ namespace cAlgo
         }
     }
 }
+
+namespace cAlgo
+{
+    /// <summary>Allows only the specific invalidated OB that owns a breaker to render as history.</summary>
+    internal static class ZoneBreakerVisibilityPolicy
+    {
+        public static bool ShouldShowParentHistory(
+            SznpKind parentKind,
+            SznpState parentState,
+            int childId,
+            bool hasMatchingBreakerChild,
+            bool showParentHistory)
+        {
+            return showParentHistory
+                && parentKind == SznpKind.OrderBlock
+                && parentState == SznpState.Broken
+                && childId > 0
+                && hasMatchingBreakerChild;
+        }
+    }

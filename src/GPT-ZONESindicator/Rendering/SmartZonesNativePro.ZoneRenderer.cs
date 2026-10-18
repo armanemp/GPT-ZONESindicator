@@ -79,10 +79,11 @@ namespace cAlgo
 
         private DateTime ZoneEndTime(Zone zone)
         {
-            // Presentation endpoint: every displayed zone reaches the same forty-bar
-            // right margin, including zones whose lifecycle state changed on a recent bar.
-            // The logical FillTime/BreakTime remains stored separately for detection/status.
-            DateTime end = _futureTime;
+            // Valid active zones project forty bars right. Terminal history ends at the
+            // actual fill/break event so old invalid zones do not create long extra lines.
+            DateTime end = zone.State == SznpState.Broken
+                ? zone.BreakTime
+                : (zone.State == SznpState.Filled ? zone.FillTime : _futureTime);
             return end <= zone.StartTime ? zone.StartTime.Add(_barSpan) : end;
         }
 
@@ -308,6 +309,8 @@ namespace cAlgo
             // newer overlapping M5/M15 zones are laid out.
             _renderTracked.Sort(delegate (Zone a, Zone b) { return a.Id.CompareTo(b.Id); });
 
+            PrepareZoneLabelRows();
+
             for (int k = 0; k < trackedCount; k++)
             {
                 Zone zone = _renderTracked[k];
@@ -463,11 +466,52 @@ namespace cAlgo
         /// Places zone labels just off the midpoint and vertically separates labels that
         /// would otherwise overlap at the common forty-bar right edge.
         /// </summary>
+        private void PrepareZoneLabelRows()
+        {
+            _zoneLabelRows.Clear();
+            long tolerance = Math.Max(1L, _barSpan.Ticks) * 2L;
+
+            // Reserve positions used by other feature labels near zone right edges.
+            // Zone labels are intentionally skipped: this pass recomputes all of them in order.
+            foreach (ChartObject chartObject in _reg.Values)
+            {
+                ChartText text = chartObject as ChartText;
+                if (text == null || !text.IsAlive
+                    || text.Name.StartsWith(_prefix + "Z", StringComparison.Ordinal))
+                    continue;
+
+                _zoneLabelRows.Add(new ZoneLabelSlot { Time = text.Time, Y = text.Y });
+            }
+        }
+
+        private bool ZoneLabelRowCollides(DateTime time, double price, double separation, long tolerance)
+        {
+            for (int i = 0; i < _zoneLabelRows.Count; i++)
+            {
+                ZoneLabelSlot row = _zoneLabelRows[i];
+                if (Math.Abs((row.Time - time).Ticks) <= tolerance
+                    && Math.Abs(row.Y - price) < separation)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private void ReserveZoneLabelRow(DateTime time, double price)
+        {
+            _zoneLabelRows.Add(new ZoneLabelSlot { Time = time, Y = price });
+        }
+
+        /// <summary>
+        /// Places zone labels just off the midpoint and vertically separates labels that
+        /// would otherwise overlap at the common active-zone right edge.
+        /// </summary>
         private double ComputeZoneLabelY(Zone zone, DateTime end)
         {
             double middle = (zone.Upper + zone.Lower) * 0.5;
             if (!ShowZoneLabels)
                 return middle;
+
             double separation = Math.Max(_tick * 3.0, (zone.Upper - zone.Lower) * 0.10);
             double top = Chart.TopY;
             double bottom = Chart.BottomY;
@@ -481,38 +525,27 @@ namespace cAlgo
                 separation = Math.Max(separation, (top - bottom) * labelPixels / height);
             }
 
-            // Never place the zone label directly on its midpoint line.
+            long tolerance = Math.Max(1L, _barSpan.Ticks) * 2L;
             double preferred = zone.Bull ? 1.0 : -1.0;
-            int attempts = Math.Max(8, _renderTracked.Count * 2 + 2);
+            int attempts = Math.Min(48, Math.Max(8, _renderTracked.Count * 2 + 2));
+
             for (int attempt = 0; attempt < attempts; attempt++)
             {
                 int level = attempt / 2 + 1;
                 double direction = attempt % 2 == 0 ? preferred : -preferred;
                 double candidate = middle + direction * level * separation;
-                bool collision = false;
 
-                long timeTolerance = Math.Max(1L, _barSpan.Ticks) * 2L;
-                foreach (ChartObject chartObject in _reg.Values)
-                {
-                    ChartText otherText = chartObject as ChartText;
-                    if (otherText == null || otherText == zone.Lbl || !otherText.IsAlive)
-                        continue;
+                if (ZoneLabelRowCollides(end, candidate, separation, tolerance))
+                    continue;
 
-                    if (Math.Abs((otherText.Time - end).Ticks) > timeTolerance)
-                        continue;
-
-                    if (Math.Abs(otherText.Y - candidate) < separation)
-                    {
-                        collision = true;
-                        break;
-                    }
-                }
-
-                if (!collision)
-                    return candidate;
+                ReserveZoneLabelRow(end, candidate);
+                return candidate;
             }
 
-            return middle + preferred * attempts * separation;
+            // In an extremely dense price band, prefer a visible offset over stacking labels.
+            double fallback = middle + preferred * attempts * separation;
+            ReserveZoneLabelRow(end, fallback);
+            return fallback;
         }
 
         private string ZoneComment(Zone zone)

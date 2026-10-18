@@ -90,7 +90,7 @@ namespace cAlgo
         [Parameter("Filled / broken zone opacity (%)", Group = G15, DefaultValue = 22, MinValue = 0, MaxValue = 100)]
         public double BrokenOpacity { get; set; }
 
-        [Parameter("Show zone labels", Group = G15, DefaultValue = false)]
+        [Parameter("Show zone labels", Group = G15, DefaultValue = true)]
         public bool ShowZoneLabels { get; set; }
 
         [Parameter("Show zone midline", Group = G15, DefaultValue = true)]

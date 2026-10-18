@@ -16,6 +16,12 @@ The repository was created empty. The supplied `SmartZonesNativePro` source is t
 - Keep platform-facing API calls at the indicator/rendering boundary.
 - Validate compilation against the installed cTrader Automate API and validate chart behavior in cTrader before claiming runtime acceptance.
 
+## Development workflow
+
+Development is organized into gated phases, one module at a time. The single source of truth for phase order, current status, scope, tests, exit gates, and the change-control/closeout log is [docs/MODULE_DEVELOPMENT_ROADMAP.md](docs/MODULE_DEVELOPMENT_ROADMAP.md). The short overview is [docs/ROADMAP.md](docs/ROADMAP.md).
+
+Do not start a later module until the active phase passes its required tests and its chart-only acceptance is either completed or explicitly recorded. Reopen a completed phase only for a reproducible defect or an approved requirement change.
+
 ## Planned source layout
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/ROADMAP.md](docs/ROADMAP.md).

@@ -359,6 +359,9 @@ namespace cAlgo
 
         private void RenderRef()
         {
+            int cap = ReferenceMaxVisible > 0 ? ReferenceMaxVisible : int.MaxValue;
+            int count = 0;
+
             for (int k = _refItems.Count - 1; k >= 0; k--)
             {
                 Item item = _refItems[k];
@@ -376,7 +379,18 @@ namespace cAlgo
                     item.LabelY = item.Y;
                 }
 
-                SyncItem(item, true);
+                DateTime end = item.T2 <= item.T1 ? item.T1.Add(_barSpan) : item.T2;
+                bool inViewport = ItemLineIntersectsViewport(item, end)
+                    || ItemLabelIntersectsViewport(item.LabelTime, item.LabelY);
+                if (inViewport && count < cap)
+                {
+                    count++;
+                    SyncItem(item, true);
+                }
+                else
+                {
+                    SyncItem(item, false);
+                }
             }
         }
     }

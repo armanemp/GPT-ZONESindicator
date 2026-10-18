@@ -170,22 +170,16 @@ namespace cAlgo
             double minPenetration,
             double minReturn)
         {
-            if (highLevel)
-            {
-                double extreme = SweepMeasure == SznpSweepMeasure.Wick ? high : Math.Max(open, close);
-                double penetration = extreme - level;
-                return penetration > 0
-                    && penetration >= minPenetration
-                    && close < level
-                    && level - close >= minReturn;
-            }
-
-            double lowExtreme = SweepMeasure == SznpSweepMeasure.Wick ? low : Math.Min(open, close);
-            double lowPenetration = level - lowExtreme;
-            return lowPenetration > 0
-                && lowPenetration >= minPenetration
-                && close > level
-                && close - level >= minReturn;
+            return LiquiditySweepEvaluator.IsSweep(
+                highLevel,
+                level,
+                high,
+                low,
+                open,
+                close,
+                minPenetration,
+                minReturn,
+                SweepMeasure);
         }
 
         private void AddSweep(bool bull, double level, DateTime startTime, int index)

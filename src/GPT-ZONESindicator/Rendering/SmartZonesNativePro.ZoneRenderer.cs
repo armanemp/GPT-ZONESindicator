@@ -208,7 +208,6 @@ namespace cAlgo
 
             bool indexedViewportSelection = ZoneViewportSelectionPolicy.UseActiveZoneIndex(
                 hasViewport,
-                false, // ranking and per-kind budgets now operate on visible candidates only
                 ShowFilledZones,
                 ShowBrokenZones,
                 ShowObHistoryOfBreakers);
@@ -290,6 +289,17 @@ namespace cAlgo
                     view.RenderTracked = true;
                     _renderTracked.Add(zone);
                 }
+            }
+
+            // Candidates rejected by the viewport-local rank/caps need no retained cache.
+            // Keep state only for currently shown zones or the prior view being retired.
+            for (int k = 0; k < _cand.Count; k++)
+            {
+                Zone zone = _cand[k];
+                ZoneRenderState view;
+                if (_zoneRenderStates.TryGetValue(zone.Id, out view)
+                    && !view.Want && !view.Shown && !view.RenderTracked)
+                    _zoneRenderStates.Remove(zone.Id);
             }
 
             int shown = 0;

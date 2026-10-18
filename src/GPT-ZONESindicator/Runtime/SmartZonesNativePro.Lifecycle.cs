@@ -28,7 +28,6 @@ namespace cAlgo
             Chart.ScrollChanged += OnChartScrollChanged;
             Chart.ZoomChanged += OnChartZoomChanged;
             Chart.SizeChanged += OnChartSizeChanged;
-            Chart.PriceScaleChanged += OnChartPriceScaleChanged;
 
             if (LoadHistoryToLookback && LookbackBars > 0 && Bars.Count < LookbackBars + 50)
             {
@@ -49,7 +48,6 @@ namespace cAlgo
                 Chart.ScrollChanged -= OnChartScrollChanged;
                 Chart.ZoomChanged -= OnChartZoomChanged;
                 Chart.SizeChanged -= OnChartSizeChanged;
-                Chart.PriceScaleChanged -= OnChartPriceScaleChanged;
                 RemoveOwnObjects();
             }
             catch (Exception)
@@ -267,11 +265,6 @@ namespace cAlgo
         }
 
         private void OnChartSizeChanged(ChartSizeEventArgs args)
-        {
-            RefreshZoneViewport();
-        }
-
-        private void OnChartPriceScaleChanged(ChartPriceScaleEventArgs args)
         {
             RefreshZoneViewport();
         }

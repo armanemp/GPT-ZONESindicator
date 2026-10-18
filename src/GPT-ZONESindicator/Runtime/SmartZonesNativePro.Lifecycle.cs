@@ -301,6 +301,10 @@ namespace cAlgo
             if (i < _startIdx || i < 2)
                 return;
 
+            // Keep every still-valid zone (and its midline) extended past the latest
+            // closed bar, even when the user configured a short future extension.
+            _futureTime = T(i).AddDays(ExtensionDays);
+
             double atr = AtrAt(i);
 
             ProcessIndexedZones(i);

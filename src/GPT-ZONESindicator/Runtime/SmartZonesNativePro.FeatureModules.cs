@@ -165,24 +165,28 @@ namespace cAlgo
             _chartViewportState.Valid = true;
         }
 
-        private bool ItemLineIntersectsViewport(Item item, DateTime end)
+        private bool TimePriceIntersectsViewport(DateTime start, DateTime end, double price)
         {
-            if (!_chartViewportState.Valid)
-                return true;
-
-            if (item.Y < _chartViewportState.Bottom || item.Y > _chartViewportState.Top)
+            if (!_chartViewportState.Valid
+                || price < _chartViewportState.Bottom
+                || price > _chartViewportState.Top)
                 return false;
 
-            DateTime start = item.T1;
+            if (end <= start)
+                end = start.Add(_barSpan);
+
             return start <= _chartViewportState.End && end >= _chartViewportState.Start;
+        }
+
+        private bool ItemLineIntersectsViewport(Item item, DateTime end)
+        {
+            return item != null && TimePriceIntersectsViewport(item.T1, end, item.Y);
         }
 
         private bool ItemLabelIntersectsViewport(DateTime time, double price)
         {
-            if (!_chartViewportState.Valid)
-                return true;
-
-            return time >= _chartViewportState.Start && time <= _chartViewportState.End
+            return _chartViewportState.Valid
+                && time >= _chartViewportState.Start && time <= _chartViewportState.End
                 && price >= _chartViewportState.Bottom && price <= _chartViewportState.Top;
         }
     }

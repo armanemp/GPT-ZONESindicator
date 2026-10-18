@@ -16,13 +16,24 @@ namespace cAlgo
                 EqCluster cluster = _equalLevelsState.Clusters[k];
                 bool ended = cluster.Swept || cluster.Broken;
                 bool eligible = ShowEqual && (!ended || ShowSweptEqual);
-
                 Item item;
                 bool hasItem = _equalLevelsRenderingState.ByCluster.TryGetValue(cluster, out item);
-                if (!eligible)
+
+                DateTime end = ended ? cluster.EndTime : _futureTime;
+                if (end <= cluster.FirstTime)
+                    end = cluster.FirstTime.Add(_barSpan);
+                DateTime labelTime = MidTime(cluster.FirstTime, cluster.LastTime);
+                bool inViewport = eligible
+                    && (TimePriceIntersectsViewport(cluster.FirstTime, end, cluster.Level)
+                        || ItemLabelIntersectsViewport(labelTime, cluster.Level));
+
+                if (!inViewport || count >= equalCap)
                 {
                     if (hasItem)
+                    {
                         SyncItem(item, false);
+                        _equalLevelsRenderingState.ByCluster.Remove(cluster);
+                    }
                     continue;
                 }
 
@@ -31,48 +42,47 @@ namespace cAlgo
                     item = new Item { Name = NextName("E") };
                     _equalLevelsRenderingState.ByCluster.Add(cluster, item);
                 }
+
                 item.Y = cluster.Level;
                 item.T1 = cluster.FirstTime;
-                item.T2 = ended ? cluster.EndTime : _futureTime;
+                item.T2 = end;
                 item.Thick = 1;
                 item.Style = LiquidityStyle;
                 item.Col = WithOpacity(_cLiquidity, StructOpacity);
                 item.Label = (cluster.High ? "EQH" : "EQL")
                     + (cluster.Count > 2 ? " x" + cluster.Count.ToString(CultureInfo.InvariantCulture) : "");
-                item.LabelTime = MidTime(cluster.FirstTime, cluster.LastTime);
+                item.LabelTime = labelTime;
                 item.LabelY = cluster.Level;
                 item.LabelH = HorizontalAlignment.Center;
                 item.LabelV = cluster.High ? VerticalAlignment.Bottom : VerticalAlignment.Top;
 
-                DateTime end = item.T2 <= item.T1 ? item.T1.Add(_barSpan) : item.T2;
-                bool inViewport = ItemLineIntersectsViewport(item, end)
-                    || ItemLabelIntersectsViewport(item.LabelTime, item.LabelY);
-                if (inViewport && count < equalCap)
-                {
-                    count++;
-                    SyncItem(item, true);
-                }
-                else
-                {
-                    SyncItem(item, false);
-                }
+                SyncItem(item, true);
+                count++;
             }
-
         }
 
         private void RenderSweeps()
         {
             int sweepCap = SweepMaxVisible > 0 ? SweepMaxVisible : int.MaxValue;
             int count = 0;
+
             for (int k = _liquiditySweepState.Events.Count - 1; k >= 0; k--)
             {
                 SweepEv sweep = _liquiditySweepState.Events[k];
                 Item item;
                 bool hasItem = _liquiditySweepRenderingState.ByEvent.TryGetValue(sweep, out item);
-                if (!ShowSweeps)
+                DateTime end = sweep.T2 <= sweep.T1 ? sweep.T1.Add(_barSpan) : sweep.T2;
+                bool inViewport = ShowSweeps
+                    && (TimePriceIntersectsViewport(sweep.T1, end, sweep.Level)
+                        || ItemLabelIntersectsViewport(sweep.T2, sweep.Level));
+
+                if (!inViewport || count >= sweepCap)
                 {
                     if (hasItem)
+                    {
                         SyncItem(item, false);
+                        _liquiditySweepRenderingState.ByEvent.Remove(sweep);
+                    }
                     continue;
                 }
 
@@ -81,6 +91,7 @@ namespace cAlgo
                     item = new Item { Name = NextName("W") };
                     _liquiditySweepRenderingState.ByEvent.Add(sweep, item);
                 }
+
                 item.Y = sweep.Level;
                 item.T1 = sweep.T1;
                 item.T2 = sweep.T2;
@@ -93,19 +104,10 @@ namespace cAlgo
                 item.LabelH = HorizontalAlignment.Center;
                 item.LabelV = sweep.Bull ? VerticalAlignment.Top : VerticalAlignment.Bottom;
 
-                DateTime end = item.T2 <= item.T1 ? item.T1.Add(_barSpan) : item.T2;
-                bool inViewport = ItemLineIntersectsViewport(item, end)
-                    || ItemLabelIntersectsViewport(item.LabelTime, item.LabelY);
-                if (inViewport && count < sweepCap)
-                {
-                    count++;
-                    SyncItem(item, true);
-                }
-                else
-                {
-                    SyncItem(item, false);
-                }
+                SyncItem(item, true);
+                count++;
             }
         }
+
     }
 }

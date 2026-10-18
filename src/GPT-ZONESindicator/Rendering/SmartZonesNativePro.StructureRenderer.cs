@@ -24,8 +24,6 @@ namespace cAlgo
 
         private void SyncEngine(Engine engine, bool showBos, bool showChoch, bool showMarks, bool showActive)
         {
-            // Process every feature even when all its visibility switches are off, so
-            // objects created by a prior settings state are removed rather than left behind.
             int configuredCap = engine.Major ? StructMaxVisible : InternalStructMaxVisible;
             int cap = configuredCap > 0 ? configuredCap : int.MaxValue;
             int levelCount = 0;
@@ -40,52 +38,39 @@ namespace cAlgo
                 bool wantLevel = swing.Broken
                     ? (!swing.SilentBreak && (swing.Choch ? showChoch : showBos))
                     : showActive;
+                DateTime lineEnd = swing.Broken ? swing.BreakTime : _futureTime;
+                bool inViewport = wantLevel
+                    && TimePriceIntersectsViewport(swing.Time, lineEnd, swing.Price);
 
-                if (wantLevel)
+                if (inViewport && levelCount < cap)
                 {
                     renderState = GetStructureSwingRenderState(swing);
                     EnsureLevelItem(swing, engine.Major, renderState);
-                    Item level = renderState.Level;
-                    DateTime end = level.T2 <= level.T1 ? level.T1.Add(_barSpan) : level.T2;
-                    bool inViewport = ItemLineIntersectsViewport(level, end)
-                        || ItemLabelIntersectsViewport(level.LabelTime, level.LabelY);
-
-                    // Off-screen history does not consume the visible-item budget.
-                    if (inViewport && levelCount < cap)
-                    {
-                        levelCount++;
-                        SyncItem(level, true);
-                    }
-                    else
-                    {
-                        SyncItem(level, false);
-                    }
+                    SyncItem(renderState.Level, true);
+                    levelCount++;
                 }
                 else if (renderState != null && renderState.Level != null)
                 {
                     SyncItem(renderState.Level, false);
                 }
 
-                if (showMarks)
+                bool markInViewport = showMarks && ItemLabelIntersectsViewport(swing.Time, swing.Price);
+                if (markInViewport && markCount < cap)
                 {
                     renderState = GetStructureSwingRenderState(swing);
                     EnsureMarkItem(swing, renderState);
-                    Item mark = renderState.Mark;
-                    bool inViewport = ItemLabelIntersectsViewport(mark.LabelTime, mark.LabelY);
-                    if (inViewport && markCount < cap)
-                    {
-                        markCount++;
-                        SyncItem(mark, true);
-                    }
-                    else
-                    {
-                        SyncItem(mark, false);
-                    }
+                    SyncItem(renderState.Mark, true);
+                    markCount++;
                 }
                 else if (renderState != null && renderState.Mark != null)
                 {
                     SyncItem(renderState.Mark, false);
                 }
+
+                if (renderState != null
+                    && (renderState.Level == null || !renderState.Level.Shown)
+                    && (renderState.Mark == null || !renderState.Mark.Shown))
+                    _marketStructureRenderingState.BySwing.Remove(swing);
             }
         }
 

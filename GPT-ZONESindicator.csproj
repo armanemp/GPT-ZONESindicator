@@ -10,7 +10,7 @@
     <IndicatorArtifactName>GPT-ZONESindicator</IndicatorArtifactName>
     <AlgoName>$(IndicatorArtifactName)</AlgoName>
     <AlgoBuild>true</AlgoBuild>
-    <AlgoPublish>true</AlgoPublish>
+    <AlgoPublish>false</AlgoPublish>
   </PropertyGroup>
 
   <ItemGroup>
@@ -55,11 +55,9 @@
           DestinationFiles="$(_IndicatorPublishDir)/$(IndicatorArtifactName).algo"
           SkipUnchangedFiles="false" />
 
-    <ItemGroup>
-      <_MisnamedPublishedAlgo Include="@(_NonCanonicalAlgo->'$(_IndicatorPublishDir)/%(Filename)%(Extension)')" />
-    </ItemGroup>
+    <!-- Remove only the misnamed intermediate from this project's bin folder. AlgoPublish is
+         disabled above so this target never overwrites or deletes another algo in Documents. -->
     <Delete Files="@(_NonCanonicalAlgo)" Condition="'@(_NonCanonicalAlgo)' != ''" />
-    <Delete Files="@(_MisnamedPublishedAlgo)" Condition="'@(_MisnamedPublishedAlgo)' != ''" />
 
     <Message Importance="high" Text="Final cTrader indicator artifact: $(_CanonicalAlgoPath)" />
     <Message Importance="high" Text="Published cTrader indicator: $(_IndicatorPublishDir)/$(IndicatorArtifactName).algo" />

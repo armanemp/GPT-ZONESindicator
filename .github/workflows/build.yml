@@ -42,6 +42,9 @@ jobs:
           dotnet msbuild GPT-ZONESindicator.csproj -target:NormalizeCTraderArtifactName -property:Configuration=Release
           test -f bin/Release/net6.0/GPT-ZONESindicator.algo
           test ! -e bin/Release/net6.0/GPT.algo
+          published="$(find "$HOME" -type f -path '*/cAlgo/Sources/Indicators/GPT-ZONESindicator.algo' -print -quit)"
+          test -n "$published"
+          echo "Published artifact: $published"
           ls -lh bin/Release/net6.0/GPT-ZONESindicator.algo
 
       - name: Run deterministic algorithm regression tests

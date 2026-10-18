@@ -24,7 +24,9 @@ This document describes the source ownership boundaries for the composite Smart 
 | Reference levels | `Features/ReferenceLevels/SmartZonesNativePro.ReferenceLevels.cs` | `Configuration/Parameters.KeyLevels.cs` and `Parameters.Sessions.cs` | `Rendering/SmartZonesNativePro.ReferenceRenderer.cs` |
 | Psychological levels | `Rendering/SmartZonesNativePro.RoundLevelsRenderer.cs` | `Configuration/Parameters.RoundLevels.cs` | Shared `Rendering/SmartZonesNativePro.ChartItemRenderer.cs` |
 
-The shared rendering contract lives in `Rendering/SmartZonesNativePro.ChartItemRenderer.cs`; feature-specific renderers only calculate their own drawing items and ask the shared renderer to virtualize/update them.\n\n## Intentional shared contracts
+The shared rendering contract lives in `Rendering/SmartZonesNativePro.ChartItemRenderer.cs`; feature-specific renderers only calculate their own drawing items and ask the shared renderer to virtualize/update them.
+
+All zone-producing features (M5/M15 FVG, Price Gap, Order Block, and Breaker) use the same terminal visibility policy. A `Broken` zone cannot be re-created by scrolling, ranking, display-mode changes, or legacy broken-history switches. Keep its logical record only where needed for diagnostics and breaker lineage; never use that record as a visible chart zone.\n\n## Intentional shared contracts
 
 Zone types intentionally share one lifecycle evaluator, interval index, zone identity, and renderer. That is required so an FVG, gap, OB, M15 zone, and breaker obey the same Fresh/Touched/Partial/Filled/Broken transitions. This shared zone core is not a reason for the detectors to share filtering rules.
 
@@ -43,7 +45,7 @@ Do not duplicate those shared evaluations inside each detector. Change the ownin
 2. Cache one time/price viewport per render pass. Lines and labels outside that viewport are removed from the chart-object layer but their logical history remains available.
 3. The renderer re-creates the visible object when the user pans back to its time/price area.
 4. Apply independent per-viewport budgets by feature: major structure 12, internal structure 8, equal levels 6, sweeps 6 and reference levels 10 by default. These auxiliary budgets must not delete zones from logical state.
-5. Zone rectangles/midlines use viewport-aware zone selection. Only active valid zones project to the forty-bar future edge; terminal filled/broken history ends at the actual lifecycle event. When filled-zone display is enabled, selection falls back to the full logical collection because the active interval index excludes terminal zones.
+5. Zone rectangles/midlines use viewport-aware zone selection. Only active, non-broken zones project to the forty-bar future edge. Broken zones are never eligible for drawing, regardless of the legacy `ShowBrokenZones` or `ShowObHistoryOfBreakers` settings; any existing rectangle, midline, and label are removed in the same bar's render reconciliation. Broken logical records remain in internal history only for lifecycle diagnostics and breaker parent/child lineage. Filled zones may still be shown when `ShowFilledZones` is enabled; in that opt-in case, selection falls back to the full logical collection because the active interval index excludes filled zones.
 6. Reuse chart objects and update only changed fields where practical. Feature renderers always get a cleanup pass, even when their show toggle is off. Do not add a new object each tick and do not print repetitive per-bar diagnostics.
 7. Keep BOS/CHoCH labels at their break location. A line endpoint and the semantic position of its text are different concepts.
 

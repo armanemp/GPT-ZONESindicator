@@ -148,16 +148,34 @@ namespace cAlgo
         private DateTime LineLabelAnchorTime()
         {
             DateTime current = Bars.Count > 0 ? Bars.OpenTimes[Bars.Count - 1] : _lastBarTime;
-            long stepTicks = Math.Max(1L, _barSpan.Ticks);
+            long spanTicks = Math.Max(1L, _barSpan.Ticks);
+
+            // Extrapolate by the observed time span of exactly forty recent bar intervals.
+            // This naturally accounts for weekends and trading-session pauses.
+            if (Bars.Count > 40)
+            {
+                long observedTicks = (Bars.OpenTimes[Bars.Count - 1]
+                    - Bars.OpenTimes[Bars.Count - 41]).Ticks;
+                if (observedTicks > 0)
+                    spanTicks = observedTicks;
+            }
+            else
+            {
+                try
+                {
+                    spanTicks = checked(spanTicks * 40L);
+                }
+                catch (OverflowException)
+                {
+                    spanTicks = TimeSpan.FromDays(40).Ticks;
+                }
+            }
+
             try
             {
-                return current.AddTicks(checked(stepTicks * 40L));
+                return current.AddTicks(spanTicks);
             }
             catch (ArgumentOutOfRangeException)
-            {
-                return current.AddDays(40);
-            }
-            catch (OverflowException)
             {
                 return current.AddDays(40);
             }

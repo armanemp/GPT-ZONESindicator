@@ -90,7 +90,7 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 - [x] Separate FVG, Price Gap, Market Structure, Order Block, Breaker, Equal Level, Liquidity Sweep, Higher-Timeframe, Zone Lifecycle and Reference Level source files into feature-owned folders.
 - [x] Separate parameter files by feature family, including visibility, scoring, colors, line presentation, key levels, sessions and psychological levels. Initialization no longer forcibly rewrites each feature's toggle/style settings.
 - [x] Apply viewport/price filtering to line and label objects and release off-screen chart objects while preserving logical history for panning back.
-- [x] Give structure, liquidity and reference objects separate viewport budgets (defaults 12, 6 and 10 respectively); off-screen objects do not consume those budgets.
+- [x] Give each auxiliary renderer an independent viewport budget (major structure 12, internal structure 8, equal levels 6, sweeps 6, reference levels 10 by default); off-screen objects do not consume those budgets.
 - [x] Ensure disabling a renderer cleans up its existing chart objects and ensure filled-state display uses the full zone collection instead of the active-only index.
 - [x] Use separate configurable viewport budgets for structure, liquidity and reference items; off-screen history no longer consumes these budgets.
 - [x] Reduce zone label-collision scanning to a cached per-render label layout rather than repeatedly scanning every chart object for each candidate.

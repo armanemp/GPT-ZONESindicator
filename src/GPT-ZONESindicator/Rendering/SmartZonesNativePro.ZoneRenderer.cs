@@ -31,10 +31,34 @@ namespace cAlgo
             return comparison != 0 ? comparison : b.ConfirmIdx.CompareTo(a.ConfirmIdx);
         }
 
+        private bool IsBreakerParentHistory(Zone zone)
+        {
+            if (zone == null
+                || !ShowObHistoryOfBreakers
+                || zone.Kind != SznpKind.OrderBlock
+                || zone.State != SznpState.Broken
+                || zone.ChildId <= 0
+                || zone.ChildId > _zones.Count)
+                return false;
+
+            // IDs are assigned monotonically by AddZone. Still verify the reciprocal link so
+            // a stale/malformed child ID can never make an unrelated broken OB visible.
+            Zone child = _zones[zone.ChildId - 1];
+            bool matchingChild = child != null
+                && child.Id == zone.ChildId
+                && child.Kind == SznpKind.Breaker
+                && child.ParentId == zone.Id;
+
+            return ZoneBreakerVisibilityPolicy.ShouldShowParentHistory(
+                zone.Kind, zone.State, zone.ChildId, matchingChild, ShowObHistoryOfBreakers);
+        }
+
         private bool ZoneWanted(Zone zone, double price, double atrNow)
         {
             if (zone.IsHigherTimeframe && !ShowM15Zones)
                 return false;
+
+            bool showParentHistory = IsBreakerParentHistory(zone);
 
             switch (zone.Kind)
             {
@@ -45,7 +69,7 @@ namespace cAlgo
                     if (!ShowGap) return false;
                     break;
                 case SznpKind.OrderBlock:
-                    if (!ShowOb) return false;
+                    if (!ShowOb && !showParentHistory) return false;
                     break;
                 default:
                     if (!ShowBreaker) return false;
@@ -55,10 +79,12 @@ namespace cAlgo
             // Broken zones are never valid chart areas. Their logical records stay in
             // history for lifecycle diagnostics and breaker-parent lineage, but display
             // switches cannot resurrect their rectangles, midlines, or labels.
-            if (!ZoneVisibilityPolicy.ShouldRender(zone.State, ShowTouchedZones, ShowFilledZones))
+            if (!showParentHistory
+                && !ZoneVisibilityPolicy.ShouldRender(zone.State, ShowTouchedZones, ShowFilledZones))
                 return false;
 
-            if (DisplayMode == SznpDisplayMode.FreshOnly && zone.State != SznpState.Fresh)
+            if (!showParentHistory
+                && DisplayMode == SznpDisplayMode.FreshOnly && zone.State != SznpState.Fresh)
                 return false;
 
             if (DisplayMode == SznpDisplayMode.NearPrice && zone.State != SznpState.Broken)
@@ -193,7 +219,8 @@ namespace cAlgo
 
             bool indexedViewportSelection = ZoneViewportSelectionPolicy.UseActiveZoneIndex(
                 hasViewport,
-                ShowFilledZones);
+                ShowFilledZones,
+                ShowObHistoryOfBreakers);
 
             bool needScore = MinScore > 0
                 || DisplayMode == SznpDisplayMode.TopRanked
@@ -429,18 +456,26 @@ namespace cAlgo
             return Color.FromArgb(alpha, matching.R, matching.G, matching.B);
         }
 
-        private static string KindTag(Zone zone)
+        private string KindTag(Zone zone)
         {
             string tag;
+            bool showParentHistory = IsBreakerParentHistory(zone);
             switch (zone.Kind)
             {
                 case SznpKind.Fvg: tag = "FVG"; break;
                 case SznpKind.Gap: tag = "GAP"; break;
-                case SznpKind.OrderBlock: tag = zone.Major ? "OB*" : "OB"; break;
+                case SznpKind.OrderBlock:
+                    tag = showParentHistory
+                        ? (zone.Major ? "OB*→BB" : "OB→BB")
+                        : (zone.Major ? "OB*" : "OB");
+                    break;
                 default: tag = "BB"; break;
             }
 
-            return (zone.IsHigherTimeframe ? "M15 " : "") + tag + (zone.Bull ? "+" : "-");
+            bool taggedDirection = showParentHistory && zone.Kind == SznpKind.OrderBlock
+                ? !zone.Bull
+                : zone.Bull;
+            return (zone.IsHigherTimeframe ? "M15 " : "") + tag + (taggedDirection ? "+" : "-");
         }
 
         private string LabelText(Zone zone)

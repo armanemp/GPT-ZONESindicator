@@ -76,21 +76,10 @@ namespace cAlgo
             }
         }
 
-        /// <summary>Replay bars after an OB candle was discovered retrospectively.</summary>
-        private void ReplayZone(Zone zone, int from, int to)
-        {
-            for (int index = from; index <= to; index++)
-            {
-                UpdateZone(zone, index, true);
-                if (zone.State != SznpState.Broken)
-                    continue;
-
-                if (zone.ChildId > 0)
-                    ReplayZone(_zones[zone.ChildId - 1], index + 1, to);
-                return;
-            }
-        }
-
+        // An OB is discovered only when its structure-break candle closes. Its lifecycle
+        // therefore starts on the next closed bar; replaying earlier candles can create a
+        // speculative breaker before the parent OB was confirmed and invalidate it again
+        // during the same historical impulse.
         private void OnZoneBroken(Zone zone, int index)
         {
             zone.Score = ComputeScore(zone, index, C(index), AtrAt(index));
@@ -110,7 +99,8 @@ namespace cAlgo
                 || orderBlock.ChildId > 0
                 || orderBlock.ConfirmIdx < 0
                 || orderBlock.OriginIdx < 0
-                || index <= orderBlock.OriginIdx)
+                || index <= orderBlock.OriginIdx
+                || index <= orderBlock.ConfirmIdx)
             {
                 Reject("breaker: parent not eligible");
                 return;

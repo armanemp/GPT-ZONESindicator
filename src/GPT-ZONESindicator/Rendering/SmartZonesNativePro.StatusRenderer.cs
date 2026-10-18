@@ -47,11 +47,15 @@ namespace cAlgo
 
             int[] byKind = new int[4];
             int[] byState = new int[5];
+            int[] breakerByState = new int[5];
 
             for (int k = 0; k < _zones.Count; k++)
             {
-                byKind[(int)_zones[k].Kind]++;
-                byState[(int)_zones[k].State]++;
+                Zone zone = _zones[k];
+                byKind[(int)zone.Kind]++;
+                byState[(int)zone.State]++;
+                if (zone.Kind == SznpKind.Breaker)
+                    breakerByState[(int)zone.State]++;
             }
 
             double millisecondsPerTick = 1000.0 / Stopwatch.Frequency;
@@ -71,6 +75,12 @@ namespace cAlgo
                 _zones.Count,
                 byKind[0], byKind[1], byKind[2], byKind[3],
                 byState[0], byState[1], byState[2], byState[3], byState[4]));
+
+            Print(string.Format(
+                CultureInfo.InvariantCulture,
+                "[SZNP] breaker lifecycle: fresh {0}, touched {1}, partial {2}, filled {3}, broken {4} | DetectBreaker {5} | ShowBreaker {6} | ShowMidline {7}",
+                breakerByState[0], breakerByState[1], breakerByState[2],
+                breakerByState[3], breakerByState[4], DetectBreaker, ShowBreaker, ShowMidline));
 
             Print(string.Format(
                 CultureInfo.InvariantCulture,

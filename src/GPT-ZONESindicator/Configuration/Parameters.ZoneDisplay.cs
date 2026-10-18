@@ -42,7 +42,7 @@ namespace cAlgo
         [Parameter("Show zone labels (extra chart objects)", Group = G15, DefaultValue = false)]
         public bool ShowZoneLabels { get; set; }
 
-        [Parameter("Show zone midline (extra chart object)", Group = G15, DefaultValue = false)]
+        [Parameter("Show zone midline", Group = G15, DefaultValue = true)]
         public bool ShowMidline { get; set; }
     }
 }

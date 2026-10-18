@@ -105,8 +105,8 @@ namespace cAlgo
 
         private DateTime ZoneEndTime(Zone zone)
         {
-            // Valid active zones project forty bars right. Terminal history ends at the
-            // actual fill/break event so old invalid zones do not create long extra lines.
+            // Active zones honour the configured future extension. Terminal history ends
+            // at the actual fill/break event, so invalid zones do not keep projecting.
             DateTime end = zone.State == SznpState.Broken
                 ? zone.BreakTime
                 : (zone.State == SznpState.Filled ? zone.FillTime : _futureTime);

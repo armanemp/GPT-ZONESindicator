@@ -18,7 +18,7 @@ namespace cAlgo
         [Parameter("Breaker midline", Group = G17, DefaultValue = "#4CB3B8")]
         public string BreakerMidColor { get; set; }
 
-        [Parameter("Midline opacity (%)", Group = G17, DefaultValue = 70, MinValue = 0, MaxValue = 100)]
+        [Parameter("Midline opacity (%)", Group = G17, DefaultValue = 90, MinValue = 0, MaxValue = 100)]
         public double MidlineOpacity { get; set; }
     }
 }

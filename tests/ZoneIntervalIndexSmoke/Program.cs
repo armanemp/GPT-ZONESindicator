@@ -491,13 +491,33 @@ namespace ZoneIntervalIndexSmoke
             Assert(rejectedTimeline, "A breaker must be confirmed after its order-block origin.");
             input.ConfirmationIndex = 17;
 
-            ZoneBreakerInput replayedInput = input;
-            replayedInput.ConfirmationIndex = 8;
-            replayedInput.ConfirmationTime = input.ParentConfirmationTime.AddMinutes(-5);
-            ZoneBreakerSpec replayedSpec = ZoneBreakerFactory.Create(replayedInput);
-            Assert(replayedSpec.ConfirmationIndex < replayedInput.ParentConfirmationIndex
-                && replayedSpec.StartTime < replayedInput.ParentConfirmationTime,
-                "Historical replay must allow a breaker to predate the later OB-discovery confirmation.");
+            bool rejectedBeforeParentConfirmation = false;
+            try
+            {
+                input.ConfirmationIndex = input.ParentConfirmationIndex;
+                ZoneBreakerFactory.Create(input);
+            }
+            catch (ArgumentException)
+            {
+                rejectedBeforeParentConfirmation = true;
+            }
+            Assert(rejectedBeforeParentConfirmation,
+                "A breaker must not be created on or before the parent OB confirmation bar.");
+            input.ConfirmationIndex = 17;
+
+            bool rejectedBeforeParentConfirmationTime = false;
+            try
+            {
+                input.ConfirmationTime = input.ParentConfirmationTime;
+                ZoneBreakerFactory.Create(input);
+            }
+            catch (ArgumentException)
+            {
+                rejectedBeforeParentConfirmationTime = true;
+            }
+            Assert(rejectedBeforeParentConfirmationTime,
+                "A breaker must not be created at or before the parent OB confirmation time.");
+            input.ConfirmationTime = confirmedAt;
 
             bool rejectedConfirmationTime = false;
             try

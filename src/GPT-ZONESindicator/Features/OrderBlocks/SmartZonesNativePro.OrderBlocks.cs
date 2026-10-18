@@ -139,7 +139,8 @@ namespace cAlgo
 
             AddZone(zone);
             _orderBlockState.ByCandle[key] = zone;
-            ReplayZone(zone, candidate + 1, breakIndex);
+            // This OB is confirmed on breakIndex. The lifecycle starts on the next
+            // closed candle; pre-confirmation price action must not create a breaker.
         }
     }
 }

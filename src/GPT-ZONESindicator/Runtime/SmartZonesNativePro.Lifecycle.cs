@@ -35,6 +35,7 @@ namespace cAlgo
             _tick = Symbol.TickSize > 0 ? Symbol.TickSize : _pip / 10.0;
 
             BuildPalette();
+            SetupM15Bars();
             RemoveOwnObjects();
             SetupHtf();
             SetupSessions();
@@ -67,6 +68,11 @@ namespace cAlgo
                 Chart.ScrollChanged -= OnChartScrollChanged;
                 Chart.ZoomChanged -= OnChartZoomChanged;
                 Chart.SizeChanged -= OnChartSizeChanged;
+                if (_m15Bars != null)
+                {
+                    _m15Bars.HistoryLoaded -= OnM15HistoryChanged;
+                    _m15Bars.Reloaded -= OnM15HistoryChanged;
+                }
                 RemoveOwnObjects();
             }
             catch (Exception)
@@ -130,6 +136,15 @@ namespace cAlgo
             _status = null;
             _atr.Clear();
             _trSum = 0;
+            _m15Atr.Clear();
+            _m15TrSum = 0;
+            _m15Swings.Clear();
+            _m15OpenSwings.Clear();
+            _m15LastHigh = null;
+            _m15LastLow = null;
+            _m15Trend = 0;
+            _m15LastBullBreak = -1;
+            _m15LastBearBreak = -1;
             _rej.Clear();
 
             _nextId = 1;
@@ -184,12 +199,23 @@ namespace cAlgo
             _firstOpenTime = n > 0 ? Bars.OpenTimes[0] : DateTime.MinValue;
             _startIdx = LookbackBars > 0 ? Math.Max(2, n - 1 - LookbackBars) : 2;
             _lastProcessed = _startIdx - 1;
+            _m15ZoneStartTime = n > 0 ? Bars.OpenTimes[Math.Min(_startIdx, n - 1)] : DateTime.MinValue;
+            if (_m15Bars != null && _m15Bars.Count > 0)
+            {
+                int htfAtLookback = FindM15IndexAtOrBefore(_m15ZoneStartTime);
+                int warmupBars = Math.Max(100, Math.Max(AtrPeriod * 5, MajorLeft + MajorRight + ObMaxBarsFromSwing));
+                _m15StartIndex = Math.Max(2, htfAtLookback - warmupBars);
+            }
+            else
+            {
+                _m15StartIndex = 0;
+            }
+            _lastM15Processed = _m15StartIndex - 1;
             _renderDirty = true;
             _viewportDirty = true;
 
             ComputeBarSpan();
-            _futureTime = (n > 0 ? Bars.OpenTimes[n - 1] : DateTime.UtcNow)
-                .AddDays(ExtensionDays);
+            _futureTime = ComputeFutureZoneTime();
         }
 
         private void ComputeBarSpan()
@@ -325,7 +351,7 @@ namespace cAlgo
 
             // Keep every still-valid zone (and its midline) extended past the latest
             // closed bar, even when the user configured a short future extension.
-            _futureTime = CloseTimeOf(i).AddDays(ExtensionDays);
+            _futureTime = ComputeFutureZoneTime();
 
             double atr = AtrAt(i);
 
@@ -343,6 +369,7 @@ namespace cAlgo
                 DetectGapAt(i, atr);
 
             UpdateReference(i);
+            ProcessClosedM15Bars(i);
         }
     }
 }

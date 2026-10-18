@@ -40,19 +40,21 @@ namespace cAlgo
             result.IsReady = true;
             double pivotHigh = highAt(pivotIndex);
             double pivotLow = lowAt(pivotIndex);
-            bool isHigh = IsFinite(pivotHigh);
-            bool isLow = IsFinite(pivotLow);
+            bool pivotRangeValid = IsValidRange(pivotHigh, pivotLow);
+            bool isHigh = pivotRangeValid;
+            bool isLow = pivotRangeValid;
 
             for (int offset = 1; offset <= leftBars && (isHigh || isLow); offset++)
             {
                 double leftHigh = highAt(pivotIndex - offset);
                 double leftLow = lowAt(pivotIndex - offset);
+                bool leftRangeValid = IsValidRange(leftHigh, leftLow);
 
                 // NaN comparisons are always false; explicitly reject malformed price
                 // samples instead of accidentally accepting them as an extreme.
-                if (!IsFinite(leftHigh) || leftHigh >= pivotHigh)
+                if (!leftRangeValid || leftHigh >= pivotHigh)
                     isHigh = false;
-                if (!IsFinite(leftLow) || leftLow <= pivotLow)
+                if (!leftRangeValid || leftLow <= pivotLow)
                     isLow = false;
             }
 
@@ -60,10 +62,11 @@ namespace cAlgo
             {
                 double rightHigh = highAt(pivotIndex + offset);
                 double rightLow = lowAt(pivotIndex + offset);
+                bool rightRangeValid = IsValidRange(rightHigh, rightLow);
 
-                if (!IsFinite(rightHigh) || rightHigh > pivotHigh)
+                if (!rightRangeValid || rightHigh > pivotHigh)
                     isHigh = false;
-                if (!IsFinite(rightLow) || rightLow < pivotLow)
+                if (!rightRangeValid || rightLow < pivotLow)
                     isLow = false;
             }
 
@@ -75,6 +78,11 @@ namespace cAlgo
         private static bool IsFinite(double value)
         {
             return !double.IsNaN(value) && !double.IsInfinity(value);
+        }
+
+        private static bool IsValidRange(double high, double low)
+        {
+            return IsFinite(high) && IsFinite(low) && high >= low;
         }
     }
 }

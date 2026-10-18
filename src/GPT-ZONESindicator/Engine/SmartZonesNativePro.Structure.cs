@@ -94,7 +94,7 @@ namespace cAlgo
                 if (swing.Broken || swing.Swept)
                     continue;
 
-                bool crossed = swing.High ? close > swing.Price : close < swing.Price;
+                bool crossed = StructureBreakEvaluator.IsLevelCrossed(swing.High, close, swing.Price);
                 if (!crossed)
                     continue;
 
@@ -120,14 +120,15 @@ namespace cAlgo
         private void RegisterBreak(Engine engine, Swing swing, int index, double atr)
         {
             bool bullishBreak = swing.High;
-            bool choch = bullishBreak ? engine.Trend < 0 : engine.Trend > 0;
+            StructureBreakClassification classification =
+                StructureBreakEvaluator.Classify(engine.Trend, bullishBreak);
 
             swing.Broken = true;
             swing.BreakIdx = index;
             swing.BreakTime = T(index);
-            swing.Choch = choch;
+            swing.Choch = classification.IsChangeOfCharacter;
             swing.BreakBull = bullishBreak;
-            engine.Trend = bullishBreak ? 1 : -1;
+            engine.Trend = classification.NextTrend;
 
             if (bullishBreak)
                 _lastBullBreak = index;

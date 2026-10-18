@@ -218,14 +218,39 @@ namespace cAlgo
         {
             double atr = M15AtrAt(index);
 
-            ScanM15Pivots(index, atr);
-            CheckM15Breaks(index, confirmingChartIndex, atr);
+            try
+            {
+                ScanM15Pivots(index, atr);
+                CheckM15Breaks(index, confirmingChartIndex, atr);
+            }
+            catch (Exception ex)
+            {
+                LogError("M15 market structure", ex);
+            }
 
             if (DetectFvg)
-                DetectM15FvgAt(index, confirmingChartIndex, atr);
+            {
+                try
+                {
+                    DetectM15FvgAt(index, confirmingChartIndex, atr);
+                }
+                catch (Exception ex)
+                {
+                    LogError("M15 FVG detector", ex);
+                }
+            }
 
             if (DetectGap)
-                DetectM15GapAt(index, confirmingChartIndex, atr);
+            {
+                try
+                {
+                    DetectM15GapAt(index, confirmingChartIndex, atr);
+                }
+                catch (Exception ex)
+                {
+                    LogError("M15 price-gap detector", ex);
+                }
+            }
         }
 
         private void ScanM15Pivots(int index, double atr)
@@ -303,197 +328,28 @@ namespace cAlgo
                     _higherTimeframeState.LastBearBreak = index;
 
                 if (DetectOb && OrderBlockRules.IsSourceAllowed(ObSource, true))
-                    TryCreateM15OrderBlock(swing.Index, index, confirmingChartIndex, atr, bullishBreak);
+                {
+                    try
+                    {
+                        TryCreateM15OrderBlock(swing.Index, index, confirmingChartIndex, atr, bullishBreak);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError("M15 order-block detector at bar " + index, ex);
+                    }
+                }
             }
 
             _higherTimeframeState.OpenSwings.RemoveAll(delegate (HigherTimeframeSwing swing) { return swing.Broken; });
         }
 
-        private void TryCreateM15OrderBlock(
-            int swingIndex,
-            int breakIndex,
-            int confirmingChartIndex,
-            double atr,
-            bool bullish)
-        {
-            if (confirmingChartIndex < _startIdx || breakIndex - swingIndex < 2)
-            {
-                Reject("M15 OB: short/unavailable break");
-                return;
-            }
 
-            double breakClose = _higherTimeframeState.Bars.ClosePrices[breakIndex];
-            double swingPrice = _higherTimeframeState.Bars.HighPrices[swingIndex];
-            if (!bullish)
-                swingPrice = _higherTimeframeState.Bars.LowPrices[swingIndex];
 
-            double strength = bullish ? breakClose - swingPrice : swingPrice - breakClose;
-            if (strength < ObMinBreakAtr * atr)
-                return;
 
-            if (ObRequireDisplacement
-                && Math.Abs(_higherTimeframeState.Bars.ClosePrices[breakIndex] - _higherTimeframeState.Bars.OpenPrices[breakIndex])
-                    < ObMinBreakBodyAtr * atr)
-                return;
 
-            OrderBlockCandidateSearch search = OrderBlockCandidateEvaluator.Find(
-                bullish,
-                swingIndex,
-                breakIndex,
-                delegate (int barIndex) { return _higherTimeframeState.Bars.HighPrices[barIndex]; },
-                delegate (int barIndex) { return _higherTimeframeState.Bars.LowPrices[barIndex]; },
-                delegate (int barIndex) { return _higherTimeframeState.Bars.OpenPrices[barIndex]; },
-                delegate (int barIndex) { return _higherTimeframeState.Bars.ClosePrices[barIndex]; });
 
-            int candidate = search.CandidateIndex;
-            if (candidate < 0 || candidate - swingIndex > ObMaxBarsFromSwing)
-                return;
 
-            OrderBlockBoundsResult bounds = OrderBlockRules.EvaluateBounds(
-                _higherTimeframeState.Bars.LowPrices[candidate],
-                _higherTimeframeState.Bars.HighPrices[candidate],
-                _higherTimeframeState.Bars.OpenPrices[candidate],
-                _higherTimeframeState.Bars.ClosePrices[candidate],
-                ObRangeMode,
-                ObMaxSizeAtr * atr,
-                ObUseBodyIfOversize,
-                Math.Max(_tick, ObMinSizeAtr * atr));
 
-            if (!bounds.Accepted)
-                return;
-
-            double impulse = 0;
-            for (int k = candidate; k <= breakIndex; k++)
-            {
-                double move = bullish
-                    ? _higherTimeframeState.Bars.HighPrices[k] - bounds.Lower
-                    : bounds.Upper - _higherTimeframeState.Bars.LowPrices[k];
-                if (move > impulse)
-                    impulse = move;
-            }
-
-            AddM15Zone(new Zone
-            {
-                Kind = SznpKind.OrderBlock,
-                Bull = bullish,
-                Lower = bounds.Lower,
-                Upper = bounds.Upper,
-                OriginIdx = FindMainIndexAtOrBefore(_higherTimeframeState.Bars.OpenTimes[candidate]),
-                ConfirmIdx = confirmingChartIndex,
-                StartTime = _higherTimeframeState.Bars.OpenTimes[candidate],
-                Atr = atr,
-                Momentum = impulse / atr,
-                StructFactor = 1.0,
-                Major = true,
-                IsHigherTimeframe = true
-            }, breakIndex, confirmingChartIndex);
-        }
-
-        private void DetectM15FvgAt(int index, int confirmingChartIndex, double atr)
-        {
-            if (index < 2 || confirmingChartIndex < _startIdx)
-                return;
-
-            int first = index - 2;
-            int middle = index - 1;
-            FairValueGapEvaluation evaluation = FairValueGapDetectorEvaluator.Evaluate(new FairValueGapInput
-            {
-                OriginIndex = FindMainIndexAtOrBefore(_higherTimeframeState.Bars.OpenTimes[first]),
-                ConfirmationIndex = confirmingChartIndex,
-                FirstCandleTime = _higherTimeframeState.Bars.OpenTimes[first],
-                ConfirmationCandleTime = _higherTimeframeState.Bars.OpenTimes[index],
-                TickSize = _tick,
-                PipSize = _pip,
-                Atr = atr,
-                MinSizePips = FvgMinSizePips,
-                MinSizeAtr = FvgMinSizeAtr,
-                RequireDisplacement = FvgRequireDisplacement,
-                MinBodyAtr = FvgMinBodyAtr,
-                MinBodyRatio = FvgMinBodyRatio,
-                MatchDirection = FvgMatchDirection,
-                StartMode = FvgStartMode,
-                FirstHigh = _higherTimeframeState.Bars.HighPrices[first],
-                FirstLow = _higherTimeframeState.Bars.LowPrices[first],
-                MiddleOpen = _higherTimeframeState.Bars.OpenPrices[middle],
-                MiddleClose = _higherTimeframeState.Bars.ClosePrices[middle],
-                MiddleHigh = _higherTimeframeState.Bars.HighPrices[middle],
-                MiddleLow = _higherTimeframeState.Bars.LowPrices[middle],
-                ThirdHigh = _higherTimeframeState.Bars.HighPrices[index],
-                ThirdLow = _higherTimeframeState.Bars.LowPrices[index]
-            });
-
-            if (!evaluation.Detected || !evaluation.Accepted)
-                return;
-
-            AddM15Zone(new Zone
-            {
-                Kind = SznpKind.Fvg,
-                Bull = evaluation.Bullish,
-                Lower = evaluation.Lower,
-                Upper = evaluation.Upper,
-                OriginIdx = evaluation.OriginIndex,
-                ConfirmIdx = confirmingChartIndex,
-                StartTime = evaluation.StartTime,
-                Atr = atr,
-                Momentum = evaluation.Momentum,
-                StructFactor = M15StructureFactor(index),
-                IsHigherTimeframe = true
-            }, index, confirmingChartIndex);
-        }
-
-        private void DetectM15GapAt(int index, int confirmingChartIndex, double atr)
-        {
-            if (index < 1 || confirmingChartIndex < _startIdx)
-                return;
-
-            PriceGapEvaluation evaluation = PriceGapDetectorEvaluator.Evaluate(new PriceGapInput
-            {
-                PipSize = _pip,
-                TickSize = _tick,
-                Atr = atr,
-                MinSizePips = GapMinSizePips,
-                MinSizeAtr = GapMinSizeAtr,
-                Method = GapMethod,
-                Combine = GapCombine,
-                PreviousClose = _higherTimeframeState.Bars.ClosePrices[index - 1],
-                CurrentOpen = _higherTimeframeState.Bars.OpenPrices[index],
-                PreviousHigh = _higherTimeframeState.Bars.HighPrices[index - 1],
-                PreviousLow = _higherTimeframeState.Bars.LowPrices[index - 1],
-                CurrentHigh = _higherTimeframeState.Bars.HighPrices[index],
-                CurrentLow = _higherTimeframeState.Bars.LowPrices[index]
-            });
-
-            if (evaluation.HasOpenClose)
-                CreateM15Gap(index, confirmingChartIndex, atr, evaluation.OpenCloseBullish,
-                    evaluation.OpenCloseLower, evaluation.OpenCloseUpper);
-            if (evaluation.HasRange)
-                CreateM15Gap(index, confirmingChartIndex, atr, evaluation.RangeBullish,
-                    evaluation.RangeLower, evaluation.RangeUpper);
-        }
-
-        private void CreateM15Gap(
-            int index,
-            int confirmingChartIndex,
-            double atr,
-            bool bullish,
-            double lower,
-            double upper)
-        {
-            AddM15Zone(new Zone
-            {
-                Kind = SznpKind.Gap,
-                Bull = bullish,
-                Lower = lower,
-                Upper = upper,
-                OriginIdx = FindMainIndexAtOrBefore(_higherTimeframeState.Bars.OpenTimes[index]),
-                ConfirmIdx = confirmingChartIndex,
-                StartTime = _higherTimeframeState.Bars.OpenTimes[index],
-                Atr = atr,
-                Momentum = (upper - lower) / atr,
-                StructFactor = M15StructureFactor(index),
-                IsHigherTimeframe = true
-            }, index, confirmingChartIndex);
-        }
 
         private void AddM15Zone(Zone zone, int m15Index, int confirmingChartIndex)
         {

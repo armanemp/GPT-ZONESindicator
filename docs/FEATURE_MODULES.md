@@ -42,9 +42,9 @@ Do not duplicate those shared evaluations inside each detector. Change the ownin
 1. Calculate logical state on closed bars; chart drawing is deferred to the render pass.
 2. Cache one time/price viewport per render pass. Lines and labels outside that viewport are removed from the chart-object layer but their logical history remains available.
 3. The renderer re-creates the visible object when the user pans back to its time/price area.
-4. Apply separate per-viewport budgets to structure, liquidity and reference drawings. These budgets must not delete zones from logical state.
-5. Zone rectangles/midlines use viewport-aware zone selection. Only active valid zones project to the forty-bar future edge; terminal filled/broken history ends at the actual lifecycle event.
-6. Reuse chart objects and update only changed fields where practical. Do not add a new object each tick and do not print repetitive per-bar diagnostics.
+4. Apply separate per-viewport budgets to structure, liquidity and reference drawings (defaults: 12 structure, 6 liquidity, 10 reference items). These budgets must not delete zones from logical state.
+5. Zone rectangles/midlines use viewport-aware zone selection. Only active valid zones project to the forty-bar future edge; terminal filled/broken history ends at the actual lifecycle event. When filled-zone display is enabled, selection falls back to the full logical collection because the active interval index excludes terminal zones.
+6. Reuse chart objects and update only changed fields where practical. Feature renderers always get a cleanup pass, even when their show toggle is off. Do not add a new object each tick and do not print repetitive per-bar diagnostics.
 7. Keep BOS/CHoCH labels at their break location. A line endpoint and the semantic position of its text are different concepts.
 
 ## Remaining isolation work

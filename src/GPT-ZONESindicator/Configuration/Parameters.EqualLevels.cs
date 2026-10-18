@@ -12,7 +12,7 @@ namespace cAlgo
         [Parameter("Show equal highs/lows", Group = G10, DefaultValue = true)]
         public bool ShowEqual { get; set; }
 
-        [Parameter("Max liquidity items in viewport (0 = all)", Group = G10, DefaultValue = 12, MinValue = 0, MaxValue = 100000)]
+        [Parameter("Max liquidity items in viewport (0 = all)", Group = G10, DefaultValue = 6, MinValue = 0, MaxValue = 100000]
         public int LiquidityMaxVisible { get; set; }
 
         [Parameter("Use major swings (off = internal)", Group = G10, DefaultValue = false)]

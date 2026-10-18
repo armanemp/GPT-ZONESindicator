@@ -13,20 +13,20 @@ namespace cAlgo
         public static int FindClosedIndex(
             int barsCount,
             DateTime closeTime,
-            Func<int, DateTime> openTimeAt)
+            Func<int, DateTime> barCloseTimeAt)
         {
-            if (openTimeAt == null)
-                throw new ArgumentNullException(nameof(openTimeAt));
-            if (barsCount < 2)
+            if (barCloseTimeAt == null)
+                throw new ArgumentNullException(nameof(barCloseTimeAt));
+            if (barsCount < 1)
                 return -1;
 
             int low = 0;
-            int high = barsCount - 2;
+            int high = barsCount - 1;
             int best = -1;
             while (low <= high)
             {
                 int middle = low + (high - low) / 2;
-                if (openTimeAt(middle + 1) <= closeTime)
+                if (barCloseTimeAt(middle) <= closeTime)
                 {
                     best = middle;
                     low = middle + 1;
@@ -38,6 +38,7 @@ namespace cAlgo
             }
 
             return best;
+        }
         }
     }
 }

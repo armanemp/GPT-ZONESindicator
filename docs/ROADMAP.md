@@ -87,6 +87,7 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 ## Phase 8 — Feature boundaries and lightweight chart-object management
 
 - [x] Register closed-bar processing and render passes through a feature pipeline with per-module exception isolation; preserve the deliberate dependency order.
+- [x] Render budget and drawing cache changes are presentation-only; zone boundaries and lifecycle remain held in the logical zone state.
 - [x] Separate FVG, Price Gap, Market Structure, Order Block, Breaker, Equal Level, Liquidity Sweep, Higher-Timeframe, Zone Lifecycle and Reference Level source files into feature-owned folders.
 - [x] Separate parameter files by feature family, including visibility, scoring, colors, line presentation, key levels, sessions and psychological levels. Initialization no longer forcibly rewrites each feature's toggle/style settings.
 - [x] Apply viewport/price filtering to line and label objects and release off-screen chart objects while preserving logical history for panning back.
@@ -94,8 +95,12 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 - [x] Ensure disabling a renderer cleans up its existing chart objects and ensure filled-state display uses the full zone collection instead of the active-only index.
 - [x] Use separate configurable viewport budgets for structure, liquidity and reference items; off-screen history no longer consumes these budgets.
 - [x] Reduce zone label-collision scanning to a cached per-render label layout rather than repeatedly scanning every chart object for each candidate.
-- [ ] Move all feature-private detector state out of the shared partial indicator host into independent module service classes with explicit immutable events/snapshots. The shared zone lifecycle remains intentional, but full state encapsulation is not yet complete.
-- [ ] Verify that no valid active zone is omitted because of viewport selection or saved display parameters; use the status/diagnostic counts to distinguish detection rejection from display filtering.
+- [x] Separate zone chart-object handles, visibility flags and render-time ranking scores into renderer-owned state rather than the logical zone record.
+- [x] Filter to viewport-intersecting zones before applying ranking or visible-zone quotas; invalid viewport states no longer trigger full-history object creation.
+- [x] Make zone rectangles the lightweight default; labels and midlines are opt-in extra chart objects.
+- [x] Separate M15 detection from M15 visibility so hiding that overlay does not stop calculation.
+- [ ] Move all remaining feature-private detector state out of the shared partial indicator host into independent module service classes with explicit immutable events/snapshots. The shared zone lifecycle remains intentional, but full state encapsulation is not yet complete.
+- [ ] Verify that no valid active zone is omitted because of viewport selection or saved display parameters; use the status/diagnostic counts to distinguish detection rejection from display filtering. Rank and per-kind quotas are now viewport-local by design.
 - [ ] Confirm scrolling/zooming behavior and live object counts on the actual cTrader chart.
 
 **Exit gate:** All CI build and deterministic tests pass, feature toggles do not affect unrelated modules, and live cTrader testing confirms viewport virtualization and zone visibility. Do not describe the modules as fully state-isolated until the first open item above is complete.

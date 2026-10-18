@@ -33,7 +33,7 @@ namespace cAlgo
         [Parameter("Show active (unbroken) swing levels", Group = G07, DefaultValue = false)]
         public bool ShowMajorActiveLevels { get; set; }
 
-        [Parameter("Max items shown per category (0 = all)", Group = G07, DefaultValue = 60, MinValue = 0, MaxValue = 100000)]
+        [Parameter("Max structure items in viewport (0 = all)", Group = G07, DefaultValue = 20, MinValue = 0, MaxValue = 100000)]
         public int StructMaxVisible { get; set; }
 
         [Parameter("Swing left bars", Group = G08, DefaultValue = 5, MinValue = 1, MaxValue = 1000)]
@@ -92,6 +92,9 @@ namespace cAlgo
 
         [Parameter("Show equal highs/lows", Group = G10, DefaultValue = true)]
         public bool ShowEqual { get; set; }
+
+        [Parameter("Max liquidity items in viewport (0 = all)", Group = G10, DefaultValue = 12, MinValue = 0, MaxValue = 100000)]
+        public int LiquidityMaxVisible { get; set; }
 
         [Parameter("Use major swings (off = internal)", Group = G10, DefaultValue = false)]
         public bool EqUseMajorSwings { get; set; }

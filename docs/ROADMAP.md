@@ -27,6 +27,8 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 - [x] Add deterministic lifecycle unit cases for Fresh, Touched, Partial, Filled and Broken states (the full history/live replay fixture remains outstanding).
 - [x] Test all break modes: CandleClose, BodyBeyond and WickBeyond for bullish/bearish zones, including exact-boundary cases.
 - [x] Extract the closed-bar lifecycle decision step into a pure evaluator and add regression cases for both directions, strict break boundaries, fill/break priority, touch re-entry and terminal Broken state (CI passed; full history/live replay remains outstanding).
+- [x] Make Broken-state visibility terminal for all shared zone kinds: broken zones are ineligible for rendering regardless of legacy history toggles; add deterministic state-visibility and viewport-policy regression cases.
+- [ ] Confirm in cTrader that the existing rectangle, midline and label are removed on the same render reconciliation after a break for M5/M15 FVG, price gaps, order blocks and breakers, including when legacy broken-history settings are enabled.
 - [x] Validate breaker eligibility (broken OB parent only, no duplicate child, valid bounds/scoring inputs, confirmation after origin), reverse direction, preserve identity/bounds/scoring context, and start at confirmation time (CI pending for latest runtime guard).
 - [ ] Verify in cTrader that the parent's ChildId points to the generated breaker and the rendered breaker begins at the break confirmation time.
 - [ ] Verify hiding, ranking, overlap decluttering and chart-object budgets never mutate logical state.

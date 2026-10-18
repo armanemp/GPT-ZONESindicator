@@ -114,6 +114,7 @@ namespace cAlgo
             _zoneRenderingState.States.Clear();
             _dupe.Clear();
             _orderBlockState.ByCandle.Clear();
+            _orderBlockState.PendingSignals.Clear();
             _equalLevelsState.Clusters.Clear();
             _equalLevelsState.OpenClusters.Clear();
             _liquiditySweepState.Events.Clear();

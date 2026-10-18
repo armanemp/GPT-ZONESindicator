@@ -126,7 +126,17 @@ namespace cAlgo
             bool sourceAllowed = OrderBlockRules.IsSourceAllowed(ObSource, engine.Major);
 
             if (DetectOb && sourceAllowed)
-                TryCreateOb(engine, swing, index, atr);
+            {
+                _orderBlockState.PendingSignals.Add(new OrderBlockSignal
+                {
+                    Major = engine.Major,
+                    SwingHigh = swing.High,
+                    SwingPrice = swing.Price,
+                    SwingIndex = swing.Idx,
+                    BreakIndex = index,
+                    Atr = atr
+                });
+            }
         }
 
         private double StructFactorFor(bool bull, int index)

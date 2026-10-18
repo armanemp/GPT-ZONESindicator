@@ -4,10 +4,42 @@ namespace cAlgo
 {
     public partial class SmartZonesNativePro
     {
-        private void TryCreateOb(Engine engine, Swing swing, int breakIndex, double atr)
+        private void ProcessOrderBlockSignals(int throughIndex)
         {
-            bool bullish = swing.High;
-            int swingIndex = swing.Idx;
+            List<OrderBlockSignal> pending = _orderBlockState.PendingSignals;
+            int i = 0;
+            while (i < pending.Count)
+            {
+                OrderBlockSignal signal = pending[i];
+                if (signal.BreakIndex > throughIndex)
+                {
+                    i++;
+                    continue;
+                }
+
+                // Remove before processing so a malformed signal cannot be replayed forever.
+                pending.RemoveAt(i);
+                if (!DetectOb)
+                    continue;
+
+                try
+                {
+                    TryCreateOb(signal);
+                }
+                catch (Exception ex)
+                {
+                    LogError("Order block signal at bar " + signal.BreakIndex, ex);
+                }
+            }
+        }
+
+        private void TryCreateOb(OrderBlockSignal signal)
+        {
+            bool bullish = signal.SwingHigh;
+            int swingIndex = signal.SwingIndex;
+            int breakIndex = signal.BreakIndex;
+            double atr = signal.Atr;
+            double swingPrice = signal.SwingPrice;
 
             if (breakIndex - swingIndex < 2)
             {
@@ -16,7 +48,7 @@ namespace cAlgo
             }
 
             double breakClose = C(breakIndex);
-            double strength = bullish ? breakClose - swing.Price : swing.Price - breakClose;
+            double strength = bullish ? breakClose - swingPrice : swingPrice - breakClose;
             if (strength < ObMinBreakAtr * atr)
             {
                 Reject("ob: break strength");
@@ -39,7 +71,6 @@ namespace cAlgo
                 _closePriceAt);
 
             int candidate = search.CandidateIndex;
-
             if (candidate < 0)
             {
                 Reject("ob: no opposite candle");
@@ -72,12 +103,11 @@ namespace cAlgo
 
             double lower = bounds.Lower;
             double upper = bounds.Upper;
-
             int key = candidate * 2 + (bullish ? 1 : 0);
             Zone existing;
             if (_orderBlockState.ByCandle.TryGetValue(key, out existing))
             {
-                if (engine.Major)
+                if (signal.Major)
                     existing.Major = true;
                 Reject("ob: duplicate candle");
                 return;
@@ -103,7 +133,7 @@ namespace cAlgo
                 Atr = atr,
                 Momentum = impulse / atr,
                 StructFactor = 1.0,
-                Major = engine.Major
+                Major = signal.Major
             };
 
             AddZone(zone);

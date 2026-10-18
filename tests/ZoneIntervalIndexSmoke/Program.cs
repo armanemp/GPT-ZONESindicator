@@ -1401,6 +1401,32 @@ namespace ZoneIntervalIndexSmoke
                 "Price gap evaluator must report an open/close gap rejected by the configured size floor.");
         }
 
+        private static void VerifyFeatureModuleFaultIsolation()
+        {
+            List<string> errors = new List<string>();
+            int processed = 0;
+            int rendered = 0;
+            FeatureModulePipeline pipeline = new FeatureModulePipeline(
+                delegate (string name, Exception error) { errors.Add(name); });
+
+            pipeline.AddProcessor("failing processor", delegate { return true; },
+                delegate (int index, double atr) { throw new InvalidOperationException("expected test failure"); });
+            pipeline.AddProcessor("independent processor", delegate { return true; },
+                delegate (int index, double atr) { processed++; });
+            pipeline.ProcessBar(10, 1.5);
+
+            pipeline.AddRenderer("failing renderer", delegate { return true; },
+                delegate (bool refresh) { throw new InvalidOperationException("expected test failure"); });
+            pipeline.AddRenderer("independent renderer", delegate { return true; },
+                delegate (bool refresh) { rendered++; });
+            pipeline.Render(false);
+
+            Assert(processed == 1, "A failed processor must not prevent the next feature processor from running.");
+            Assert(rendered == 1, "A failed renderer must not prevent the next feature renderer from running.");
+            Assert(errors.SequenceEqual(new[] { "failing processor", "failing renderer" }),
+                "The pipeline must report failures with the corresponding feature name.");
+        }
+
         private static int Main()
         {
             try
@@ -1425,6 +1451,7 @@ namespace ZoneIntervalIndexSmoke
                 VerifyLiquiditySweepPredicates();
                 VerifyFairValueGapDetector();
                 VerifyPriceGapDetector();
+                VerifyFeatureModuleFaultIsolation();
 
                 Console.WriteLine("PASS: interval index boundary/mutation tests and "
                     + _queryCount + " seeded differential queries over 50,000 operations.");
@@ -1435,6 +1462,7 @@ namespace ZoneIntervalIndexSmoke
                 Console.WriteLine("PASS: high/low liquidity sweep predicates for Wick/Body measure and thresholds.");
                 Console.WriteLine("PASS: shared FVG detector rules, thresholds and start-time semantics.");
                 Console.WriteLine("PASS: shared price-gap detector rules, combine modes and minimum-size filters.");
+                Console.WriteLine("PASS: independent feature pipeline continues after processor/renderer failures.");
                 return 0;
             }
             catch (Exception exception)

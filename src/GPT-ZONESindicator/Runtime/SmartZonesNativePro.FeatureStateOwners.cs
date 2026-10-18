@@ -19,6 +19,7 @@ namespace cAlgo
         private sealed class OrderBlockFeatureState
         {
             public readonly Dictionary<int, Zone> ByCandle = new Dictionary<int, Zone>();
+            public readonly List<OrderBlockSignal> PendingSignals = new List<OrderBlockSignal>();
         }
 
         private sealed class EqualLevelsFeatureState

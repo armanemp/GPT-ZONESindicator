@@ -791,8 +791,10 @@ namespace ZoneIntervalIndexSmoke
 
         private static void VerifyPivotConfirmationAndTieRules()
         {
+            // Keep the fixture's OHLC ranges valid (High >= Low) while preserving
+            // equal highs/lows to the right of the pivot candidate.
             double[] highs = { 5, 8, 10, 8, 10, 7, 6 };
-            double[] lows  = { 6, 4, 2, 4, 2, 5, 7 };
+            double[] lows  = { 3, 4, 2, 4, 2, 5, 5 };
             Func<int, double> highAt = delegate (int index) { return highs[index]; };
             Func<int, double> lowAt = delegate (int index) { return lows[index]; };
 

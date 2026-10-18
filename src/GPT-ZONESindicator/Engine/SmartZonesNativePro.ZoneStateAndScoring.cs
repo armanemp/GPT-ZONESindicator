@@ -101,20 +101,35 @@ namespace cAlgo
         /// <summary>A broken order block can create a same-boundary breaker with reversed direction.</summary>
         private void CreateBreaker(Zone orderBlock, int index)
         {
-            Zone breaker = new Zone
+            ZoneBreakerSpec spec = ZoneBreakerFactory.Create(new ZoneBreakerInput
             {
-                Kind = SznpKind.Breaker,
-                Bull = !orderBlock.Bull,
+                ParentId = orderBlock.Id,
+                ParentBull = orderBlock.Bull,
                 Lower = orderBlock.Lower,
                 Upper = orderBlock.Upper,
-                OriginIdx = orderBlock.OriginIdx,
-                ConfirmIdx = index,
-                StartTime = CloseTimeOf(index),
+                OriginIndex = orderBlock.OriginIdx,
+                ConfirmationIndex = index,
+                ConfirmationTime = CloseTimeOf(index),
                 Atr = orderBlock.Atr,
                 Momentum = orderBlock.Momentum,
                 StructFactor = orderBlock.StructFactor,
-                Major = orderBlock.Major,
-                ParentId = orderBlock.Id
+                Major = orderBlock.Major
+            });
+
+            Zone breaker = new Zone
+            {
+                Kind = SznpKind.Breaker,
+                Bull = spec.Bull,
+                Lower = spec.Lower,
+                Upper = spec.Upper,
+                OriginIdx = spec.OriginIndex,
+                ConfirmIdx = spec.ConfirmationIndex,
+                StartTime = spec.StartTime,
+                Atr = spec.Atr,
+                Momentum = spec.Momentum,
+                StructFactor = spec.StructFactor,
+                Major = spec.Major,
+                ParentId = spec.ParentId
             };
 
             AddZone(breaker);

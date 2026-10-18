@@ -163,6 +163,7 @@ namespace cAlgo
             _startIdx = LookbackBars > 0 ? Math.Max(2, n - 1 - LookbackBars) : 2;
             _lastProcessed = _startIdx - 1;
             _renderDirty = true;
+            _viewportDirty = true;
 
             ComputeBarSpan();
             _futureTime = (n > 0 ? Bars.OpenTimes[n - 1] : DateTime.UtcNow)
@@ -236,7 +237,7 @@ namespace cAlgo
                     }
                     else
                     {
-                        RenderZones();
+                        RenderZones(false);
                         RenderStatus();
                     }
 
@@ -289,7 +290,6 @@ namespace cAlgo
                 RenderZones();
                 RenderStatus();
                 _renderTicks += Stopwatch.GetTimestamp() - t0;
-                _renderCount++;
                 _viewportDirty = false;
             }
             catch (Exception ex)

@@ -26,6 +26,7 @@
     <Compile Include="../../src/GPT-ZONESindicator/Features/ZoneLifecycle/ZoneViewportSelectionPolicy.cs" Link="ZoneViewportSelectionPolicy.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Features/MarketStructure/StructureBreakEvaluator.cs" Link="StructureBreakEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Features/MarketStructure/StructureSwingVisibilityEvaluator.cs" Link="StructureSwingVisibilityEvaluator.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Features/MarketStructure/StructureSwingDistanceEvaluator.cs" Link="StructureSwingDistanceEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Features/LiquiditySweeps/LiquiditySweepEvaluator.cs" Link="LiquiditySweepEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Domain/ZoneTypes.cs" Link="ZoneTypes.cs" />
   </ItemGroup>

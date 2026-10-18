@@ -25,6 +25,9 @@ namespace cAlgo
 
         private bool ZoneWanted(Zone zone, double price, double atrNow)
         {
+            if (zone.IsHigherTimeframe && !ShowM15Zones)
+                return false;
+
             switch (zone.Kind)
             {
                 case SznpKind.Fvg:
@@ -447,7 +450,7 @@ namespace cAlgo
                 default: tag = "BB"; break;
             }
 
-            return tag + (zone.Bull ? "+" : "-");
+            return (zone.IsHigherTimeframe ? "M15 " : "") + tag + (zone.Bull ? "+" : "-");
         }
 
         private string LabelText(Zone zone)
@@ -497,8 +500,14 @@ namespace cAlgo
             if (!zone.Shown)
             {
                 string name = _prefix + "Z" + zone.Id.ToString(CultureInfo.InvariantCulture);
+                int borderThickness = zone.IsHigherTimeframe
+                    ? Math.Max(1, ZoneBorderThickness)
+                    : ZoneBorderThickness;
+                LineStyle borderStyle = zone.IsHigherTimeframe
+                    ? LineStyle.Dots
+                    : LineStyle.Solid;
                 ChartRectangle rectangle = Chart.DrawRectangle(
-                    name, start, zone.Upper, end, zone.Lower, color, ZoneBorderThickness);
+                    name, start, zone.Upper, end, zone.Lower, color, borderThickness, borderStyle);
 
                 rectangle.IsFilled = true;
                 rectangle.IsInteractive = ObjectsInteractive;
@@ -525,14 +534,14 @@ namespace cAlgo
                     ChartText label = Chart.DrawText(
                         name + "_t",
                         labelText,
-                        start,
-                        zone.Upper,
-                        WithOpacity(_midBase[(int)zone.Kind], 90));
+                        end,
+                        (zone.Upper + zone.Lower) * 0.5,
+                        color);
                     label.FontSize = Math.Max(11, LabelFontSize + 2);
                     label.FontFamily = "Segoe UI Light";
                     label.IsBold = false;
                     label.HorizontalAlignment = HorizontalAlignment.Left;
-                    label.VerticalAlignment = VerticalAlignment.Top;
+                    label.VerticalAlignment = VerticalAlignment.Center;
                     label.IsInteractive = ObjectsInteractive;
                     zone.Lbl = label;
                     Reg(label);
@@ -557,6 +566,11 @@ namespace cAlgo
                 zone.Rect.Time2 = end;
                 if (zone.Mid != null && zone.Mid.IsAlive)
                     zone.Mid.Time2 = end;
+                if (zone.Lbl != null && zone.Lbl.IsAlive)
+                {
+                    zone.Lbl.Time = end;
+                    zone.Lbl.Y = (zone.Upper + zone.Lower) * 0.5;
+                }
                 zone.AppT2 = end;
             }
 
@@ -567,6 +581,8 @@ namespace cAlgo
 
                 if (zone.Mid != null && zone.Mid.IsAlive)
                     zone.Mid.Color = ZoneMidlineColor(zone);
+                if (zone.Lbl != null && zone.Lbl.IsAlive)
+                    zone.Lbl.Color = color;
             }
 
             if (commentChanged)

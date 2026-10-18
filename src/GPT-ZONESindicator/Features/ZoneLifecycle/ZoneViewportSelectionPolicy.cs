@@ -29,14 +29,16 @@ namespace cAlgo
 
     /// <summary>
     /// Decides when the active-zone index is sufficient for viewport drawing.
-    /// Broken zones are never rendered, so legacy broken-history switches do not require
-    /// scanning the full logical history. Filled zones remain opt-in history.
+    /// Filled zones and explicitly requested breaker-parent history require logical history.
     /// </summary>
     internal static class ZoneViewportSelectionPolicy
     {
-        public static bool UseActiveZoneIndex(bool hasViewport, bool showFilledZones)
+        public static bool UseActiveZoneIndex(
+            bool hasViewport,
+            bool showFilledZones,
+            bool showBreakerParentHistory = false)
         {
-            return hasViewport && !showFilledZones;
+            return hasViewport && !showFilledZones && !showBreakerParentHistory;
         }
     }
 }

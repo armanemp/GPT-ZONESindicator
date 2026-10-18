@@ -147,6 +147,43 @@ namespace cAlgo
             return zone.StartTime <= timeEnd && end >= timeStart;
         }
 
+        private bool TryAddRenderCandidate(
+            Zone zone,
+            double price,
+            double atrNow,
+            int nowIndex,
+            bool hasViewport,
+            bool globalSelection,
+            DateTime viewStart,
+            DateTime viewEnd,
+            double viewTop,
+            double viewBottom,
+            bool needScore)
+        {
+            zone.Want = ZoneWanted(zone, price, atrNow);
+            if (!zone.Want)
+                return false;
+
+            if (hasViewport && !globalSelection
+                && !ZoneIntersectsViewport(zone, viewStart, viewEnd, viewTop, viewBottom))
+            {
+                zone.Want = false;
+                return false;
+            }
+
+            if (needScore && zone.State != SznpState.Broken)
+                zone.Score = ComputeScore(zone, nowIndex, price, atrNow);
+
+            if (MinScore > 0 && zone.Score < MinScore)
+            {
+                zone.Want = false;
+                return false;
+            }
+
+            _cand.Add(zone);
+            return true;
+        }
+
         private void RenderZones(bool refreshMetadata)
         {
             int nowIndex = _lastProcessed;
@@ -158,10 +195,18 @@ namespace cAlgo
             bool hasViewport = TryGetZoneViewport(
                 out viewStart, out viewEnd, out viewTop, out viewBottom);
 
-            // Preserve global rank semantics for explicit global ranking/per-kind limits.
-            // In the common AllInLookback mode, first constrain work to the chart viewport.
+            // Global modes must inspect the complete logical history to preserve their ranking semantics.
             bool globalSelection = DisplayMode == SznpDisplayMode.TopRanked
                 || MaxZonesPerKind > 0;
+
+            // In the usual viewport/all-zones mode, use the lifecycle interval index to
+            // find zones intersecting visible prices instead of scanning all historical zones.
+            // Explicit terminal-history display falls back to the complete collection so those
+            // opt-in history records remain available.
+            bool indexedViewportSelection = hasViewport
+                && !globalSelection
+                && !ShowBrokenZones
+                && !ShowObHistoryOfBreakers;
 
             bool needScore = MinScore > 0
                 || DisplayMode == SznpDisplayMode.TopRanked
@@ -170,31 +215,35 @@ namespace cAlgo
                 || OverlapDeclutter
                 || ShowZoneLabels;
 
+            // Retire the previous viewport selection first. The tracked set contains only
+            // zones that were wanted/shown last time, not every historical record.
+            for (int k = 0; k < _renderTracked.Count; k++)
+                _renderTracked[k].Want = false;
+
             _cand.Clear();
-            for (int k = 0; k < _zones.Count; k++)
+            if (indexedViewportSelection)
             {
-                Zone zone = _zones[k];
-                zone.Want = ZoneWanted(zone, price, atrNow);
-                if (!zone.Want)
-                    continue;
+                _renderQueryScratch.Clear();
+                QueryOverlappingZoneIntervals(
+                    _zoneIntervalRoot, viewBottom, viewTop, _renderQueryScratch);
 
-                if (hasViewport && !globalSelection
-                    && !ZoneIntersectsViewport(zone, viewStart, viewEnd, viewTop, viewBottom))
+                for (int k = 0; k < _renderQueryScratch.Count; k++)
                 {
-                    zone.Want = false;
-                    continue;
+                    TryAddRenderCandidate(
+                        _renderQueryScratch[k], price, atrNow, nowIndex,
+                        hasViewport, globalSelection, viewStart, viewEnd,
+                        viewTop, viewBottom, needScore);
                 }
-
-                if (needScore && zone.State != SznpState.Broken)
-                    zone.Score = ComputeScore(zone, nowIndex, price, atrNow);
-
-                if (MinScore > 0 && zone.Score < MinScore)
+            }
+            else
+            {
+                for (int k = 0; k < _zones.Count; k++)
                 {
-                    zone.Want = false;
-                    continue;
+                    TryAddRenderCandidate(
+                        _zones[k], price, atrNow, nowIndex,
+                        hasViewport, globalSelection, viewStart, viewEnd,
+                        viewTop, viewBottom, needScore);
                 }
-
-                _cand.Add(zone);
             }
 
             int perKind = MaxZonesPerKind > 0 ? MaxZonesPerKind : int.MaxValue;
@@ -241,14 +290,41 @@ namespace cAlgo
                 }
             }
 
-            int shown = 0;
-            for (int k = 0; k < _zones.Count; k++)
+            // Track only the previous and current viewport candidates. This avoids
+            // synchronizing thousands of off-screen historical records on every new bar.
+            for (int k = 0; k < _cand.Count; k++)
             {
-                Zone zone = _zones[k];
+                Zone zone = _cand[k];
+                if ((zone.Want || zone.Shown) && !zone.RenderTracked)
+                {
+                    zone.RenderTracked = true;
+                    _renderTracked.Add(zone);
+                }
+            }
+
+            int shown = 0;
+            int write = 0;
+            int trackedCount = _renderTracked.Count;
+            for (int k = 0; k < trackedCount; k++)
+            {
+                Zone zone = _renderTracked[k];
                 SyncZone(zone, refreshMetadata);
+
                 if (zone.Shown)
                     shown++;
+
+                if (zone.Want || zone.Shown)
+                {
+                    _renderTracked[write++] = zone;
+                }
+                else
+                {
+                    zone.RenderTracked = false;
+                }
             }
+
+            if (write < _renderTracked.Count)
+                _renderTracked.RemoveRange(write, _renderTracked.Count - write);
 
             _shownZones = shown;
         }
@@ -326,6 +402,12 @@ namespace cAlgo
 
         private Color ZoneColor(Zone zone)
         {
+            // Breakers use a slightly stronger fill so they remain distinguishable
+            // without reducing visibility of the underlying candles.
+            double baseOpacity = zone.Kind == SznpKind.Breaker
+                ? Math.Min(100.0, ZoneOpacity * 1.35)
+                : ZoneOpacity;
+
             switch (zone.State)
             {
                 case SznpState.Filled:
@@ -336,10 +418,23 @@ namespace cAlgo
                 case SznpState.Partial:
                     return WithOpacity(
                         _zoneBase[ZoneIdx(zone.Kind, zone.Bull)],
-                        ZoneOpacity * TouchedOpacityPct / 100.0);
+                        baseOpacity * TouchedOpacityPct / 100.0);
                 default:
-                    return WithOpacity(_zoneBase[ZoneIdx(zone.Kind, zone.Bull)], ZoneOpacity);
+                    return WithOpacity(_zoneBase[ZoneIdx(zone.Kind, zone.Bull)], baseOpacity);
             }
+        }
+
+        private Color ZoneMidlineColor(Zone zone)
+        {
+            // Keep the zone hue, but lift RGB toward white for a contrasting 1px
+            // dashed midline. Opacity remains a user-configurable parameter.
+            Color source = ZoneColor(zone);
+            const double lift = 0.38;
+            byte r = (byte)Math.Max(0, Math.Min(255, Math.Round(source.R + (255 - source.R) * lift)));
+            byte g = (byte)Math.Max(0, Math.Min(255, Math.Round(source.G + (255 - source.G) * lift)));
+            byte b = (byte)Math.Max(0, Math.Min(255, Math.Round(source.B + (255 - source.B) * lift)));
+            byte alpha = (byte)Math.Max(0, Math.Min(255, Math.Round(MidlineOpacity * 2.55)));
+            return Color.FromArgb(alpha, r, g, b);
         }
 
         private static string KindTag(Zone zone)
@@ -418,10 +513,10 @@ namespace cAlgo
                     double middle = (zone.Upper + zone.Lower) * 0.5;
                     ChartTrendLine midline = Chart.DrawTrendLine(
                         name + "_m", start, middle, end, middle,
-                        WithOpacity(_midBase[(int)zone.Kind], MidlineOpacity),
-                        MidlineThickness, MidlineStyle);
+                        ZoneMidlineColor(zone), MidlineThickness, MidlineStyle);
                     midline.ExtendToInfinity = false;
                     midline.IsInteractive = ObjectsInteractive;
+                    midline.ZIndex = ZoneZIndex + 1;
                     zone.Mid = midline;
                     Reg(midline);
                 }
@@ -468,6 +563,9 @@ namespace cAlgo
             {
                 zone.Rect.Color = color;
                 zone.AppCol = color;
+
+                if (zone.Mid != null && zone.Mid.IsAlive)
+                    zone.Mid.Color = ZoneMidlineColor(zone);
             }
 
             if (commentChanged)

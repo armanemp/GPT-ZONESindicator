@@ -307,6 +307,10 @@ namespace cAlgo
             int shown = 0;
             int write = 0;
             int trackedCount = _renderTracked.Count;
+            // Keep older visible zones first so their label positions are reserved before
+            // newer overlapping M5/M15 zones are laid out.
+            _renderTracked.Sort(delegate (Zone a, Zone b) { return a.Id.CompareTo(b.Id); });
+
             for (int k = 0; k < trackedCount; k++)
             {
                 Zone zone = _renderTracked[k];
@@ -458,6 +462,57 @@ namespace cAlgo
                 : KindTag(zone);
         }
 
+        /// <summary>
+        /// Places zone labels just off the midpoint and vertically separates labels that
+        /// would otherwise overlap at the common forty-bar right edge.
+        /// </summary>
+        private double ComputeZoneLabelY(Zone zone)
+        {
+            double middle = (zone.Upper + zone.Lower) * 0.5;
+            double separation = Math.Max(_tick * 3.0, (zone.Upper - zone.Lower) * 0.10);
+            double top = Chart.TopY;
+            double bottom = Chart.BottomY;
+            double height = Chart.Height;
+
+            if (height > 0 && top > bottom
+                && !double.IsNaN(top) && !double.IsInfinity(top)
+                && !double.IsNaN(bottom) && !double.IsInfinity(bottom))
+            {
+                double labelPixels = Math.Max(14, LabelFontSize + 6);
+                separation = Math.Max(separation, (top - bottom) * labelPixels / height);
+            }
+
+            // Never place the zone label directly on its midpoint line.
+            double preferred = zone.Bull ? 1.0 : -1.0;
+            int attempts = Math.Max(8, _renderTracked.Count * 2 + 2);
+            for (int attempt = 0; attempt < attempts; attempt++)
+            {
+                int level = attempt / 2 + 1;
+                double direction = attempt % 2 == 0 ? preferred : -preferred;
+                double candidate = middle + direction * level * separation;
+                bool collision = false;
+
+                for (int k = 0; k < _renderTracked.Count; k++)
+                {
+                    Zone other = _renderTracked[k];
+                    if (other == zone || !other.Want || !other.Shown
+                        || other.Lbl == null || !other.Lbl.IsAlive)
+                        continue;
+
+                    if (Math.Abs(other.Lbl.Y - candidate) < separation)
+                    {
+                        collision = true;
+                        break;
+                    }
+                }
+
+                if (!collision)
+                    return candidate;
+            }
+
+            return middle + preferred * attempts * separation;
+        }
+
         private string ZoneComment(Zone zone)
         {
             return string.Format(
@@ -477,6 +532,7 @@ namespace cAlgo
 
             DateTime start = zone.StartTime;
             DateTime end = ZoneEndTime(zone);
+            double labelY = ComputeZoneLabelY(zone);
             Color color = ZoneColor(zone);
 
             bool missingRectangle = zone.Rect == null || !zone.Rect.IsAlive;
@@ -533,7 +589,7 @@ namespace cAlgo
                         name + "_t",
                         labelText,
                         end,
-                        (zone.Upper + zone.Lower) * 0.5,
+                        labelY,
                         WithOpacity(color, 100));
                     label.FontSize = Math.Max(11, LabelFontSize + 2);
                     label.FontFamily = "Segoe UI Light";
@@ -547,6 +603,7 @@ namespace cAlgo
 
                 zone.Shown = true;
                 zone.AppT2 = end;
+                zone.AppLabelY = labelY;
                 zone.AppCol = color;
                 zone.AppComment = comment;
                 zone.AppLabelText = labelText;
@@ -567,7 +624,8 @@ namespace cAlgo
                 if (zone.Lbl != null && zone.Lbl.IsAlive)
                 {
                     zone.Lbl.Time = end;
-                    zone.Lbl.Y = (zone.Upper + zone.Lower) * 0.5;
+                    zone.Lbl.Y = labelY;
+                    zone.AppLabelY = labelY;
                 }
                 zone.AppT2 = end;
             }
@@ -581,6 +639,13 @@ namespace cAlgo
                     zone.Mid.Color = ZoneMidlineColor(zone);
                 if (zone.Lbl != null && zone.Lbl.IsAlive)
                     zone.Lbl.Color = WithOpacity(color, 100);
+            }
+
+            if (ShowZoneLabels && Math.Abs(zone.AppLabelY - labelY) > Math.Max(1e-12, _tick * 0.1))
+            {
+                if (zone.Lbl != null && zone.Lbl.IsAlive)
+                    zone.Lbl.Y = labelY;
+                zone.AppLabelY = labelY;
             }
 
             if (commentChanged)
@@ -610,6 +675,7 @@ namespace cAlgo
             zone.Lbl = null;
             zone.AppComment = null;
             zone.AppLabelText = null;
+            zone.AppLabelY = 0;
             zone.Shown = false;
         }
     }

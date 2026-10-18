@@ -8,21 +8,20 @@ namespace cAlgo
     }
 
     /// <summary>
-    /// Preserves the zone's RGB ratios (same hue) while darkening each channel slightly.
+    /// Preserves the zone's hue while lifting each RGB channel toward white for visibility.
     /// Alpha is applied by the cTrader renderer separately through MidlineOpacity.
     /// </summary>
     internal static class ZoneMidlineColorEvaluator
     {
-        public const double Darkness = 0.12;
+        public const double Lightness = 0.14;
 
-        public static ZoneMidlineRgb Darken(byte red, byte green, byte blue)
+        public static ZoneMidlineRgb Lighten(byte red, byte green, byte blue)
         {
-            double scale = 1.0 - Darkness;
             return new ZoneMidlineRgb
             {
-                R = (byte)Math.Round(red * scale, MidpointRounding.AwayFromZero),
-                G = (byte)Math.Round(green * scale, MidpointRounding.AwayFromZero),
-                B = (byte)Math.Round(blue * scale, MidpointRounding.AwayFromZero)
+                R = (byte)Math.Round(red + (255 - red) * Lightness, MidpointRounding.AwayFromZero),
+                G = (byte)Math.Round(green + (255 - green) * Lightness, MidpointRounding.AwayFromZero),
+                B = (byte)Math.Round(blue + (255 - blue) * Lightness, MidpointRounding.AwayFromZero)
             };
         }
     }

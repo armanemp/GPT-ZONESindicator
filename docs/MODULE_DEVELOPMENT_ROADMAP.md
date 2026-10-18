@@ -19,14 +19,16 @@ The goal is a reliable cTrader indicator—not the largest possible checklist. W
 
 | Item | Status | Evidence / remaining work |
 |---|---|---|
-| Local Release build | **Passed** | User output: 0 warnings, 0 errors. The subsequent commit changed test data only. |
-| Deterministic regression harness | **Passed** | User output after pulling `610de11`: all printed test groups passed, including pivot validation, BOS/CHoCH, swept-level visibility and dual-pivot distance. |
+| Local Release build | **Passed before latest renderer fix** | User's local build had 0 warnings and 0 errors. The latest renderer fix was then verified by GitHub Actions run 369; after pulling, rebuild locally to publish that version into cTrader. |
+| Deterministic regression harness | **Passed** | User's run after `610de11` passed all printed groups; GitHub Actions run 369 also passed after the latest renderer fix (`ebb6b5e`). |
 | Current module | **Phase 1 — Market Structure** | Code-level fixes and automated tests are in place. XAUUSD M5 chart acceptance is still required. |
 | Equal Highs / Equal Lows | Not started as an active phase | Starts after Phase 1 is accepted and frozen. |
 | Shared zone/render integration gate | Pending | Broken-zone removal, viewport/pan/zoom, toggle independence and instance-owned cleanup will be checked together in Phase 11 rather than repeated in every detector phase. |
 | Release readiness | Not ready | Live chart acceptance and remaining module gates are incomplete. |
 
 The successful regression output is already recorded as evidence. Do not rerun the same full harness after every documentation edit; rerun it when code or test code changes, and always at each phase gate.
+
+**Progress snapshot (2026-10-18):** 1 of 13 phases is fully closed (Phase 0: 7.7% by phase count). Phase 1's code and automated gates are complete and its latest GitHub Actions build/regression run passed; the remaining work is the six cTrader chart-acceptance checks below. Phase 2 stays locked until Phase 1 is accepted.
 
 ## Phase map and dependencies
 
@@ -85,8 +87,9 @@ The current baseline compiles and the complete deterministic harness passes. Thi
 - [x] Classify BOS versus CHoCH based on prior trend, including neutral-to-trend transitions.
 - [x] Make minimum swing-distance filtering independent of high-first/low-first insertion when one candle qualifies as both a high and a low pivot.
 - [x] Prevent swept swings and silent breaks from being displayed as live active levels.
+- [x] Anchor BOS/CHoCH text to the actual break candle instead of the midpoint of the completed swing line (commit `ebb6b5e`).
 - [x] Add deterministic tests for the rules above; the user's latest harness run reports all tests passing.
-- [x] Release build succeeded with 0 warnings and 0 errors before the test-fixture-only follow-up; no indicator-source change was made in that follow-up.
+- [x] Release build succeeded locally with 0 warnings and 0 errors before the latest renderer fix; GitHub Actions run 369 then passed the build, packaged-artifact checks and deterministic regression harness on commit `ebb6b5e`.
 
 ### Remaining work: one bounded chart acceptance pass
 On cTrader, load the newly built `GPT-ZONESindicator.algo` on **XAUUSD / Gold, M5**. Use the existing/default parameters first; do not tune many settings while testing.

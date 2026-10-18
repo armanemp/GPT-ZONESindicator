@@ -838,7 +838,41 @@ namespace ZoneIntervalIndexSmoke
             Assert(!missingLeftHistory.IsReady,
                 "A pivot without enough left-hand history must be rejected.");
 
-            Console.WriteLine("PASS: pivot confirmation delay, lookback eligibility, and asymmetric equal-high/low tie rules.");
+            double[] invalidPivotHighs = { 5, 8, double.NaN, 8, 6 };
+            double[] validPivotLows = { 8, 6, 7, 6, 8 };
+            PivotEvaluation invalidHigh = PivotEvaluator.Evaluate(
+                2, 1, 1, 3, 0,
+                delegate (int index) { return invalidPivotHighs[index]; },
+                delegate (int index) { return validPivotLows[index]; });
+            Assert(invalidHigh.IsReady && !invalidHigh.IsHigh,
+                "A non-finite pivot high must not be accepted as a swing high.");
+
+            double[] validPivotHighs = { 8, 9, 10, 9, 8 };
+            double[] invalidPivotLows = { 8, 6, double.PositiveInfinity, 6, 8 };
+            PivotEvaluation invalidLow = PivotEvaluator.Evaluate(
+                2, 1, 1, 3, 0,
+                delegate (int index) { return validPivotHighs[index]; },
+                delegate (int index) { return invalidPivotLows[index]; });
+            Assert(invalidLow.IsReady && !invalidLow.IsLow,
+                "A non-finite pivot low must not be accepted as a swing low.");
+
+            double[] invalidLeftHighs = { 8, double.NaN, 10, 8, 7 };
+            PivotEvaluation invalidLeftHigh = PivotEvaluator.Evaluate(
+                2, 2, 2, 4, 0,
+                delegate (int index) { return invalidLeftHighs[index]; },
+                delegate (int index) { return ordinaryLows[index]; });
+            Assert(invalidLeftHigh.IsReady && !invalidLeftHigh.IsHigh,
+                "A non-finite neighboring high must not let a pivot pass through failed comparisons.");
+
+            double[] invalidRightLows = { 8, 6, 5, double.NegativeInfinity, 7 };
+            PivotEvaluation invalidRightLow = PivotEvaluator.Evaluate(
+                2, 1, 2, 4, 0,
+                delegate (int index) { return ordinaryHighs[index]; },
+                delegate (int index) { return invalidRightLows[index]; });
+            Assert(invalidRightLow.IsReady && !invalidRightLow.IsLow,
+                "A non-finite neighboring low must not let a pivot pass through failed comparisons.");
+
+            Console.WriteLine("PASS: pivot confirmation delay, lookback eligibility, asymmetric ties, and invalid-price rejection.");
         }
 
         private static void VerifyStructureBreakClassification()

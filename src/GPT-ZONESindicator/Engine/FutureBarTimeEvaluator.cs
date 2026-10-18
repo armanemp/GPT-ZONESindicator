@@ -20,5 +20,17 @@ namespace cAlgo
                 return TimeSpan.FromDays(14);
             }
         }
+
+        public static DateTime GetFortyBarEnd(DateTime lastBarOpen, TimeSpan typicalBarSpan)
+        {
+            try
+            {
+                return lastBarOpen.Add(GetFortyBarSpan(typicalBarSpan));
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return DateTime.MaxValue;
+            }
+        }
     }
 }

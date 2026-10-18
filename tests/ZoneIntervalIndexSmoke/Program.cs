@@ -434,6 +434,113 @@ namespace ZoneIntervalIndexSmoke
         }
 
 
+
+        private static void VerifyEqualLevelPairRules()
+        {
+            double[] highs = { 99.0, 100.9, 100.5, 100.9, 99.0, 99.0, 99.0, 99.0 };
+            double[] lows  = { 98.0, 99.1, 99.5, 99.1, 98.0, 98.0, 98.0, 98.0 };
+            Func<int, double> highAt = delegate (int index) { return highs[index]; };
+            Func<int, double> lowAt = delegate (int index) { return lows[index]; };
+
+            EqualLevelPairEvaluation highPair = EqualLevelEvaluator.Evaluate(
+                true, 1, 100.0, true, 6, 100.4, 5, 10, 0.5, highAt, lowAt);
+            Assert(highPair.Accepted && !highPair.StopSearch,
+                "Equal-high pair at the exact minimum separation and exact tolerance band should qualify.");
+            Assert(Math.Abs(highPair.Level - 100.4) < 1e-9,
+                "Equal-high level should use the higher of the two swing prices.");
+
+            double[] dirtyHighs = { 99.0, 100.9, 101.0, 100.9, 99.0, 99.0, 99.0, 99.0 };
+            EqualLevelPairEvaluation dirtyHigh = EqualLevelEvaluator.Evaluate(
+                true, 1, 100.0, true, 6, 100.4, 5, 10, 0.5,
+                delegate (int index) { return dirtyHighs[index]; }, lowAt);
+            Assert(!dirtyHigh.Accepted && dirtyHigh.StopSearch,
+                "A high inside the intervening range that pierces the tolerance band must stop the search.");
+
+            EqualLevelPairEvaluation lowPair = EqualLevelEvaluator.Evaluate(
+                false, 1, 100.0, false, 6, 99.6, 5, 10, 0.5, highAt, lowAt);
+            Assert(lowPair.Accepted && Math.Abs(lowPair.Level - 99.6) < 1e-9,
+                "Equal-low pair should use the lower swing price and accept the exact clean-band boundary.");
+
+            double[] dirtyLows = { 98.0, 99.1, 98.9, 99.1, 98.0, 98.0, 98.0, 98.0 };
+            EqualLevelPairEvaluation dirtyLow = EqualLevelEvaluator.Evaluate(
+                false, 1, 100.0, false, 6, 99.6, 5, 10, 0.5, highAt,
+                delegate (int index) { return dirtyLows[index]; });
+            Assert(!dirtyLow.Accepted && dirtyLow.StopSearch,
+                "A lower wick piercing below the equal-low tolerance band must stop the search.");
+
+            EqualLevelPairEvaluation tooClose = EqualLevelEvaluator.Evaluate(
+                true, 2, 100.0, true, 6, 100.1, 5, 10, 0.5, highAt, lowAt);
+            Assert(!tooClose.Accepted && !tooClose.StopSearch,
+                "A pair inside the configured minimum bar separation must be skipped, not terminate the scan.");
+
+            EqualLevelPairEvaluation tooOld = EqualLevelEvaluator.Evaluate(
+                true, 1, 100.0, true, 13, 100.1, 5, 10, 0.5, highAt, lowAt);
+            Assert(!tooOld.Accepted && tooOld.StopSearch,
+                "A matching swing beyond maximum separation must terminate backward search.");
+
+            EqualLevelPairEvaluation wrongType = EqualLevelEvaluator.Evaluate(
+                false, 1, 100.0, true, 6, 100.1, 5, 10, 0.5, highAt, lowAt);
+            Assert(!wrongType.Accepted && !wrongType.StopSearch,
+                "A high swing must not be paired with a low swing.");
+            Console.WriteLine("PASS: equal-high/low pair tolerance, clean-range, separation and early-exit predicates.");
+        }
+
+        private static void VerifyOrderBlockRules()
+        {
+            Assert(OrderBlockRules.IsSourceAllowed(SznpStructureSource.MajorAndInternal, true)
+                && OrderBlockRules.IsSourceAllowed(SznpStructureSource.MajorAndInternal, false),
+                "MajorAndInternal source must allow both structure engines.");
+            Assert(OrderBlockRules.IsSourceAllowed(SznpStructureSource.MajorOnly, true)
+                && !OrderBlockRules.IsSourceAllowed(SznpStructureSource.MajorOnly, false),
+                "MajorOnly source must reject internal structure.");
+            Assert(!OrderBlockRules.IsSourceAllowed(SznpStructureSource.InternalOnly, true)
+                && OrderBlockRules.IsSourceAllowed(SznpStructureSource.InternalOnly, false),
+                "InternalOnly source must reject major structure.");
+
+            OrderBlockBoundsResult full = OrderBlockRules.EvaluateBounds(
+                95.0, 110.0, 101.0, 104.0, SznpObRange.FullCandle, 0.0, true, 1.0);
+            Assert(full.Accepted && !full.UsedBodyFallback
+                && full.Lower == 95.0 && full.Upper == 110.0,
+                "FullCandle mode with no maximum must preserve wick bounds.");
+
+            OrderBlockBoundsResult body = OrderBlockRules.EvaluateBounds(
+                95.0, 110.0, 101.0, 104.0, SznpObRange.BodyOnly, 5.0, true, 1.0);
+            Assert(body.Accepted && !body.UsedBodyFallback
+                && body.Lower == 101.0 && body.Upper == 104.0,
+                "BodyOnly mode must use the candle body and should not be re-labelled as a fallback.");
+
+            OrderBlockBoundsResult fallback = OrderBlockRules.EvaluateBounds(
+                95.0, 110.0, 101.0, 104.0, SznpObRange.FullCandle, 5.0, true, 1.0);
+            Assert(fallback.Accepted && fallback.UsedBodyFallback
+                && fallback.Lower == 101.0 && fallback.Upper == 104.0,
+                "Oversized full-candle ranges must fall back to body when enabled and body fits.");
+
+            OrderBlockBoundsResult stillOversized = OrderBlockRules.EvaluateBounds(
+                95.0, 110.0, 101.0, 108.0, SznpObRange.FullCandle, 5.0, true, 1.0);
+            Assert(!stillOversized.Accepted && stillOversized.UsedBodyFallback
+                && stillOversized.Failure == OrderBlockBoundsFailure.Oversize,
+                "A body that remains above the maximum must still be rejected.");
+
+            OrderBlockBoundsResult noFallback = OrderBlockRules.EvaluateBounds(
+                95.0, 110.0, 101.0, 104.0, SznpObRange.FullCandle, 5.0, false, 1.0);
+            Assert(!noFallback.Accepted && !noFallback.UsedBodyFallback
+                && noFallback.Failure == OrderBlockBoundsFailure.Oversize,
+                "Oversized full candles must be rejected when body fallback is disabled.");
+
+            OrderBlockBoundsResult bodyOversize = OrderBlockRules.EvaluateBounds(
+                95.0, 110.0, 101.0, 108.0, SznpObRange.BodyOnly, 5.0, true, 1.0);
+            Assert(!bodyOversize.Accepted && !bodyOversize.UsedBodyFallback
+                && bodyOversize.Failure == OrderBlockBoundsFailure.Oversize,
+                "BodyOnly mode should not perform a redundant body fallback.");
+
+            OrderBlockBoundsResult tooSmall = OrderBlockRules.EvaluateBounds(
+                99.0, 101.0, 99.8, 100.2, SznpObRange.BodyOnly, 0.0, false, 1.0);
+            Assert(!tooSmall.Accepted && tooSmall.Failure == OrderBlockBoundsFailure.TooSmall,
+                "An order block below the minimum size must be rejected.");
+
+            Console.WriteLine("PASS: order-block source filters, full/body ranges, oversize fallback and minimum-size rules.");
+        }
+
         private static void VerifyPivotConfirmationAndTieRules()
         {
             double[] highs = { 5, 8, 10, 8, 10, 7, 6 };
@@ -956,6 +1063,8 @@ namespace ZoneIntervalIndexSmoke
                 VerifyInvalidLifecycleInput();
                 VerifyBreakerFactory();
                 VerifyPivotConfirmationAndTieRules();
+                VerifyEqualLevelPairRules();
+                VerifyOrderBlockRules();
                 VerifyStructureBreakClassification();
                 VerifyLiquiditySweepPredicates();
 

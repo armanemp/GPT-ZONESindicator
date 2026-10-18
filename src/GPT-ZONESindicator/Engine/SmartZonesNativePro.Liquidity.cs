@@ -19,33 +19,25 @@ namespace cAlgo
             for (int k = swings.Count - 2; k >= 0; k--)
             {
                 Swing candidate = swings[k];
-                if (candidate.High != swing.High)
-                    continue;
+                EqualLevelPairEvaluation pair = EqualLevelEvaluator.Evaluate(
+                    candidate.High,
+                    candidate.Idx,
+                    candidate.Price,
+                    swing.High,
+                    swing.Idx,
+                    swing.Price,
+                    EqMinBarsApart,
+                    EqMaxBarsApart,
+                    tolerance,
+                    _highPriceAt,
+                    _lowPriceAt);
 
-                int distance = swing.Idx - candidate.Idx;
-                if (distance > EqMaxBarsApart)
+                if (pair.StopSearch)
                     break;
-                if (distance < EqMinBarsApart)
-                    continue;
-                if (Math.Abs(candidate.Price - swing.Price) > tolerance)
+                if (!pair.Accepted)
                     continue;
 
-                double level = swing.High
-                    ? Math.Max(candidate.Price, swing.Price)
-                    : Math.Min(candidate.Price, swing.Price);
-
-                bool clean = true;
-                for (int bar = candidate.Idx + 1; bar < swing.Idx; bar++)
-                {
-                    if (swing.High ? H(bar) > level + tolerance : L(bar) < level - tolerance)
-                    {
-                        clean = false;
-                        break;
-                    }
-                }
-
-                if (!clean)
-                    break;
+                double level = pair.Level;
 
                 EqCluster cluster = candidate.Cluster;
                 if (cluster != null && !cluster.Swept && !cluster.Broken)

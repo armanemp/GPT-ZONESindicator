@@ -123,9 +123,7 @@ namespace cAlgo
             else
                 _lastBearBreak = index;
 
-            bool sourceAllowed = ObSource == SznpStructureSource.MajorAndInternal
-                || (ObSource == SznpStructureSource.MajorOnly && engine.Major)
-                || (ObSource == SznpStructureSource.InternalOnly && !engine.Major);
+            bool sourceAllowed = OrderBlockRules.IsSourceAllowed(ObSource, engine.Major);
 
             if (DetectOb && sourceAllowed)
                 TryCreateOb(engine, swing, index, atr);

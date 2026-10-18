@@ -63,42 +63,26 @@ namespace cAlgo
                 return;
             }
 
-            double lower, upper;
-            if (ObRangeMode == SznpObRange.FullCandle)
-            {
-                lower = L(candidate);
-                upper = H(candidate);
-            }
-            else
-            {
-                lower = Math.Min(O(candidate), C(candidate));
-                upper = Math.Max(O(candidate), C(candidate));
-            }
+            OrderBlockBoundsResult bounds = OrderBlockRules.EvaluateBounds(
+                L(candidate),
+                H(candidate),
+                O(candidate),
+                C(candidate),
+                ObRangeMode,
+                ObMaxSizeAtr * atr,
+                ObUseBodyIfOversize,
+                Math.Max(_tick, ObMinSizeAtr * atr));
 
-            if (ObMaxSizeAtr > 0 && upper - lower > ObMaxSizeAtr * atr)
+            if (!bounds.Accepted)
             {
-                if (ObUseBodyIfOversize && ObRangeMode == SznpObRange.FullCandle)
-                {
-                    lower = Math.Min(O(candidate), C(candidate));
-                    upper = Math.Max(O(candidate), C(candidate));
-                    if (upper - lower > ObMaxSizeAtr * atr)
-                    {
-                        Reject("ob: oversize");
-                        return;
-                    }
-                }
-                else
-                {
-                    Reject("ob: oversize");
-                    return;
-                }
-            }
-
-            if (upper - lower < Math.Max(_tick, ObMinSizeAtr * atr))
-            {
-                Reject("ob: min size");
+                Reject(bounds.Failure == OrderBlockBoundsFailure.TooSmall
+                    ? "ob: min size"
+                    : "ob: oversize");
                 return;
             }
+
+            double lower = bounds.Lower;
+            double upper = bounds.Upper;
 
             int key = candidate * 2 + (bullish ? 1 : 0);
             Zone existing;

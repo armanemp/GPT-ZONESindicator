@@ -469,6 +469,8 @@ namespace cAlgo
         private double ComputeZoneLabelY(Zone zone)
         {
             double middle = (zone.Upper + zone.Lower) * 0.5;
+            if (!ShowZoneLabels)
+                return middle;
             double separation = Math.Max(_tick * 3.0, (zone.Upper - zone.Lower) * 0.10);
             double top = Chart.TopY;
             double bottom = Chart.BottomY;

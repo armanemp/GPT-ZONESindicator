@@ -77,7 +77,7 @@ namespace cAlgo
 
                 item.Y = level;
                 item.Col = WithOpacity(major ? _cRoundMajor : _cRound, RefOpacity);
-                item.Style = LineStyle.Dots;
+                item.Style = RoundStyle;
                 item.T1 = Bars.OpenTimes[0];
                 item.T2 = _futureTime;
                 item.Label = "RN " + level.ToString("0.#####", CultureInfo.InvariantCulture);

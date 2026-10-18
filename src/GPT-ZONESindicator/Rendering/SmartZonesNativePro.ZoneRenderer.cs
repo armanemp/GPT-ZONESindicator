@@ -224,8 +224,7 @@ namespace cAlgo
             if (indexedViewportSelection)
             {
                 _renderQueryScratch.Clear();
-                QueryOverlappingZoneIntervals(
-                    _zoneIntervalRoot, viewBottom, viewTop, _renderQueryScratch);
+                _zoneIntervalIndex.Query(viewBottom, viewTop, _renderQueryScratch);
 
                 for (int k = 0; k < _renderQueryScratch.Count; k++)
                 {

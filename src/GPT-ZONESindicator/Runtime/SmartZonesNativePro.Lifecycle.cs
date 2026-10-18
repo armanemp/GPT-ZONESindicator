@@ -124,7 +124,7 @@ namespace cAlgo
             _equalLevelsState.ClusterBySwing.Clear();
             _liquiditySweepState.Events.Clear();
             _referenceLevelRenderingState.Items.Clear();
-            _psychologicalLevelState.Items.Clear();
+            _psychologicalLevelRenderingState.Items.Clear();
             _psychologicalLevelState.Center = long.MinValue;
             _status = null;
             _atr.Clear();

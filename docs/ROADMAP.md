@@ -2,6 +2,8 @@
 
 This roadmap is intentionally split into small reviewable phases. Do not mark a phase complete merely because source files were created; record the actual validation performed.
 
+For the ordered, feature-by-feature implementation checklist, current module statuses, dependencies, test targets and exit gates, see [MODULE_DEVELOPMENT_ROADMAP.md](MODULE_DEVELOPMENT_ROADMAP.md). Use that document as the working plan for each next module.
+
 ## Phase 0 — Repository and modular extraction
 
 - [x] Create an explicit repository entry point and source layout.
@@ -41,7 +43,8 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 - [x] Ignore non-finite close/swing prices in structure-break evaluation so malformed values cannot manufacture BOS/CHoCH events.
 - [x] Make the minimum swing-distance filter order-independent when a bar qualifies as both a high and a low pivot; evaluate both against prior engine state and reject undersized dual-pivot pairs symmetrically.
 - [x] Test BOS vs CHoCH classification from neutral, bullish and bearish trend states (pure evaluator regression tests pass in CI).
-- [ ] Run the expanded Market Structure regression suite on the latest branch, confirm Release build/test output, then verify major/internal swings, dual-pivot cases, swept-level removal and BOS/CHoCH placement on a live cTrader chart.
+- [x] Run the expanded Market Structure deterministic regression suite on Windows; all checks passed in the user's latest output.
+- [ ] Verify major/internal swings, dual-pivot cases, swept-level removal and BOS/CHoCH placement on a live cTrader chart.
 - [ ] Test full equal-high/equal-low cluster merge/lifecycle (pair tolerance, separation, range cleanliness and backward-scan early exits have deterministic tests; duplicate sweep suppression predicate is now covered).
 - [x] Extract and test high/low sweep predicates for Wick/Body measurement, minimum penetration, close-back return and exact threshold behavior (CI passed; exhaustive swing/equal-level end-to-end replay remains outstanding).
 - [x] Extract and test order-block source filters, source-candle/extreme discovery, full/body bounds, oversize fallback and minimum-size behavior (CI passed; full end-to-end discovery/replay remains outstanding).
@@ -82,7 +85,7 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 - [x] Set dotted line styles as editable defaults rather than forcibly overriding a user's saved style parameters.
 - [x] Extend active valid zone rectangles and their midlines by forty nominal intervals of the active chart timeframe; terminal filled/broken history ends at the actual lifecycle event. Keep line endpoints separate from semantic text locations so BOS/CHoCH labels remain at their breaks. Live-chart verification remains pending.
 - [x] Add an M15 overlay on lower-timeframe charts for closed-bar FVGs, price gaps, and major-structure order blocks; M15 order blocks can produce breakers after M5 lifecycle confirmation. Keep M5/M15 duplicate identities separate and align M15 detection history with loaded M5 history. Replay closed M5 candles for retrospective M15 OBs and gaps so zones already filled/broken are not shown as fresh. No-lookahead close timing has deterministic boundary tests; live chart acceptance remains pending.
-- [x] Keep broken/fill history hidden by default while retaining the existing opt-in display switches.
+- [x] Keep filled-zone history opt-in. Broken zones are always excluded from rendering even if legacy broken-history switches are enabled; the old broken-history parameters remain a compatibility/documentation decision.
 - [x] Include phase/* branches in the build workflow trigger.
 - [ ] Verify all valid zones appear while panning and zooming in cTrader, including breaker zones through the chart's right edge.
 - [ ] Compare indexed viewport selection against full-history selection and validate terminal-zone removal, chart-object count and visual contrast on a live cTrader chart.

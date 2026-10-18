@@ -217,6 +217,13 @@ namespace cAlgo
 
             ComputeBarSpan();
             _futureTime = ComputeFutureZoneTime();
+
+            if (n > 0)
+            {
+                Log("Forty-bar projection: bar interval=" + _barSpan
+                    + ", latest candle open=" + Bars.OpenTimes[n - 1].ToString("yyyy-MM-dd HH:mm:ss")
+                    + ", drawing endpoint=" + _futureTime.ToString("yyyy-MM-dd HH:mm:ss"));
+            }
         }
 
         private void ComputeBarSpan()

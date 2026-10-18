@@ -1,8 +1,8 @@
 namespace cAlgo
 {
     /// <summary>
-    /// Controls lifecycle-state visibility. Broken zones are terminal and must never be
-    /// drawn again, regardless of legacy ShowBrokenZones/history display settings.
+    /// Default lifecycle-state visibility. Broken zones stay hidden here; the breaker module
+    /// has a separate, tightly scoped exception for a linked parent OB when history is requested.
     /// </summary>
     internal static class ZoneVisibilityPolicy
     {

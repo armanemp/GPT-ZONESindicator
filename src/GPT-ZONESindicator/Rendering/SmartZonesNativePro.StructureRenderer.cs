@@ -16,7 +16,8 @@ namespace cAlgo
         {
             // Process every feature even when all its visibility switches are off, so
             // objects created by a prior settings state are removed rather than left behind.
-            int cap = StructMaxVisible > 0 ? StructMaxVisible : int.MaxValue;
+            int configuredCap = engine.Major ? StructMaxVisible : InternalStructMaxVisible;
+            int cap = configuredCap > 0 ? configuredCap : int.MaxValue;
             int levelCount = 0;
             int markCount = 0;
 

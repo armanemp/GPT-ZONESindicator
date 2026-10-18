@@ -51,88 +51,82 @@ namespace cAlgo
 
             if (!want || item.Dead)
             {
-                if (item.Shown)
+                if (item.Shown || item.Line != null || item.Txt != null)
                     RemoveItem(item);
                 return;
             }
 
             bool hasLabel = !string.IsNullOrEmpty(item.Label);
-            // Keep the line's visual endpoint separate from its label's semantic location.
-            // A future endpoint must never drag BOS/CHoCH, EQH/EQL or sweep labels to the right.
-            DateTime end = item.TextOnly
-                ? (item.T2 <= item.T1 ? item.T1.Add(_barSpan) : item.T2)
-                : (_futureTime <= item.T1 ? item.T1.Add(_barSpan) : _futureTime);
-            DateTime labelTime = item.Follow ? end : item.LabelTime;
-            Color visibleColor = item.Col;
+            // Preserve each line's own semantic end. Only active objects were assigned
+            // _futureTime by their producer; a completed BOS/CHoCH stays at its break.
+            DateTime end = item.T2 <= item.T1 ? item.T1.Add(_barSpan) : item.T2;
+            DateTime labelTime = item.LabelTime;
 
-            if (item.Shown)
+            bool lineWanted = !item.TextOnly && ItemLineIntersectsViewport(item, end);
+            bool textWanted = hasLabel && ItemLabelIntersectsViewport(labelTime, item.LabelY);
+
+            // Virtualize line and text independently. Off-screen history retains its logical
+            // state but does not keep chart objects alive; scrolling creates only the visible set.
+            if (!lineWanted && item.Line != null)
             {
-                bool lineGone = !item.TextOnly && (item.Line == null || !item.Line.IsAlive);
-                bool textGone = hasLabel && (item.Txt == null || !item.Txt.IsAlive);
-                if (lineGone || textGone)
-                    RemoveItem(item);
+                KillObject(item.Line, item.Name);
+                item.Line = null;
             }
 
-            if (!item.Shown)
-            {
-                if (!item.TextOnly)
-                {
-                    ChartTrendLine line = Chart.DrawTrendLine(
-                        item.Name, item.T1, item.Y, end, item.Y, visibleColor, item.Thick, item.Style);
-                    line.ExtendToInfinity = item.ExtendToInfinity;
-                    line.IsInteractive = ObjectsInteractive;
-                    item.Line = line;
-                    Reg(line);
-                }
-
-                if (hasLabel)
-                    MakeItemText(item, labelTime, visibleColor);
-
-                item.Shown = true;
-                SnapItem(item, end);
-                return;
-            }
-
-            bool changed = item.aT1 != item.T1
-                || item.aT2 != end
-                || item.aY != item.Y
-                || !SameColor(item.aCol, item.Col)
-                || item.aLabel != item.Label
-                || item.aLt != item.LabelTime
-                || item.aLy != item.LabelY;
-
-            if (!changed)
-                return;
-
-            if (item.Line != null)
-            {
-                item.Line.Time1 = item.T1;
-                item.Line.Time2 = end;
-                item.Line.Y1 = item.Y;
-                item.Line.Y2 = item.Y;
-                item.Line.Color = visibleColor;
-            }
-
-            if (hasLabel)
-            {
-                if (item.Txt == null)
-                {
-                    MakeItemText(item, labelTime, visibleColor);
-                }
-                else
-                {
-                    item.Txt.Text = item.Label;
-                    item.Txt.Time = labelTime;
-                    item.Txt.Y = item.LabelY;
-                    item.Txt.Color = visibleColor;
-                }
-            }
-            else if (item.Txt != null)
+            if (!textWanted && item.Txt != null)
             {
                 KillObject(item.Txt, item.Name + "_t");
                 item.Txt = null;
             }
 
+            bool lineChanged = item.aT1 != item.T1
+                || item.aT2 != end
+                || item.aY != item.Y
+                || !SameColor(item.aCol, item.Col);
+
+            bool textChanged = item.aLabel != item.Label
+                || item.aLt != item.LabelTime
+                || item.aLy != item.LabelY
+                || !SameColor(item.aCol, item.Col);
+
+            if (lineWanted)
+            {
+                if (item.Line == null || !item.Line.IsAlive)
+                {
+                    ChartTrendLine line = Chart.DrawTrendLine(
+                        item.Name, item.T1, item.Y, end, item.Y, item.Col, item.Thick, item.Style);
+                    line.ExtendToInfinity = item.ExtendToInfinity;
+                    line.IsInteractive = ObjectsInteractive;
+                    item.Line = line;
+                    Reg(line);
+                }
+                else if (lineChanged)
+                {
+                    item.Line.Time1 = item.T1;
+                    item.Line.Time2 = end;
+                    item.Line.Y1 = item.Y;
+                    item.Line.Y2 = item.Y;
+                    item.Line.Color = item.Col;
+                }
+            }
+
+            if (textWanted)
+            {
+                if (item.Txt == null || !item.Txt.IsAlive)
+                {
+                    MakeItemText(item, labelTime, item.Col);
+                }
+                else if (textChanged)
+                {
+                    item.Txt.Text = item.Label;
+                    item.Txt.Time = labelTime;
+                    item.Txt.Y = item.LabelY;
+                    item.Txt.Color = item.Col;
+                }
+            }
+
+            item.Shown = (item.Line != null && item.Line.IsAlive)
+                || (item.Txt != null && item.Txt.IsAlive);
             SnapItem(item, end);
         }
 

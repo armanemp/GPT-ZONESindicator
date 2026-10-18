@@ -76,9 +76,9 @@ namespace cAlgo
                     break;
             }
 
-            // Broken zones are never valid chart areas. Their logical records stay in
-            // history for lifecycle diagnostics and breaker-parent lineage, but display
-            // switches cannot resurrect their rectangles, midlines, or labels.
+            // Broken zones are not valid live areas. They stay hidden by default; only the
+            // exact parent OB linked to a breaker can be rendered as bounded history when
+            // ShowObHistoryOfBreakers is explicitly enabled. Its end remains the actual break time.
             if (!showParentHistory
                 && !ZoneVisibilityPolicy.ShouldRender(zone.State, ShowTouchedZones, ShowFilledZones))
                 return false;

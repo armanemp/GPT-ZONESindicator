@@ -126,19 +126,19 @@ namespace cAlgo
 
         private void BuildPalette()
         {
-            _zoneBase[ZoneIdx(SznpKind.Fvg, true)] = ParseColor(FvgBullColor, Rgb(0, 100, 0));
-            _zoneBase[ZoneIdx(SznpKind.Fvg, false)] = ParseColor(FvgBearColor, Rgb(139, 0, 0));
+            _zoneBase[ZoneIdx(SznpKind.Fvg, true)] = ParseColor(FvgBullColor, Rgb(10, 78, 62));
+            _zoneBase[ZoneIdx(SznpKind.Fvg, false)] = ParseColor(FvgBearColor, Rgb(94, 12, 37));
             _zoneBase[ZoneIdx(SznpKind.Gap, true)] = ParseColor(GapBullColor, Rgb(184, 134, 11));
             _zoneBase[ZoneIdx(SznpKind.Gap, false)] = ParseColor(GapBearColor, Rgb(139, 69, 19));
-            _zoneBase[ZoneIdx(SznpKind.OrderBlock, true)] = ParseColor(ObBullColor, Rgb(70, 130, 180));
-            _zoneBase[ZoneIdx(SznpKind.OrderBlock, false)] = ParseColor(ObBearColor, Rgb(105, 105, 105));
-            _zoneBase[ZoneIdx(SznpKind.Breaker, true)] = ParseColor(BreakerBullColor, Rgb(0, 128, 128));
-            _zoneBase[ZoneIdx(SznpKind.Breaker, false)] = ParseColor(BreakerBearColor, Rgb(75, 0, 130));
+            _zoneBase[ZoneIdx(SznpKind.OrderBlock, true)] = ParseColor(ObBullColor, Rgb(25, 72, 110));
+            _zoneBase[ZoneIdx(SznpKind.OrderBlock, false)] = ParseColor(ObBearColor, Rgb(72, 59, 50));
+            _zoneBase[ZoneIdx(SznpKind.Breaker, true)] = ParseColor(BreakerBullColor, Rgb(22, 160, 166));
+            _zoneBase[ZoneIdx(SznpKind.Breaker, false)] = ParseColor(BreakerBearColor, Rgb(128, 100, 181));
 
             _midBase[(int)SznpKind.Fvg] = ParseColor(FvgMidColor, Rgb(60, 179, 113));
             _midBase[(int)SznpKind.Gap] = ParseColor(GapMidColor, Rgb(218, 165, 32));
             _midBase[(int)SznpKind.OrderBlock] = ParseColor(ObMidColor, Rgb(100, 149, 237));
-            _midBase[(int)SznpKind.Breaker] = ParseColor(BreakerMidColor, Rgb(95, 158, 160));
+            _midBase[(int)SznpKind.Breaker] = ParseColor(BreakerMidColor, Rgb(100, 200, 204));
 
             _cFilled = ParseColor(FilledZoneColor, Rgb(112, 128, 144));
             _cBroken = ParseColor(BrokenZoneColor, Rgb(105, 105, 105));

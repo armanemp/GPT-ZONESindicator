@@ -4,18 +4,18 @@ namespace cAlgo
 {
     public partial class SmartZonesNativePro
     {
-        private static long MakeKey(SznpKind kind, bool bull, long lower, long upper)
+        private static long MakeKey(SznpKind kind, bool bull, long lower, long upper, bool higherTimeframe = false)
         {
             unchecked
             {
-                long hash = (int)kind * 2 + (bull ? 1 : 0);
+                long hash = (int)kind * 4 + (bull ? 1 : 0) + (higherTimeframe ? 2 : 0);
                 hash = hash * 1000003L + lower;
                 hash = hash * 1000003L + upper;
                 return hash;
             }
         }
 
-        private bool IsDuplicate(SznpKind kind, bool bull, double lower, double upper)
+        private bool IsDuplicate(SznpKind kind, bool bull, double lower, double upper, bool higherTimeframe = false)
         {
             if (!FilterDuplicateZones)
                 return false;
@@ -24,7 +24,8 @@ namespace cAlgo
                 kind,
                 bull,
                 (long)Math.Round(lower / _tick),
-                (long)Math.Round(upper / _tick));
+                (long)Math.Round(upper / _tick),
+                higherTimeframe);
 
             Zone existing;
             return _dupe.TryGetValue(key, out existing)
@@ -62,7 +63,8 @@ namespace cAlgo
                     zone.Kind,
                     zone.Bull,
                     (long)Math.Round(zone.Lower / _tick),
-                    (long)Math.Round(zone.Upper / _tick));
+                    (long)Math.Round(zone.Upper / _tick),
+                    zone.IsHigherTimeframe);
                 _dupe[key] = zone;
             }
         }

@@ -36,7 +36,7 @@ The indicator is a single cTrader Automate type, `cAlgo.SmartZonesNativePro`. Th
 
 1. Detection is based on closed bars. Do not read the forming candle as a confirmed signal.
 2. A zone's `Lower` and `Upper` boundaries are fixed after creation.
-3. Rendering is viewport-aware: only zones intersecting the visible time/price range plus a small buffer receive chart objects. Out-of-view zones remain in the full logical history and are reconsidered on scroll, zoom, resize, or price-scale changes. The optional rectangle budget defaults to `0` (unlimited within the viewport); it never alters zone detection or lifecycle state.
+3. Rendering is viewport-aware: only zones intersecting the visible time/price range plus a small buffer receive chart objects. Out-of-view zones remain in the full logical history and are reconsidered on scroll, zoom, and chart-resize events supported by the project's current Automate API package. The optional rectangle budget defaults to `0` (unlimited within the viewport); it never alters zone detection or lifecycle state.
 4. Historical discovery and live discovery must converge to the same state when supplied the same closed-bar sequence.
 5. Swing levels are only confirmed after the configured right-hand bars close.
 6. Historical HTF levels must use a completed HTF bar; never read future HTF data.

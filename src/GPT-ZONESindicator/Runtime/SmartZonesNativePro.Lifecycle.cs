@@ -114,6 +114,7 @@ namespace cAlgo
 
             _histLoading = false;
             _rebuildPending = true;
+            EnsureM15History();
         }
 
         private void OnBarsHistoryLoaded(BarsHistoryLoadedEventArgs args)
@@ -122,6 +123,7 @@ namespace cAlgo
                 return;
 
             _rebuildPending = true;
+            EnsureM15History();
         }
 
         private void RebuildAll()

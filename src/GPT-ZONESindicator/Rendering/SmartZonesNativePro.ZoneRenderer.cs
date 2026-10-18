@@ -512,7 +512,7 @@ namespace cAlgo
                     double middle = (zone.Upper + zone.Lower) * 0.5;
                     ChartTrendLine midline = Chart.DrawTrendLine(
                         name + "_m", start, middle, end, middle,
-                        ZoneMidlineColor(zone), MidlineThickness, LineStyle.Dots);
+                        ZoneMidlineColor(zone), MidlineThickness, MidlineStyle);
                     midline.ExtendToInfinity = false;
                     midline.IsInteractive = ObjectsInteractive;
                     midline.ZIndex = ZoneZIndex + 1;

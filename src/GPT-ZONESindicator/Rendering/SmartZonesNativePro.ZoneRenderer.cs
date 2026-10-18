@@ -582,7 +582,7 @@ namespace cAlgo
                 if (zone.Mid != null && zone.Mid.IsAlive)
                     zone.Mid.Color = ZoneMidlineColor(zone);
                 if (zone.Lbl != null && zone.Lbl.IsAlive)
-                    zone.Lbl.Color = color;
+                    zone.Lbl.Color = WithOpacity(color, 100);
             }
 
             if (commentChanged)

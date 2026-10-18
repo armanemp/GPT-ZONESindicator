@@ -9,9 +9,9 @@ namespace cAlgo
     {
         private void ApplyLineLabelPresentation()
         {
-            // Preserve the user's display/detection choices. Earlier builds forcibly enabled
-            // every zone type and all zone labels, which made the chart unnecessarily busy.
-            // M15 overlay and dotted drawing styles remain the requested defaults.
+            // Preserve the user's zone detection, scoring, and non-zone overlay choices.
+            // Keep zone tags visible; their vertical layout now avoids stacking them together.
+            ShowZoneLabels = true;
             ShowM15Zones = true;
             MidlineStyle = LineStyle.Dots;
             StructStyle = LineStyle.Dots;

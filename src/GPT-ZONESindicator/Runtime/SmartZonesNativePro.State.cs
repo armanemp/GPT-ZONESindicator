@@ -6,6 +6,12 @@ namespace cAlgo
 {
     public partial class SmartZonesNativePro
     {
+        private sealed class ZoneLabelSlot
+        {
+            public DateTime Time;
+            public double Y;
+        }
+
         /// <summary>Logical zone record; chart objects are a disposable view of this state.</summary>
         private sealed class Zone
         {
@@ -189,7 +195,7 @@ namespace cAlgo
         private readonly List<Zone> _breakScratch = new List<Zone>();
         private readonly List<Zone> _renderQueryScratch = new List<Zone>();
         private readonly List<Zone> _renderTracked = new List<Zone>();
-        private readonly List<double> _zoneLabelRows = new List<double>(128);
+        private readonly List<ZoneLabelSlot> _zoneLabelRows = new List<ZoneLabelSlot>(128);
         private readonly Dictionary<long, Zone> _dupe = new Dictionary<long, Zone>();
         private readonly Dictionary<int, Zone> _obByCandle = new Dictionary<int, Zone>();
         private Engine _engMajor, _engInt;

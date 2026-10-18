@@ -1,3 +1,5 @@
+using System;
+
 namespace cAlgo
 {
     /// <summary>Closed-bar input for the pure zone lifecycle decision step.</summary>

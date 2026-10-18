@@ -51,7 +51,7 @@ namespace cAlgo
 
             _featurePipeline.AddProcessor(
                 "M15 overlay",
-                delegate { return ShowM15Zones && _m15Bars != null; },
+                delegate { return DetectM15Zones && _m15Bars != null; },
                 delegate (int index, double atr) { ProcessClosedM15Bars(index); });
 
             // Chart rendering is also independent. A renderer failure is logged and isolated;

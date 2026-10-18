@@ -872,7 +872,25 @@ namespace ZoneIntervalIndexSmoke
             Assert(invalidRightLow.IsReady && !invalidRightLow.IsLow,
                 "A non-finite neighboring low must not let a pivot pass through failed comparisons.");
 
-            Console.WriteLine("PASS: pivot confirmation delay, lookback eligibility, asymmetric ties, and invalid-price rejection.");
+            double[] invertedCenterHighs = { 8, 9, 4, 9, 8 };
+            double[] invertedCenterLows = { 8, 6, 7, 6, 8 };
+            PivotEvaluation invertedCenter = PivotEvaluator.Evaluate(
+                2, 1, 1, 3, 0,
+                delegate (int index) { return invertedCenterHighs[index]; },
+                delegate (int index) { return invertedCenterLows[index]; });
+            Assert(invertedCenter.IsReady && !invertedCenter.IsHigh && !invertedCenter.IsLow,
+                "A center bar with High below Low must not form either kind of pivot.");
+
+            double[] invertedNeighborHighs = { 8, 4, 10, 8, 7 };
+            double[] invertedNeighborLows = { 8, 6, 7, 6, 8 };
+            PivotEvaluation invertedNeighbor = PivotEvaluator.Evaluate(
+                2, 1, 1, 3, 0,
+                delegate (int index) { return invertedNeighborHighs[index]; },
+                delegate (int index) { return invertedNeighborLows[index]; });
+            Assert(invertedNeighbor.IsReady && !invertedNeighbor.IsHigh && !invertedNeighbor.IsLow,
+                "A neighboring bar with High below Low must invalidate a pivot candidate.");
+
+            Console.WriteLine("PASS: pivot confirmation delay, lookback eligibility, asymmetric ties, and malformed OHLC rejection.");
         }
 
         private static void VerifyStructureBreakClassification()
@@ -890,6 +908,12 @@ namespace ZoneIntervalIndexSmoke
                 "A bearish close below swing low is a cross.");
             Assert(!StructureBreakEvaluator.IsLevelCrossed(false, 100.01, 100.0),
                 "A close above swing low is not a bearish cross.");
+            Assert(!StructureBreakEvaluator.IsLevelCrossed(true, double.NaN, 100.0),
+                "A non-finite close must not trigger a bullish structure break.");
+            Assert(!StructureBreakEvaluator.IsLevelCrossed(false, double.PositiveInfinity, 100.0),
+                "An infinite close must not trigger a bearish structure break.");
+            Assert(!StructureBreakEvaluator.IsLevelCrossed(true, 100.01, double.NaN),
+                "A non-finite swing level must not trigger a structure break.");
 
             StructureBreakClassification neutralBull = StructureBreakEvaluator.Classify(0, true);
             Assert(!neutralBull.IsChangeOfCharacter && neutralBull.NextTrend == 1,

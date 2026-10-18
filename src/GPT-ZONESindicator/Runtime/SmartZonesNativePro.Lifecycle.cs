@@ -287,7 +287,7 @@ namespace cAlgo
             long t0 = Stopwatch.GetTimestamp();
             try
             {
-                RenderZones();
+                RenderZones(false);
                 RenderStatus();
                 _renderTicks += Stopwatch.GetTimestamp() - t0;
                 _viewportDirty = false;

@@ -95,8 +95,8 @@ namespace cAlgo
                 T2 = _futureTime,
                 Col = color,
                 Thick = RefThickness,
-                Style = style,
-                Label = ShowLevelLabels ? label : null,
+                Style = LineStyle.Dots,
+                Label = label,
                 LabelTime = start,
                 LabelY = price,
                 Follow = follow,
@@ -135,7 +135,7 @@ namespace cAlgo
                 {
                     item.T2 = periodStart;
                     item.Follow = false;
-                    item.Label = null;
+                    // Keep the completed period's label attached to its historical line.
                 }
             }
 
@@ -243,8 +243,8 @@ namespace cAlgo
                 T2 = end,
                 Col = color,
                 Thick = RefThickness,
-                Style = SessionStyle,
-                Label = ShowLevelLabels ? session.Name + " H" : null,
+                Style = LineStyle.Dots,
+                Label = session.Name + " H",
                 LabelTime = start,
                 LabelY = session.Hi,
                 LabelH = HorizontalAlignment.Left,
@@ -260,7 +260,7 @@ namespace cAlgo
                 Col = color,
                 Thick = RefThickness,
                 Style = SessionStyle,
-                Label = ShowLevelLabels ? session.Name + " L" : null,
+                Label = session.Name + " L",
                 LabelTime = start,
                 LabelY = session.Lo,
                 LabelH = HorizontalAlignment.Left,

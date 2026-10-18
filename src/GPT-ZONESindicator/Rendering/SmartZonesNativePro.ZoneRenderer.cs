@@ -220,6 +220,12 @@ namespace cAlgo
             if (!hasViewport)
                 return;
 
+            bool canvasMode = UseCanvasZoneOverlay && !ObjectsInteractive && !_canvasZoneOverlayFailed;
+            if (UseCanvasZoneOverlay && ObjectsInteractive)
+                NoteCanvasFallback("interactive chart objects are enabled; their click/hover metadata is preserved by native objects");
+            if (!canvasMode && _zoneOverlayCanvas != null)
+                DestroyZoneCanvasOverlay();
+
             bool indexedViewportSelection = ZoneViewportSelectionPolicy.UseActiveZoneIndex(
                 hasViewport,
                 ShowFilledZones,
@@ -332,7 +338,11 @@ namespace cAlgo
             for (int k = 0; k < trackedCount; k++)
             {
                 Zone zone = _zoneRenderingState.Tracked[k];
-                SyncZone(zone, refreshMetadata);
+                if (canvasMode)
+                    SyncCanvasZone(zone, refreshMetadata);
+                else
+                    SyncZone(zone, refreshMetadata);
+
                 ZoneRenderState view = GetZoneRenderState(zone);
 
                 if (view.Shown)
@@ -352,6 +362,21 @@ namespace cAlgo
             if (write < _zoneRenderingState.Tracked.Count)
                 _zoneRenderingState.Tracked.RemoveRange(write, _zoneRenderingState.Tracked.Count - write);
             _zoneRenderingState.ShownZones = shown;
+
+            if (canvasMode && !UpdateCanvasZoneOverlay())
+            {
+                // An SVG/coordinate error must never hide valid zones. Rebuild the visible
+                // set with the already-tested native renderer during the same reconciliation.
+                int nativeShown = 0;
+                for (int k = 0; k < _zoneRenderingState.Tracked.Count; k++)
+                {
+                    SyncZone(_zoneRenderingState.Tracked[k], true);
+                    ZoneRenderState nativeView = GetZoneRenderState(_zoneRenderingState.Tracked[k]);
+                    if (nativeView.Shown)
+                        nativeShown++;
+                }
+                _zoneRenderingState.ShownZones = nativeShown;
+            }
         }
 
         private void LimitPerKind(int limit)

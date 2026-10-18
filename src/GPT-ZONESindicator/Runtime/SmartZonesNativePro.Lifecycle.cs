@@ -11,8 +11,6 @@ namespace cAlgo
         {
             // Preserve the user's zone detection, scoring, and non-zone overlay choices.
             // Keep zone tags visible; their vertical layout now avoids stacking them together.
-            ShowZoneLabels = true;
-            ShowM15Zones = true;
             MidlineStyle = LineStyle.Dots;
             StructStyle = LineStyle.Dots;
             InternalStyle = LineStyle.Dots;
@@ -40,6 +38,7 @@ namespace cAlgo
             RemoveOwnObjects();
             SetupHtf();
             SetupSessions();
+            ConfigureFeaturePipeline();
 
             Bars.HistoryLoaded += OnBarsHistoryLoaded;
             Bars.Reloaded += OnBarsHistoryLoaded;
@@ -287,14 +286,14 @@ namespace cAlgo
                 {
                     long t1 = Stopwatch.GetTimestamp();
                     bool fullRender = _renderDirty;
+                    UpdateItemViewport();
                     if (fullRender)
                     {
                         RenderAll();
                     }
-                    else
+                    else if (_featurePipeline != null)
                     {
-                        RenderZones(false);
-                        RenderStatus();
+                        _featurePipeline.Render(false);
                     }
 
                     _renderTicks += Stopwatch.GetTimestamp() - t1;
@@ -338,8 +337,9 @@ namespace cAlgo
             long t0 = Stopwatch.GetTimestamp();
             try
             {
-                RenderZones(false);
-                RenderStatus();
+                UpdateItemViewport();
+                if (_featurePipeline != null)
+                    _featurePipeline.Render(false);
                 _renderTicks += Stopwatch.GetTimestamp() - t0;
                 _viewportDirty = false;
             }
@@ -362,21 +362,10 @@ namespace cAlgo
 
             double atr = AtrAt(i);
 
-            ProcessIndexedZones(i);
-
-            ProcessStructure(i, atr);
-
-            if (DetectSweeps)
-                ProcessSweeps(i, atr);
-
-            if (DetectFvg)
-                DetectFvgAt(i, atr);
-
-            if (DetectGap)
-                DetectGapAt(i, atr);
-
-            UpdateReference(i);
-            ProcessClosedM15Bars(i);
+            // Each feature is processed independently by the module pipeline. An exception
+            // in one detector no longer skips zone lifecycle, HTF, references or other modules.
+            if (_featurePipeline != null)
+                _featurePipeline.ProcessBar(i, atr);
         }
     }
 }

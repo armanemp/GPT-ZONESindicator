@@ -10,8 +10,10 @@ namespace cAlgo
         private void MakeItemText(Item item)
         {
             ChartText text = Chart.DrawText(
-                item.Name + "_t", item.Label, item.LabelTime, item.LabelY, item.Col);
-            text.FontSize = LabelFontSize;
+                item.Name + "_t", item.Label, item.RenderLabelTime, item.RenderLabelY, item.Col);
+            text.FontSize = Math.Max(11, LabelFontSize + 2);
+            text.FontFamily = "Segoe UI Light";
+            text.IsBold = false;
             text.HorizontalAlignment = item.LabelH;
             text.VerticalAlignment = item.LabelV;
             text.IsInteractive = ObjectsInteractive;
@@ -26,8 +28,8 @@ namespace cAlgo
             item.aY = item.Y;
             item.aCol = item.Col;
             item.aLabel = item.Label;
-            item.aLt = item.LabelTime;
-            item.aLy = item.LabelY;
+            item.aLt = item.RenderLabelTime;
+            item.aLy = item.RenderLabelY;
         }
 
         private void RemoveItem(Item item)
@@ -55,6 +57,19 @@ namespace cAlgo
             }
 
             bool hasLabel = !string.IsNullOrEmpty(item.Label);
+            if (hasLabel && !item.TextOnly)
+            {
+                TrackLineLabel(item);
+                item.RenderLabelTime = LineLabelAnchorTime();
+                item.RenderLabelY = ResolveLineLabelY(item.LabelY);
+            }
+            else
+            {
+                UntrackLineLabel(item);
+                item.RenderLabelTime = item.LabelTime;
+                item.RenderLabelY = item.LabelY;
+            }
+
             DateTime end = item.T2 <= item.T1 ? item.T1.Add(_barSpan) : item.T2;
 
             if (item.Shown)
@@ -71,7 +86,7 @@ namespace cAlgo
                 {
                     ChartTrendLine line = Chart.DrawTrendLine(
                         item.Name, item.T1, item.Y, end, item.Y, item.Col, item.Thick, item.Style);
-                    line.ExtendToInfinity = false;
+                    line.ExtendToInfinity = item.ExtendToInfinity;
                     line.IsInteractive = ObjectsInteractive;
                     item.Line = line;
                     Reg(line);
@@ -90,8 +105,8 @@ namespace cAlgo
                 || item.aY != item.Y
                 || !SameColor(item.aCol, item.Col)
                 || item.aLabel != item.Label
-                || item.aLt != item.LabelTime
-                || item.aLy != item.LabelY;
+                || item.aLt != item.RenderLabelTime
+                || item.aLy != item.RenderLabelY;
 
             if (!changed)
                 return;
@@ -114,8 +129,8 @@ namespace cAlgo
                 else
                 {
                     item.Txt.Text = item.Label;
-                    item.Txt.Time = item.LabelTime;
-                    item.Txt.Y = item.LabelY;
+                    item.Txt.Time = item.RenderLabelTime;
+                    item.Txt.Y = item.RenderLabelY;
                     item.Txt.Color = item.Col;
                 }
             }
@@ -126,6 +141,80 @@ namespace cAlgo
             }
 
             SnapItem(item, end);
+        }
+
+        private DateTime LineLabelAnchorTime()
+        {
+            DateTime current = Bars.Count > 0 ? Bars.OpenTimes[Bars.Count - 1] : _lastBarTime;
+            long stepTicks = Math.Max(1L, _barSpan.Ticks);
+            try
+            {
+                return current.AddTicks(checked(stepTicks * 40L));
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return current.AddDays(40);
+            }
+            catch (OverflowException)
+            {
+                return current.AddDays(40);
+            }
+        }
+
+        private double ResolveLineLabelY(double targetY)
+        {
+            double top = Chart.TopY;
+            double bottom = Chart.BottomY;
+            if (Chart.Height <= 0 || double.IsNaN(top) || double.IsInfinity(top)
+                || double.IsNaN(bottom) || double.IsInfinity(bottom) || top <= bottom
+                || targetY < bottom || targetY > top)
+                return targetY;
+
+            double pricePerPixel = (top - bottom) / Math.Max(1, Chart.Height);
+            double gap = pricePerPixel * Math.Max(18.0, (Math.Max(11, LabelFontSize + 2) * 1.65) + 3.0);
+            double placed = LineLabelLayoutEvaluator.Place(
+                targetY, bottom, top, gap, _occupiedLineLabelPrices);
+
+            if (placed >= bottom && placed <= top)
+                _occupiedLineLabelPrices.Add(placed);
+
+            return placed;
+        }
+
+        private void TrackLineLabel(Item item)
+        {
+            if (item.LabelLayoutTracked)
+                return;
+
+            item.LabelLayoutTracked = true;
+            _lineLabelItems.Add(item);
+        }
+
+        private void UntrackLineLabel(Item item)
+        {
+            if (!item.LabelLayoutTracked)
+                return;
+
+            item.LabelLayoutTracked = false;
+            _lineLabelItems.Remove(item);
+        }
+
+        private void ReflowLineLabels()
+        {
+            _occupiedLineLabelPrices.Clear();
+            Item[] items = _lineLabelItems.ToArray();
+            for (int index = 0; index < items.Length; index++)
+            {
+                Item item = items[index];
+                if (item == null || !item.Shown || item.TextOnly
+                    || string.IsNullOrEmpty(item.Label))
+                {
+                    UntrackLineLabel(item);
+                    continue;
+                }
+
+                SyncItem(item, true);
+            }
         }
 
         private static DateTime MidTime(DateTime a, DateTime b)
@@ -216,7 +305,12 @@ namespace cAlgo
             {
                 item.T2 = _futureTime;
                 item.Col = WithOpacity(swing.High ? _cSwingHigh : _cSwingLow, StructOpacity);
-                item.Label = null;
+                item.Label = (major ? "Major " : "Internal ")
+                    + (swing.High ? "Swing High" : "Swing Low");
+                item.LabelTime = _lastBarTime;
+                item.LabelY = swing.Price;
+                item.LabelH = HorizontalAlignment.Left;
+                item.LabelV = swing.High ? VerticalAlignment.Bottom : VerticalAlignment.Top;
             }
         }
 

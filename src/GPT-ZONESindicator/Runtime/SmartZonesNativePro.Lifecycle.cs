@@ -111,6 +111,7 @@ namespace cAlgo
             ResetZoneLifecycleIndexes();
             _renderQueryScratch.Clear();
             _renderTracked.Clear();
+            _zoneRenderStates.Clear();
             _dupe.Clear();
             _obByCandle.Clear();
             _eqs.Clear();

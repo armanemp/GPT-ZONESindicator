@@ -57,6 +57,7 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 
 - [ ] Replace per-bar full scans of all active zones with a price interval index and per-kind ordered break indexes, preserving all zone states and all three break-mode predicates (Release CI and cTrader replay validation pending).
 - [ ] Verify indexed lifecycle output against an exhaustive reference replay across CandleClose, BodyBeyond, and WickBeyond, including bars that gap entirely across a zone and re-entry touch counts.
+- [x] Extract the interval treap into a reusable component and add deterministic boundary/mutation coverage plus 50,000 seeded randomized queries compared with a brute-force reference scan (automated CI execution added; pass status pending).
 - [ ] Benchmark initial load at several lookbacks (for example 1k, 10k and 50k bars).
 - [ ] Measure process time per bar, render time, object count, and allocations.
 - [ ] Inspect pivot scans and active-zone updates for avoidable repeated work.

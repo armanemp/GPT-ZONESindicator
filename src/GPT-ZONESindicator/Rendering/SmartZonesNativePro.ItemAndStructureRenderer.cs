@@ -62,7 +62,7 @@ namespace cAlgo
             DateTime end = item.TextOnly
                 ? (item.T2 <= item.T1 ? item.T1.Add(_barSpan) : item.T2)
                 : (_futureTime <= item.T1 ? item.T1.Add(_barSpan) : _futureTime);
-            DateTime labelTime = item.LabelTime;
+            DateTime labelTime = item.Follow ? end : item.LabelTime;
             Color visibleColor = item.Col;
 
             if (item.Shown)

@@ -303,7 +303,7 @@ namespace cAlgo
 
             // Keep every still-valid zone (and its midline) extended past the latest
             // closed bar, even when the user configured a short future extension.
-            _futureTime = T(i).AddDays(ExtensionDays);
+            _futureTime = CloseTimeOf(i).AddDays(ExtensionDays);
 
             double atr = AtrAt(i);
 

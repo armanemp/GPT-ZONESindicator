@@ -27,7 +27,8 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 - [x] Add deterministic lifecycle unit cases for Fresh, Touched, Partial, Filled and Broken states (the full history/live replay fixture remains outstanding).
 - [x] Test all break modes: CandleClose, BodyBeyond and WickBeyond for bullish/bearish zones, including exact-boundary cases.
 - [x] Extract the closed-bar lifecycle decision step into a pure evaluator and add regression cases for both directions, strict break boundaries, fill/break priority, touch re-entry and terminal Broken state (CI passed; full history/live replay remains outstanding).
-- [ ] Verify breaker creation begins at the break confirmation time and preserves parent/child identity.
+- [x] Extract and test the pure breaker spec: reverse direction, preserve parent identity/bounds/scoring context, and start exactly at confirmation time (CI passed; end-to-end runtime link/chart verification remains pending).
+- [ ] Verify in cTrader that the parent's ChildId points to the generated breaker and the rendered breaker begins at the break confirmation time.
 - [ ] Verify hiding, ranking, overlap decluttering and chart-object budgets never mutate logical state.
 
 ## Phase 3 — Structure and liquidity correctness

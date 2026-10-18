@@ -13,14 +13,14 @@ This document describes the source ownership boundaries for the composite Smart 
 
 | Feature | Algorithm source | Parameter source | Rendering/state |
 |---|---|---|---|
-| Fair Value Gaps | `Features/FairValueGaps/SmartZonesNativePro.Fvg.cs` | `Configuration/Parameters.FairValueGaps.cs` | Shared zone lifecycle and `Rendering/SmartZonesNativePro.ZoneRenderer.cs` |
-| Price Gaps | `Features/PriceGaps/SmartZonesNativePro.PriceGaps.cs` | `Configuration/Parameters.PriceGaps.cs` | Shared zone lifecycle and zone renderer |
-| Market Structure (BOS/CHoCH) | `Features/MarketStructure/` | `Configuration/Parameters.MarketStructure.cs` | `Rendering/SmartZonesNativePro.StructureRenderer.cs` |
-| Order Blocks | `Features/OrderBlocks/` | `Configuration/Parameters.OrderBlocks.cs` | Shared zone lifecycle; structure breaks provide OB confirmation |
+| Fair Value Gaps | `Features/FairValueGaps/SmartZonesNativePro.Fvg.cs`, `FairValueGapDetectorEvaluator.cs`, `SmartZonesNativePro.M15Fvg.cs` | `Configuration/Parameters.FairValueGaps.cs` | Dedicated detector rules; shared zone lifecycle and zone renderer |
+| Price Gaps | `Features/PriceGaps/SmartZonesNativePro.PriceGaps.cs`, `PriceGapDetectorEvaluator.cs`, `SmartZonesNativePro.M15Gaps.cs` | `Configuration/Parameters.PriceGaps.cs` | Dedicated detector rules; shared zone lifecycle and zone renderer |
+| Market Structure (BOS/CHoCH) | `Features/MarketStructure/SmartZonesNativePro.Structure.cs`, `PivotEvaluator.cs`, `StructureBreakEvaluator.cs` | `Configuration/Parameters.MarketStructure.cs` | Own engine/state; emits immutable `OrderBlockSignal` and `EqualLevelSignal` snapshots; rendering cache is separate |
+| Order Blocks | `Features/OrderBlocks/SmartZonesNativePro.OrderBlocks.cs`, `SmartZonesNativePro.M15OrderBlocks.cs`, `OrderBlockSignal.cs`, candidate/rule evaluators | `Configuration/Parameters.OrderBlocks.cs` | Consumes break snapshots; M5 and M15 handlers are separate; shared zone lifecycle |
 | Breaker Blocks | Breaker creation in `Features/ZoneLifecycle/SmartZonesNativePro.ZoneStateAndScoring.cs` and `ZoneBreakerFactory.cs` | `Configuration/Parameters.Breakers.cs` | Shared zone lifecycle and zone renderer |
-| Equal Highs/Lows | `Features/EqualLevels/` | `Configuration/Parameters.EqualLevels.cs` | `Rendering/SmartZonesNativePro.LiquidityRenderer.cs`; clusters are built from confirmed swings |
-| Liquidity Sweeps | `Features/LiquiditySweeps/` | `Configuration/Parameters.LiquiditySweeps.cs` | `Rendering/SmartZonesNativePro.LiquidityRenderer.cs`; consumes swing/equal-level state |
-| M15 overlay | `Features/HigherTimeframe/` | `Configuration/Parameters.HigherTimeframe.cs` | Shared zone lifecycle, with closed-M15 confirmation |
+| Equal Highs/Lows | `Features/EqualLevels/SmartZonesNativePro.EqualLevels.cs`, `EqualLevelSignal.cs`, `EqualLevelEvaluator.cs` | `Configuration/Parameters.EqualLevels.cs` | Consumes value-only confirmed-swing snapshots; cluster-to-swing ownership stays in equal-level state; render items are separate |
+| Liquidity Sweeps | `Features/LiquiditySweeps/SmartZonesNativePro.LiquiditySweeps.cs`, sweep evaluators | `Configuration/Parameters.LiquiditySweeps.cs` | Explicit dependency on open swings/equal clusters; event data and render items are separate |
+| M15 overlay | `Features/HigherTimeframe/SmartZonesNativePro.M15Zones.cs` schedules closed bars; FVG, Price Gap and OB handlers live under their respective feature folders | `Configuration/Parameters.HigherTimeframe.cs` plus the owning detector settings | Own HTF state/history; per-detector exception boundaries; shared zone lifecycle only at registration |
 | Reference levels | `Features/ReferenceLevels/SmartZonesNativePro.ReferenceLevels.cs` | `Configuration/Parameters.KeyLevels.cs` and `Parameters.Sessions.cs` | `Rendering/SmartZonesNativePro.ReferenceRenderer.cs` |
 | Psychological levels | `Rendering/SmartZonesNativePro.RoundLevelsRenderer.cs` | `Configuration/Parameters.RoundLevels.cs` | Shared `Rendering/SmartZonesNativePro.ChartItemRenderer.cs` |
 
@@ -47,9 +47,20 @@ Do not duplicate those shared evaluations inside each detector. Change the ownin
 6. Reuse chart objects and update only changed fields where practical. Feature renderers always get a cleanup pass, even when their show toggle is off. Do not add a new object each tick and do not print repetitive per-bar diagnostics.
 7. Keep BOS/CHoCH labels at their break location. A line endpoint and the semantic position of its text are different concepts.
 
-## Remaining isolation work
+## Isolation status and boundaries
 
-The current feature algorithms live in separate source files and are scheduled through the fault-isolated pipeline, but they still compile as partial members of the same cTrader indicator class. The shared zone model and intentional cross-feature dependencies need a stable data contract before their state can be moved into standalone service classes. Treat extraction of each detector's private state into independent service objects, with event/snapshot interfaces, as a separate refactor phase and validate it with replay tests. Do not claim complete state encapsulation until that phase is finished.
+The source/state separation pass is implemented on `phase-9/feature-module-isolation`:
+
+- Mutable detector state is grouped by owner in `Runtime/SmartZonesNativePro.FeatureStateOwners.cs`; the rendering caches for zones, structure swings, equal clusters and sweep events are kept in separate render-state owners.
+- Logical `Zone`, `Swing`, `EqCluster`, and `SweepEv` records no longer carry their chart-item/line/text handles. Rendering is a disposable view of the logical records.
+- Structure sends **immutable value-only** `OrderBlockSignal` and `EqualLevelSignal` messages. Equal-level clusters map to swings in the equal-level owner rather than mutating a cluster pointer embedded inside `Swing`.
+- FVG and Price Gap rules are pure detector evaluators reused by the M5 and M15 adapters. M15 OB, FVG and Price Gap adapters are in their owning feature folders.
+- Each pipeline processor/renderer has an exception boundary, and M15 sub-detectors are wrapped separately so one detector exception does not suppress the others for the same closed M15 bar.
+- Deterministic tests cover detector thresholds/combine modes and pipeline error isolation; CI also builds/packages the cTrader artifact.
+
+The cTrader-facing indicator remains one `SmartZonesNativePro` type. Its thin partial-class adapters still read platform bars/parameters and register logical zones, but detector decisions, mutable feature state, event hand-offs, and drawing state are separated by responsibility. The zone repository/lifecycle/registration and shared chart-item synchronizer are intentionally common infrastructure, not per-detector logic.
+
+This is **module isolation inside one indicator**, not separate deployable DLLs. The code stage is complete; actual chart acceptance remains a separate integration gate because CI cannot render a live cTrader chart.
 
 ## Acceptance still required
 

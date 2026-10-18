@@ -9,27 +9,32 @@ The indicator is a single cTrader Automate type, `cAlgo.SmartZonesNativePro`. Th
 | Area | Responsibility |
 | --- | --- |
 | `Domain/ZoneTypes.cs` | Public parameter enums and internal zone-kind/state enums |
-| `Configuration/Parameters.*.cs` | Parameter definitions grouped by feature; parameter names/defaults are part of the user-facing contract |
-| `Runtime/SmartZonesNativePro.State.cs` | Zone, swing, liquidity, HTF/session records and instance-owned state |
-| `Runtime/SmartZonesNativePro.Lifecycle.cs` | Initialize/destroy, history loading/rebuild, closed-bar calculation pipeline |
-| `Runtime/SmartZonesNativePro.Helpers.cs` | OHLC/ATR, color, naming, object cleanup, diagnostics and DST-date helpers |
-| `Engine/SmartZonesNativePro.Structure.cs` | Confirmed pivots, BOS/CHoCH and structure-context updates |
-| `Engine/SmartZonesNativePro.ZoneRegistration.cs` | Duplicate keys, zone registration and confluence bookkeeping |
-| `Engine/SmartZonesNativePro.ZoneLifecycleIndex.cs` | Interval-tree lookup for overlapping zones and ordered break-candidate indexes, without dropping logical zone history |
-| `Engine/SmartZonesNativePro.Gaps.cs` | Three-candle FVGs and separately configured price gaps |
-| `Engine/SmartZonesNativePro.OrderBlocks.cs` | Structure-triggered order-block candidate detection |
-| `Engine/SmartZonesNativePro.Liquidity.cs` | Equal highs/lows, sweep detection and sweep event records |
-| `Engine/SmartZonesNativePro.ZoneStateAndScoring.cs` | Zone state machine, breaker creation, explainable score factors |
-| `References/SmartZonesNativePro.ReferenceLevels.cs` | Previous D/W/M levels, period opens, session ranges |
+| `Configuration/Parameters.*.cs` | Parameter declarations grouped by feature; names/defaults remain the user-facing contract |
+| `Runtime/SmartZonesNativePro.State.cs` | Logical domain records, common zone repository/indexes, indicator-runtime fields; no per-swing/equal/sweep chart-item handles |
+| `Runtime/SmartZonesNativePro.FeatureStateOwners.cs` | Mutable state owners grouped by feature plus separate structure/equal/sweep/zone rendering-cache owners |
+| `Runtime/SmartZonesNativePro.Lifecycle.cs` | Initialize/destroy, history loading/rebuild, closed-bar scheduling, independent feature execution |
+| `Runtime/SmartZonesNativePro.FeatureModules.cs` | Pipeline composition and viewport calculation; keeps ordering/fault boundaries, not detector rules |
+| `Engine/FeatureModulePipeline.cs` | Ordered closed-bar and render modules, each executed within its own exception boundary |
+| `Features/MarketStructure/` | Pivot and BOS/CHoCH processing; pure pivot/break evaluators; emits value-only signal snapshots |
+| `Features/OrderBlocks/` | M5 order-block handler/rules/candidate search and independent M15 order-block adapter |
+| `Features/FairValueGaps/` | M5 FVG adapter, pure FVG detector evaluator and M15 FVG adapter |
+| `Features/PriceGaps/` | M5 price-gap adapter, pure price-gap evaluator and M15 gap adapter |
+| `Features/EqualLevels/` | Confirmed-swing snapshot handling, equal-pair evaluator and state-owned cluster/swing association |
+| `Features/LiquiditySweeps/` | Sweep predicates, deduplication and sweep events; consumes confirmed swing/equal-level state |
+| `Features/HigherTimeframe/SmartZonesNativePro.M15Zones.cs` | M15 history/timing and higher-timeframe structure; detector handlers themselves belong to their feature folders |
+| `Features/ZoneLifecycle/` | Shared zone registration, lifecycle state transitions, indexes, viewport selection and breaker factory |
+| `Features/ReferenceLevels/` | Prior D/W/M levels, period opens and session ranges |
 | `Rendering/SmartZonesNativePro.ZoneRenderer.cs` | Zone visibility policy, buffered viewport filtering, ranking/decluttering and rectangle/midline/label synchronization |
-| `Rendering/SmartZonesNativePro.ItemAndStructureRenderer.cs` | Reusable line/text synchronization, structure, equality and sweep drawing |
-| `Rendering/SmartZonesNativePro.StatusAndRoundLevels.cs` | Psychological levels, status panel and one-time diagnostics summary |
+| `Rendering/SmartZonesNativePro.StructureRenderer.cs` | Structure swing/BOS/CHoCH objects; uses rendering-owned state, not chart handles in swing logic |
+| `Rendering/SmartZonesNativePro.LiquidityRenderer.cs` | Equal-level and sweep chart objects with separate render caches |
+| `Rendering/SmartZonesNativePro.ReferenceRenderer.cs`, `RoundLevelsRenderer.cs`, `ChartItemRenderer.cs` | Reference/psychological drawing and shared native chart-item synchronization |
+| `Tests/ZoneIntervalIndexSmoke/Program.cs` | Deterministic differential, lifecycle, detector-threshold and pipeline fault-isolation tests |
 
 ## Dependency direction
 
-- Detection/state code creates or updates logical records; it does not directly draw chart objects.
-- Rendering reads logical state and owns chart object creation/update/removal.
-- The lifecycle file coordinates engines in a deterministic order for each closed bar.
+- Feature handlers produce or update logical records; pure evaluators isolate deterministic rule decisions from the platform adapter.
+- Rendering reads logical state and owns chart object creation/update/removal; the zone/swing/equal/sweep logical records contain no chart-item handles.
+- The composition root coordinates engines and immutable hand-off signals in deterministic closed-bar order; each processor and renderer has a fault boundary.
 - The parameter files are declarations only; they do not contain execution logic.
 - All object names are prefixed per indicator instance. Cleanup must never remove objects belonging to other indicators.
 

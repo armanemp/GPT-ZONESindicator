@@ -69,16 +69,14 @@ namespace cAlgo
 
             if (DetectEqual && engine.Major == EqUseMajorSwings)
             {
-                _equalLevelsState.PendingSwings.Add(new EqualLevelSignal
-                {
-                    Major = engine.Major,
-                    High = swing.High,
-                    Index = swing.Idx,
-                    ConfirmedIndex = swing.ConfIdx,
-                    Time = swing.Time,
-                    Price = swing.Price,
-                    Atr = atr
-                });
+                _equalLevelsState.PendingSwings.Add(new EqualLevelSignal(
+                    engine.Major,
+                    swing.High,
+                    swing.Idx,
+                    swing.ConfIdx,
+                    swing.Time,
+                    swing.Price,
+                    atr));
             }
         }
 
@@ -138,15 +136,13 @@ namespace cAlgo
 
             if (DetectOb && sourceAllowed)
             {
-                _orderBlockState.PendingSignals.Add(new OrderBlockSignal
-                {
-                    Major = engine.Major,
-                    SwingHigh = swing.High,
-                    SwingPrice = swing.Price,
-                    SwingIndex = swing.Idx,
-                    BreakIndex = index,
-                    Atr = atr
-                });
+                _orderBlockState.PendingSignals.Add(new OrderBlockSignal(
+                    engine.Major,
+                    swing.High,
+                    swing.Price,
+                    atr,
+                    swing.Idx,
+                    index));
             }
         }
 

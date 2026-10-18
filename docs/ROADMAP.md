@@ -99,11 +99,15 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 - [x] Filter to viewport-intersecting zones before applying ranking or visible-zone quotas; invalid viewport states no longer trigger full-history object creation.
 - [x] Make zone rectangles the lightweight default; labels and midlines are opt-in extra chart objects.
 - [x] Separate M15 detection from M15 visibility so hiding that overlay does not stop calculation.
-- [ ] Move all remaining feature-private detector state out of the shared partial indicator host into independent module service classes with explicit immutable events/snapshots. The shared zone lifecycle remains intentional, but full state encapsulation is not yet complete.
+- [x] Group detector state into named feature-owned state containers; separate renderer-owned caches for zone objects, structure swings, equal clusters and sweep events.
+- [x] Replace structure-to-order-block and structure-to-equal-level object coupling with immutable value-only event/snapshot structs.
+- [x] Extract shared FVG and Price Gap rule evaluators and reuse them for both M5 and M15 detectors; split M15 detector adapters by owning feature.
+- [x] Add deterministic FVG/Price Gap threshold/combine-mode tests and verify a failing pipeline processor/renderer does not suppress later modules (CI passed).
+- [x] Keep common zone registration/lifecycle/indexing shared by design, while keeping detector decisions, feature state and render caches separate. The single cTrader entry point remains a partial class that supplies platform access; feature modules are internal boundaries, not separate deployable assemblies.
 - [ ] Verify that no valid active zone is omitted because of viewport selection or saved display parameters; use the status/diagnostic counts to distinguish detection rejection from display filtering. Rank and per-kind quotas are now viewport-local by design.
 - [ ] Confirm scrolling/zooming behavior and live object counts on the actual cTrader chart.
 
-**Exit gate:** All CI build and deterministic tests pass, feature toggles do not affect unrelated modules, and live cTrader testing confirms viewport virtualization and zone visibility. Do not describe the modules as fully state-isolated until the first open item above is complete.
+**Exit gate:** The source/state isolation work and deterministic CI gate are complete on the isolation branch. Live cTrader testing is still required to verify that feature toggles preserve unrelated output and that viewport virtualization never hides valid zones; no separate-DLL claim is made.
 
 ## Phase 9 — Release acceptance
 

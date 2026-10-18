@@ -24,9 +24,9 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 
 ## Phase 2 — Zone lifecycle correctness
 
-- [ ] Add deterministic tests/replay fixtures for Fresh, Touched, Partial, Filled and Broken transitions.
-- [ ] Test all break modes: CandleClose, BodyBeyond and WickBeyond.
-- [x] Extract the closed-bar lifecycle decision step into a pure evaluator and add regression cases for both directions, strict break boundaries, fill/break priority, touch re-entry and terminal Broken state (CI execution pending).
+- [x] Add deterministic lifecycle unit cases for Fresh, Touched, Partial, Filled and Broken states (the full history/live replay fixture remains outstanding).
+- [x] Test all break modes: CandleClose, BodyBeyond and WickBeyond for bullish/bearish zones, including exact-boundary cases.
+- [x] Extract the closed-bar lifecycle decision step into a pure evaluator and add regression cases for both directions, strict break boundaries, fill/break priority, touch re-entry and terminal Broken state (CI passed; full history/live replay remains outstanding).
 - [ ] Verify breaker creation begins at the break confirmation time and preserves parent/child identity.
 - [ ] Verify hiding, ranking, overlap decluttering and chart-object budgets never mutate logical state.
 
@@ -58,7 +58,7 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 
 - [ ] Replace per-bar full scans of all active zones with a price interval index and per-kind ordered break indexes, preserving all zone states and all three break-mode predicates (Release CI and cTrader replay validation pending).
 - [ ] Verify indexed lifecycle output against an exhaustive reference replay across CandleClose, BodyBeyond, and WickBeyond, including bars that gap entirely across a zone and re-entry touch counts.
-- [x] Extract the interval treap into a reusable component and add deterministic boundary/mutation coverage plus 50,000 seeded randomized operations whose queries are compared with a brute-force reference scan (automated CI execution added; pass status pending).
+- [x] Extract the interval treap into a reusable component and add deterministic boundary/mutation coverage plus 50,000 seeded randomized operations whose queries are compared with a brute-force reference scan (CI passed: 50,000 seeded randomized operations, differential query checks included).
 - [ ] Benchmark initial load at several lookbacks (for example 1k, 10k and 50k bars).
 - [ ] Measure process time per bar, render time, object count, and allocations.
 - [ ] Inspect pivot scans and active-zone updates for avoidable repeated work.

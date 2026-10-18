@@ -28,7 +28,7 @@ namespace cAlgo
         [Parameter("Load broker history up to lookback", Group = G02, DefaultValue = true)]
         public bool LoadHistoryToLookback { get; set; }
 
-        [Parameter("Zone extension into the future (days)", Group = G02, DefaultValue = 365, MinValue = 1, MaxValue = 3650)]
+        [Parameter("Legacy extension days (ignored; zones use 40 bars)", Group = G02, DefaultValue = 40, MinValue = 1, MaxValue = 3650)]
         public int ExtensionDays { get; set; }
 
         [Parameter("Max zone rectangles shown (0 = unlimited)", Group = G02, DefaultValue = 0, MinValue = 0, MaxValue = 100000)]

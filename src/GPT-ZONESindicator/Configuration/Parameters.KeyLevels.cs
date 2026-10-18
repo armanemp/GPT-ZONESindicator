@@ -19,6 +19,6 @@ namespace cAlgo
         [Parameter("Weekly periods drawn (incl. current)", Group = G11, DefaultValue = 1, MinValue = 1, MaxValue = 1000)] public int WeeklyPeriodsKept { get; set; }
         [Parameter("Monthly periods drawn (incl. current)", Group = G11, DefaultValue = 1, MinValue = 1, MaxValue = 1000)] public int MonthlyPeriodsKept { get; set; }
         [Parameter("Show level labels", Group = G11, DefaultValue = true)] public bool ShowLevelLabels { get; set; }
-        [Parameter("Max reference items in viewport (0 = all)", Group = G11, DefaultValue = 10, MinValue = 0, MaxValue = 100000)] public int ReferenceMaxVisible { get; set; }
+        [Parameter("Max reference items in viewport (0 = all)", Group = G11, DefaultValue = 0, MinValue = 0, MaxValue = 100000)] public int ReferenceMaxVisible { get; set; }
     }
 }

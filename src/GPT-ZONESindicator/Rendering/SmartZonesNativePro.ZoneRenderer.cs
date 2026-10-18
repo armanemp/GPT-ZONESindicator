@@ -35,6 +35,7 @@ namespace cAlgo
         {
             if (zone == null
                 || !ShowObHistoryOfBreakers
+                || !ShowBreaker
                 || zone.Kind != SznpKind.OrderBlock
                 || zone.State != SznpState.Broken
                 || zone.ChildId <= 0
@@ -50,7 +51,8 @@ namespace cAlgo
                 && child.ParentId == zone.Id;
 
             return ZoneBreakerVisibilityPolicy.ShouldShowParentHistory(
-                zone.Kind, zone.State, zone.ChildId, matchingChild, ShowObHistoryOfBreakers);
+                zone.Kind, zone.State, zone.ChildId, matchingChild,
+                ShowObHistoryOfBreakers, ShowBreaker);
         }
 
         private bool ZoneWanted(Zone zone, double price, double atrNow)
@@ -76,11 +78,12 @@ namespace cAlgo
                     break;
             }
 
-            // Broken zones are not valid live areas. They stay hidden by default; only the
-            // exact parent OB linked to a breaker can be rendered as bounded history when
-            // ShowObHistoryOfBreakers is explicitly enabled. Its end remains the actual break time.
+            // Broken zones remain hidden unless ShowBrokenZones is enabled. An explicitly
+            // requested, correctly linked parent OB is a separate history exception and is
+            // bounded by the parent's actual break time.
             if (!showParentHistory
-                && !ZoneVisibilityPolicy.ShouldRender(zone.State, ShowTouchedZones, ShowFilledZones))
+                && !ZoneVisibilityPolicy.ShouldRender(
+                    zone.State, ShowTouchedZones, ShowFilledZones, ShowBrokenZones))
                 return false;
 
             if (!showParentHistory
@@ -220,7 +223,8 @@ namespace cAlgo
             bool indexedViewportSelection = ZoneViewportSelectionPolicy.UseActiveZoneIndex(
                 hasViewport,
                 ShowFilledZones,
-                ShowObHistoryOfBreakers);
+                ShowBrokenZones,
+                ShowObHistoryOfBreakers && ShowBreaker);
 
             bool needScore = MinScore > 0
                 || DisplayMode == SznpDisplayMode.TopRanked
@@ -447,11 +451,12 @@ namespace cAlgo
 
         private Color ZoneMidlineColor(Zone zone)
         {
-            // Midline RGB always matches the zone exactly; only alpha is independently
-            // configurable so the same hue remains legible over candle bodies.
+            // Keep the zone hue, brighten it slightly for contrast, and retain a subtle
+            // per-kind tint from the existing midline colour parameters.
             Color source = ZoneColor(zone);
-            ZoneMidlineRgb matching = ZoneMidlineColorEvaluator.Match(
-                source.R, source.G, source.B);
+            Color tint = _midBase[(int)zone.Kind];
+            ZoneMidlineRgb matching = ZoneMidlineColorEvaluator.Highlight(
+                source.R, source.G, source.B, tint.R, tint.G, tint.B);
             byte alpha = (byte)Math.Max(0, Math.Min(255, Math.Round(MidlineOpacity * 2.55)));
             return Color.FromArgb(alpha, matching.R, matching.G, matching.B);
         }

@@ -45,15 +45,18 @@ namespace cAlgo
             if (input.ExistingChildId > 0)
                 throw new InvalidOperationException("The parent order block already has a breaker child.");
 
+            // The OB is often discovered retrospectively when the structure break is
+            // confirmed. ReplayZone then replays candles from the OB origin up to that
+            // confirmation bar; the OB can therefore break before its own confirmation
+            // index/time. Validate against the OB origin, not its later discovery time.
             if (input.OriginIndex < 0
                 || input.ParentConfirmationIndex < input.OriginIndex
-                || input.ConfirmationIndex <= input.ParentConfirmationIndex)
-                throw new ArgumentException("A breaker can only be confirmed after its parent order block was confirmed.", nameof(input));
+                || input.ConfirmationIndex <= input.OriginIndex)
+                throw new ArgumentException("A breaker must be confirmed after the order-block origin.", nameof(input));
 
             if (input.ParentConfirmationTime == DateTime.MinValue
-                || input.ConfirmationTime == DateTime.MinValue
-                || input.ConfirmationTime <= input.ParentConfirmationTime)
-                throw new ArgumentException("Breaker confirmation time must be later than the parent order-block confirmation time.", nameof(input));
+                || input.ConfirmationTime == DateTime.MinValue)
+                throw new ArgumentException("Parent and breaker confirmation timestamps must be defined.", nameof(input));
 
             if (double.IsNaN(input.Lower) || double.IsInfinity(input.Lower)
                 || double.IsNaN(input.Upper) || double.IsInfinity(input.Upper)

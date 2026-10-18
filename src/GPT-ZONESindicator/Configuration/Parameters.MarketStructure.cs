@@ -31,7 +31,7 @@ namespace cAlgo
         [Parameter("Show active (unbroken) swing levels", Group = G07, DefaultValue = false)]
         public bool ShowMajorActiveLevels { get; set; }
 
-        [Parameter("Max major-structure items in viewport (0 = all)", Group = G07, DefaultValue = 12, MinValue = 0, MaxValue = 100000)]
+        [Parameter("Max major-structure items in viewport (0 = all)", Group = G07, DefaultValue = 60, MinValue = 0, MaxValue = 100000)]
         public int StructMaxVisible { get; set; }
 
         [Parameter("Swing left bars", Group = G08, DefaultValue = 5, MinValue = 1, MaxValue = 1000)]
@@ -58,7 +58,7 @@ namespace cAlgo
         [Parameter("Show active internal swing levels", Group = G08, DefaultValue = false)]
         public bool ShowInternalActiveLevels { get; set; }
 
-        [Parameter("Max internal-structure items in viewport (0 = all)", Group = G08, DefaultValue = 8, MinValue = 0, MaxValue = 100000)]
+        [Parameter("Max internal-structure items in viewport (0 = all)", Group = G08, DefaultValue = 60, MinValue = 0, MaxValue = 100000)]
         public int InternalStructMaxVisible { get; set; }
     }
 }

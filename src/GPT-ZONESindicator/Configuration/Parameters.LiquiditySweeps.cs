@@ -12,7 +12,7 @@ namespace cAlgo
         [Parameter("Show sweeps", Group = G09, DefaultValue = true)]
         public bool ShowSweeps { get; set; }
 
-        [Parameter("Max sweep items in viewport (0 = all)", Group = G09, DefaultValue = 6, MinValue = 0, MaxValue = 100000)]
+        [Parameter("Max sweep items in viewport (0 = all)", Group = G09, DefaultValue = 60, MinValue = 0, MaxValue = 100000)]
         public int SweepMaxVisible { get; set; }
 
         [Parameter("Source: major swings", Group = G09, DefaultValue = true)]

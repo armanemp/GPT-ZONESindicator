@@ -18,19 +18,19 @@ namespace cAlgo
         [Parameter("Major structure thickness", Group = G20, DefaultValue = 1, MinValue = 1, MaxValue = 5)]
         public int StructThickness { get; set; }
 
-        [Parameter("Major structure style", Group = G20, DefaultValue = LineStyle.Dots)]
+        [Parameter("Major structure style", Group = G20, DefaultValue = LineStyle.Solid)]
         public LineStyle StructStyle { get; set; }
 
         [Parameter("Internal structure style", Group = G20, DefaultValue = LineStyle.Dots)]
         public LineStyle InternalStyle { get; set; }
 
-        [Parameter("Liquidity line style", Group = G20, DefaultValue = LineStyle.Dots)]
+        [Parameter("Liquidity line style", Group = G20, DefaultValue = LineStyle.DotsRare)]
         public LineStyle LiquidityStyle { get; set; }
 
         [Parameter("Reference line thickness", Group = G20, DefaultValue = 1, MinValue = 1, MaxValue = 5)]
         public int RefThickness { get; set; }
 
-        [Parameter("Reference line style", Group = G20, DefaultValue = LineStyle.Dots)]
+        [Parameter("Reference line style", Group = G20, DefaultValue = LineStyle.Solid)]
         public LineStyle RefStyle { get; set; }
 
         [Parameter("Session line style", Group = G20, DefaultValue = LineStyle.Dots)]

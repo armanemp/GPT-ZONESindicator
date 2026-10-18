@@ -491,24 +491,18 @@ namespace ZoneIntervalIndexSmoke
             Assert(rejectedTimeline, "A breaker must be confirmed after its order-block origin.");
             input.ConfirmationIndex = 17;
 
-            bool rejectedBeforeParentConfirmation = false;
-            try
-            {
-                input.ConfirmationIndex = input.ParentConfirmationIndex;
-                ZoneBreakerFactory.Create(input);
-            }
-            catch (ArgumentException)
-            {
-                rejectedBeforeParentConfirmation = true;
-            }
-            Assert(rejectedBeforeParentConfirmation,
-                "A breaker must not be created on or before the parent's confirmation bar.");
-            input.ConfirmationIndex = 17;
+            ZoneBreakerInput replayedInput = input;
+            replayedInput.ConfirmationIndex = 8;
+            replayedInput.ConfirmationTime = input.ParentConfirmationTime.AddMinutes(-5);
+            ZoneBreakerSpec replayedSpec = ZoneBreakerFactory.Create(replayedInput);
+            Assert(replayedSpec.ConfirmationIndex < replayedInput.ParentConfirmationIndex
+                && replayedSpec.StartTime < replayedInput.ParentConfirmationTime,
+                "Historical replay must allow a breaker to predate the later OB-discovery confirmation.");
 
             bool rejectedConfirmationTime = false;
             try
             {
-                input.ConfirmationTime = input.ParentConfirmationTime;
+                input.ConfirmationTime = DateTime.MinValue;
                 ZoneBreakerFactory.Create(input);
             }
             catch (ArgumentException)
@@ -516,7 +510,7 @@ namespace ZoneIntervalIndexSmoke
                 rejectedConfirmationTime = true;
             }
             Assert(rejectedConfirmationTime,
-                "A breaker confirmation timestamp must be later than its parent's confirmation timestamp.");
+                "A breaker confirmation timestamp must be defined.");
             input.ConfirmationTime = confirmedAt;
 
             bool rejectedAtr = false;
@@ -535,29 +529,26 @@ namespace ZoneIntervalIndexSmoke
 
 
 
-        private static void VerifyFutureBarTime()
+        private static void VerifyFutureZoneTime()
         {
-            TimeSpan fiveMinutes = TimeSpan.FromMinutes(5);
-            TimeSpan regularFortyBars = FutureBarTimeEvaluator.GetFortyBarSpan(fiveMinutes);
-            Assert(regularFortyBars == TimeSpan.FromMinutes(200),
-                "Forty M5 bar intervals must extend the zone by exactly 200 nominal minutes.");
-
             DateTime lastBarOpen = new DateTime(2026, 10, 18, 18, 0, 0);
-            Assert(FutureBarTimeEvaluator.GetFortyBarEnd(lastBarOpen, fiveMinutes)
-                    == lastBarOpen.AddMinutes(200),
-                "The visual right edge must be exactly forty M5 bar intervals after the latest candle.");
+            Assert(FutureZoneTimeEvaluator.GetExtensionEnd(lastBarOpen, 365)
+                    == lastBarOpen.AddDays(365),
+                "Active zones must honor the configured default one-year extension.");
 
-            // A large historical span can contain weekend/session gaps. It must not
-            // change this forty-nominal-candle future margin.
-            TimeSpan afterSessionGap = FutureBarTimeEvaluator.GetFortyBarSpan(fiveMinutes);
-            Assert(afterSessionGap == TimeSpan.FromMinutes(200),
-                "Historical session gaps must not expand the future margin beyond forty nominal candles.");
+            Assert(FutureZoneTimeEvaluator.GetExtensionEnd(lastBarOpen, 7)
+                    == lastBarOpen.AddDays(7),
+                "Active zones must honor a custom extension in days.");
 
-            TimeSpan minimal = FutureBarTimeEvaluator.GetFortyBarSpan(TimeSpan.Zero);
-            Assert(minimal == TimeSpan.FromTicks(40),
-                "A missing nominal interval must remain safe and positive.");
+            Assert(FutureZoneTimeEvaluator.GetExtensionEnd(lastBarOpen, 0)
+                    == lastBarOpen.AddDays(1),
+                "The future endpoint must remain positive even when an invalid zero-day value is passed.");
 
-            Console.WriteLine("PASS: zone, line and label projection uses an exact forty-bar future endpoint.");
+            Assert(FutureZoneTimeEvaluator.GetExtensionEnd(DateTime.MaxValue, 1)
+                    == DateTime.MaxValue,
+                "Date overflow must be handled without crashing indicator processing.");
+
+            Console.WriteLine("PASS: active-zone projection honours the configurable extension in days.");
         }
 
 
@@ -593,47 +584,46 @@ namespace ZoneIntervalIndexSmoke
 
         private static void VerifyZoneVisibilityPolicy()
         {
-            Assert(ZoneVisibilityPolicy.ShouldRender(SznpState.Fresh, false, false),
+            Assert(ZoneVisibilityPolicy.ShouldRender(SznpState.Fresh, false, false, false),
                 "Fresh zones should render regardless of touched/filled display switches.");
-            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Touched, false, false),
+            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Touched, false, false, false),
                 "Touched zones should respect the touched-zone display switch.");
-            Assert(ZoneVisibilityPolicy.ShouldRender(SznpState.Touched, true, false),
+            Assert(ZoneVisibilityPolicy.ShouldRender(SznpState.Touched, true, false, false),
                 "Touched zones should render when enabled.");
-            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Partial, false, false),
+            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Partial, false, false, false),
                 "Partially filled zones should respect the touched-zone display switch.");
-            Assert(ZoneVisibilityPolicy.ShouldRender(SznpState.Partial, true, false),
+            Assert(ZoneVisibilityPolicy.ShouldRender(SznpState.Partial, true, false, false),
                 "Partially filled zones should render when enabled.");
-            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Filled, true, false),
+            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Filled, true, false, false),
                 "Filled zones should remain hidden unless filled-zone history is enabled.");
-            Assert(ZoneVisibilityPolicy.ShouldRender(SznpState.Filled, true, true),
+            Assert(ZoneVisibilityPolicy.ShouldRender(SznpState.Filled, true, true, false),
                 "Filled zones should render when filled-zone history is enabled.");
+            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Broken, false, false, false),
+                "Broken zones must remain hidden when their history toggle is off.");
+            Assert(ZoneVisibilityPolicy.ShouldRender(SznpState.Broken, false, false, true),
+                "ShowBrokenZones must make broken zones visible.");
+            Assert(ZoneVisibilityPolicy.ShouldRender(SznpState.Broken, true, true, true),
+                "Broken-zone visibility must not depend on the touched/filled switches.");
 
-            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Broken, false, false),
-                "Broken zones must never render when history toggles are off.");
-            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Broken, true, false),
-                "Broken zones must never render when touched zones are enabled.");
-            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Broken, false, true),
-                "Broken zones must never render when filled history is enabled.");
-            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Broken, true, true),
-                "Broken zones must never render under any supported display combination.");
-
-            Console.WriteLine("PASS: broken zones are terminal and cannot be rendered by any state visibility combination.");
+            Console.WriteLine("PASS: zone lifecycle states respect their dedicated display switches.");
         }
 
         private static void VerifyZoneViewportSelectionPolicy()
         {
-            Assert(ZoneViewportSelectionPolicy.UseActiveZoneIndex(true, false),
+            Assert(ZoneViewportSelectionPolicy.UseActiveZoneIndex(true, false, false),
                 "Active-only viewport rendering should use the interval index.");
-            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(true, true),
+            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(true, true, false),
                 "Enabling filled zones must fall back to the full zone history.");
-            Assert(ZoneViewportSelectionPolicy.UseActiveZoneIndex(true, false),
+            Assert(ZoneViewportSelectionPolicy.UseActiveZoneIndex(true, false, false),
                 "Unrequested terminal history must not force a full-history scan.");
-            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(true, false, true),
+            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(true, false, false, true),
                 "Explicit breaker-parent history must scan logical history, because broken parents leave the active index.");
-            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(false, false),
-                "Without a valid viewport, rendering must not claim active-index viewport mode.");
+            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(true, false, true),
+                "Enabling ShowBrokenZones must scan logical history, including terminal broken zones.");
+            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(false, false, false),
+                "Without a valid viewport, the active-index viewport path must not be selected.");
 
-            Console.WriteLine("PASS: viewport selection uses the active index except for opt-in filled or breaker-parent history.");
+            Console.WriteLine("PASS: viewport selection includes requested filled, broken and breaker-parent history.");
         }
 
         private static void VerifyBreakerLifecycleDirection()
@@ -665,40 +655,45 @@ namespace ZoneIntervalIndexSmoke
         private static void VerifyBreakerParentHistoryPolicy()
         {
             Assert(ZoneBreakerVisibilityPolicy.ShouldShowParentHistory(
-                    SznpKind.OrderBlock, SznpState.Broken, 9, true, true),
-                "Explicit history should allow a broken OB with its matching breaker child.");
+                    SznpKind.OrderBlock, SznpState.Broken, 9, true, true, true),
+                "Explicit history should show a broken OB with its matching breaker when breakers are enabled.");
             Assert(!ZoneBreakerVisibilityPolicy.ShouldShowParentHistory(
-                    SznpKind.OrderBlock, SznpState.Broken, 9, true, false),
-                "The original OB history must remain hidden when its toggle is off.");
+                    SznpKind.OrderBlock, SznpState.Broken, 9, true, false, true),
+                "Original OB history must remain hidden when its history toggle is off.");
             Assert(!ZoneBreakerVisibilityPolicy.ShouldShowParentHistory(
-                    SznpKind.OrderBlock, SznpState.Fresh, 9, true, true),
+                    SznpKind.OrderBlock, SznpState.Broken, 9, true, true, false),
+                "Original OB history must remain hidden when breakers are disabled.");
+            Assert(!ZoneBreakerVisibilityPolicy.ShouldShowParentHistory(
+                    SznpKind.OrderBlock, SznpState.Fresh, 9, true, true, true),
                 "History mode must not reinterpret an unbroken OB as breaker history.");
             Assert(!ZoneBreakerVisibilityPolicy.ShouldShowParentHistory(
-                    SznpKind.OrderBlock, SznpState.Broken, -1, true, true),
+                    SznpKind.OrderBlock, SznpState.Broken, -1, true, true, true),
                 "A broken OB without a child ID must not appear as breaker history.");
             Assert(!ZoneBreakerVisibilityPolicy.ShouldShowParentHistory(
-                    SznpKind.OrderBlock, SznpState.Broken, 9, false, true),
+                    SznpKind.OrderBlock, SznpState.Broken, 9, false, true, true),
                 "An OB must not appear as history when its child is not a matching breaker.");
             Assert(!ZoneBreakerVisibilityPolicy.ShouldShowParentHistory(
-                    SznpKind.Fvg, SznpState.Broken, 9, true, true),
+                    SznpKind.Fvg, SznpState.Broken, 9, true, true, true),
                 "Only an order block can appear as the parent of breaker history.");
 
-            Console.WriteLine("PASS: breaker parent history requires an explicit toggle and a valid parent-child link.");
+            Console.WriteLine("PASS: breaker parent history respects both controls and the reciprocal parent-child link.");
         }
 
         private static void VerifyZoneMidlineColor()
         {
-            ZoneMidlineRgb source = ZoneMidlineColorEvaluator.Match(22, 160, 166);
-            Assert(source.R == 22 && source.G == 160 && source.B == 166,
-                "Zone midline RGB must match the zone exactly.");
-            ZoneMidlineRgb darkZone = ZoneMidlineColorEvaluator.Match(94, 12, 37);
-            Assert(darkZone.R == 94 && darkZone.G == 12 && darkZone.B == 37,
-                "Exact matching must work for dark bearish zone colours too.");
-            ZoneMidlineRgb neutral = ZoneMidlineColorEvaluator.Match(128, 128, 128);
-            Assert(neutral.R == 128 && neutral.G == 128 && neutral.B == 128,
-                "Exact matching must preserve neutral colours.");
+            ZoneMidlineRgb teal = ZoneMidlineColorEvaluator.Highlight(22, 160, 166, 79, 184, 155);
+            Assert(teal.R > 22 && teal.G > 160 && teal.B > 166,
+                "A midline should be a subtly brighter version of its zone colour.");
 
-            Console.WriteLine("PASS: zone midlines use the exact zone RGB without tinting.");
+            ZoneMidlineRgb darkZone = ZoneMidlineColorEvaluator.Highlight(94, 12, 37, 60, 179, 113);
+            Assert(darkZone.R > 94 && darkZone.G > 12 && darkZone.B > 37,
+                "Brightening must remain visible for dark bearish zone colours too.");
+
+            ZoneMidlineRgb neutral = ZoneMidlineColorEvaluator.Highlight(128, 128, 128, 100, 150, 200);
+            Assert(neutral.R > 128 && neutral.G > 128 && neutral.B > 128,
+                "Midline tint controls must not darken the source zone colour.");
+
+            Console.WriteLine("PASS: zone midlines are brighter, direction-aware versions of their zone colours.");
         }
 
         private static void VerifyEqualLevelPairRules()
@@ -1665,7 +1660,7 @@ namespace ZoneIntervalIndexSmoke
                 VerifyZoneVisibilityPolicy();
                 VerifyZoneViewportSelectionPolicy();
                 VerifyHigherTimeframeTiming();
-                VerifyFutureBarTime();
+                VerifyFutureZoneTime();
                 VerifyPivotConfirmationAndTieRules();
                 VerifyEqualLevelPairRules();
                 VerifyOrderBlockRules();

@@ -13,7 +13,7 @@
     <Compile Include="../../src/GPT-ZONESindicator/Features/PriceGaps/PriceGapDetectorEvaluator.cs" Link="PriceGapDetectorEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Features/ZoneLifecycle/ZoneIntervalIndex.cs" Link="ZoneIntervalIndex.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Features/HigherTimeframe/HigherTimeframeTimingEvaluator.cs" Link="HigherTimeframeTimingEvaluator.cs" />
-    <Compile Include="../../src/GPT-ZONESindicator/Engine/FutureBarTimeEvaluator.cs" Link="FutureBarTimeEvaluator.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Engine/FutureZoneTimeEvaluator.cs" Link="FutureZoneTimeEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Features/MarketStructure/PivotEvaluator.cs" Link="PivotEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Features/EqualLevels/EqualLevelEvaluator.cs" Link="EqualLevelEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Features/OrderBlocks/OrderBlockRules.cs" Link="OrderBlockRules.cs" />

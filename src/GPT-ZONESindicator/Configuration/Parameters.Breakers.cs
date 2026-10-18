@@ -15,7 +15,7 @@ namespace cAlgo
         [Parameter("Breaker invalidation criterion", Group = G06, DefaultValue = SznpBreakMode.CandleClose)]
         public SznpBreakMode BreakerBreakMode { get; set; }
 
-        [Parameter("Show original OB history of a breaker", Group = G06, DefaultValue = false)]
+        [Parameter("Show original OB history of a breaker", Group = G06, DefaultValue = true)]
         public bool ShowObHistoryOfBreakers { get; set; }
     }
 }

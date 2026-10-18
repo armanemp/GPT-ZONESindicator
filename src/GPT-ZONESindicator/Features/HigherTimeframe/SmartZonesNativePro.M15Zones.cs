@@ -14,10 +14,10 @@ namespace cAlgo
         private DateTime ComputeFutureZoneTime()
         {
             if (Bars.Count <= 0)
-                return DateTime.UtcNow.Add(TimeSpan.FromMinutes(200));
+                return FutureZoneTimeEvaluator.GetExtensionEnd(DateTime.UtcNow, ExtensionDays);
 
             int last = Bars.Count - 1;
-            return FutureBarTimeEvaluator.GetFortyBarEnd(Bars.OpenTimes[last], _barSpan);
+            return FutureZoneTimeEvaluator.GetExtensionEnd(Bars.OpenTimes[last], ExtensionDays);
         }
 
         private void SetupM15Bars()

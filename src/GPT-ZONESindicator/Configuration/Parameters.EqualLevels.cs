@@ -12,7 +12,7 @@ namespace cAlgo
         [Parameter("Show equal highs/lows", Group = G10, DefaultValue = true)]
         public bool ShowEqual { get; set; }
 
-        [Parameter("Max equal-level items in viewport (0 = all)", Group = G10, DefaultValue = 6, MinValue = 0, MaxValue = 100000)]
+        [Parameter("Max equal-level items in viewport (0 = all)", Group = G10, DefaultValue = 60, MinValue = 0, MaxValue = 100000)]
         public int EqualMaxVisible { get; set; }
 
         [Parameter("Use major swings (off = internal)", Group = G10, DefaultValue = false)]

@@ -109,7 +109,8 @@ namespace cAlgo
                 || orderBlock.BreakIdx != index
                 || orderBlock.ChildId > 0
                 || orderBlock.ConfirmIdx < 0
-                || index <= orderBlock.ConfirmIdx)
+                || orderBlock.OriginIdx < 0
+                || index <= orderBlock.OriginIdx)
             {
                 Reject("breaker: parent not eligible");
                 return;

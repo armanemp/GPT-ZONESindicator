@@ -220,7 +220,7 @@ namespace cAlgo
 
             if (n > 0)
             {
-                Log("Forty-bar projection: bar interval=" + _barSpan
+                Log("Zone extension: days=" + Math.Max(1, ExtensionDays)
                     + ", latest candle open=" + Bars.OpenTimes[n - 1].ToString("yyyy-MM-dd HH:mm:ss")
                     + ", drawing endpoint=" + _futureTime.ToString("yyyy-MM-dd HH:mm:ss"));
             }
@@ -357,8 +357,7 @@ namespace cAlgo
             if (i < _startIdx || i < 2)
                 return;
 
-            // Keep every still-valid zone (and its midline) extended past the latest
-            // closed bar, even when the user configured a short future extension.
+            // Reapply the user-configured extension endpoint as each new closed bar arrives.
             _futureTime = ComputeFutureZoneTime();
 
             double atr = AtrAt(i);

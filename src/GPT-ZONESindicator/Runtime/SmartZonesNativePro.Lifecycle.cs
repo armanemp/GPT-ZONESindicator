@@ -7,6 +7,20 @@ namespace cAlgo
 {
     public partial class SmartZonesNativePro
     {
+        private void ApplyLineLabelPresentation()
+        {
+            // Enforce the requested presentation even when cTrader restores an older
+            // parameter preset that still contains solid/line styles or hidden level labels.
+            ShowLevelLabels = true;
+            MidlineStyle = LineStyle.Dots;
+            StructStyle = LineStyle.Dots;
+            InternalStyle = LineStyle.Dots;
+            LiquidityStyle = LineStyle.Dots;
+            RefStyle = LineStyle.Dots;
+            SessionStyle = LineStyle.Dots;
+            RoundStyle = LineStyle.Dots;
+        }
+
         protected override void Initialize()
         {
             long t0 = Stopwatch.GetTimestamp();
@@ -14,6 +28,7 @@ namespace cAlgo
             _lowPriceAt = L;
             _openPriceAt = O;
             _closePriceAt = C;
+            ApplyLineLabelPresentation();
             string tag = string.IsNullOrWhiteSpace(InstanceTag) ? "SZNP" : InstanceTag.Trim();
             _prefix = tag + "_";
             _pip = Symbol.PipSize > 0 ? Symbol.PipSize : 0.0001;

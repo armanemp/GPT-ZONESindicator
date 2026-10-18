@@ -206,6 +206,9 @@ namespace cAlgo
             // opt-in history records remain available.
             bool indexedViewportSelection = hasViewport
                 && !globalSelection
+                // The active-zone interval index intentionally excludes terminal states.
+                // Fall back to the full logical zone list whenever terminal history is enabled.
+                && !ShowFilledZones
                 && !ShowBrokenZones
                 && !ShowObHistoryOfBreakers;
 

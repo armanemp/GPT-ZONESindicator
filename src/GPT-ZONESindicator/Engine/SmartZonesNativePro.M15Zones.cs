@@ -550,7 +550,7 @@ namespace cAlgo
                 Bull = bullish,
                 Lower = lower,
                 Upper = upper,
-                OriginIdx = FindMainIndexAtOrBefore(_m15Bars.OpenTimes[index - 1]),
+                OriginIdx = FindMainIndexAtOrBefore(_m15Bars.OpenTimes[index]),
                 ConfirmIdx = confirmingChartIndex,
                 StartTime = _m15Bars.OpenTimes[index],
                 Atr = atr,
@@ -582,6 +582,20 @@ namespace cAlgo
             zone.ConfirmTime = m15CloseTime;
             zone.OriginIdx = Math.Max(0, Math.Min(Bars.Count - 1, zone.OriginIdx));
             AddZone(zone);
+
+            // M15 order blocks are identified retrospectively after a confirmed major
+            // structure break. Replay already-closed M5 candles since their source candle
+            // so a zone that has already filled/broken is not incorrectly shown as Fresh.
+            // A session gap is born at the M15 open, so replay it from that open; FVG
+            // regions begin at the third-candle confirmation and must not inherit earlier touches.
+            int replayFrom = -1;
+            if (zone.Kind == SznpKind.OrderBlock)
+                replayFrom = Math.Max(_startIdx, zone.OriginIdx + 1);
+            else if (zone.Kind == SznpKind.Gap)
+                replayFrom = Math.Max(_startIdx, FindMainIndexAtOrBefore(zone.StartTime));
+
+            if (replayFrom >= 0 && replayFrom <= confirmingChartIndex)
+                ReplayZone(zone, replayFrom, confirmingChartIndex);
         }
 
         private double M15StructureFactor(int index)

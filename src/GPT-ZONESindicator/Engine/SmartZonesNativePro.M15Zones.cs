@@ -122,30 +122,10 @@ namespace cAlgo
 
         private int FindMainIndexForClosedTime(DateTime closeTime)
         {
-            if (Bars.Count < 2)
-                return -1;
-
-            int low = 0;
-            int high = Bars.Count - 2;
-            int best = -1;
-
-            while (low <= high)
-            {
-                int middle = low + (high - low) / 2;
-                DateTime barClose = Bars.OpenTimes[middle + 1];
-
-                if (barClose <= closeTime)
-                {
-                    best = middle;
-                    low = middle + 1;
-                }
-                else
-                {
-                    high = middle - 1;
-                }
-            }
-
-            return best;
+            return HigherTimeframeTimingEvaluator.FindClosedIndex(
+                Bars.Count,
+                closeTime,
+                delegate (int index) { return Bars.OpenTimes[index]; });
         }
 
         private double M15AtrAt(int index)
@@ -199,7 +179,7 @@ namespace cAlgo
             {
                 int m15Index = _lastM15Processed + 1;
                 DateTime m15CloseTime = _m15Bars.OpenTimes[m15Index + 1];
-                if (m15CloseTime > chartCloseTime)
+                if (!HigherTimeframeTimingEvaluator.IsClosed(m15CloseTime, chartCloseTime))
                     break;
 
                 _lastM15Processed = m15Index;

@@ -20,7 +20,7 @@ The indicator is a single cTrader Automate type, `cAlgo.SmartZonesNativePro`. Th
 | `Engine/SmartZonesNativePro.Liquidity.cs` | Equal highs/lows, sweep detection and sweep event records |
 | `Engine/SmartZonesNativePro.ZoneStateAndScoring.cs` | Zone state machine, breaker creation, explainable score factors |
 | `References/SmartZonesNativePro.ReferenceLevels.cs` | Previous D/W/M levels, period opens, session ranges |
-| `Rendering/SmartZonesNativePro.ZoneRenderer.cs` | Zone visibility policy, ranking/decluttering and rectangle/midline/label synchronization |
+| `Rendering/SmartZonesNativePro.ZoneRenderer.cs` | Zone visibility policy, buffered viewport filtering, ranking/decluttering and rectangle/midline/label synchronization |
 | `Rendering/SmartZonesNativePro.ItemAndStructureRenderer.cs` | Reusable line/text synchronization, structure, equality and sweep drawing |
 | `Rendering/SmartZonesNativePro.StatusAndRoundLevels.cs` | Psychological levels, status panel and one-time diagnostics summary |
 
@@ -36,11 +36,11 @@ The indicator is a single cTrader Automate type, `cAlgo.SmartZonesNativePro`. Th
 
 1. Detection is based on closed bars. Do not read the forming candle as a confirmed signal.
 2. A zone's `Lower` and `Upper` boundaries are fixed after creation.
-3. Hiding a zone or hitting the default 300-rectangle rendering budget never deletes the logical zone or alters its lifecycle state; set the budget to `0` for unlimited drawing.
+3. Rendering is viewport-aware: only zones intersecting the visible time/price range plus a small buffer receive chart objects. Out-of-view zones remain in the full logical history and are reconsidered on scroll, zoom, and chart-resize events supported by the project's current Automate API package. The optional rectangle budget defaults to `0` (unlimited within the viewport); it never alters zone detection or lifecycle state.
 4. Historical discovery and live discovery must converge to the same state when supplied the same closed-bar sequence.
 5. Swing levels are only confirmed after the configured right-hand bars close.
 6. Historical HTF levels must use a completed HTF bar; never read future HTF data.
-7. Rendering work must not run on every tick unless an explicit performance-tested change justifies it.
+7. Full rendering is driven by closed-bar updates; zone-only viewport reconciliation runs on chart viewport events and reuses cached comments/labels when zone state has not changed.
 
 ## Build
 

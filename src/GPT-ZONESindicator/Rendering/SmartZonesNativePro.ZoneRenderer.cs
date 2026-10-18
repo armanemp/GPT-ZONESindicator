@@ -8,7 +8,7 @@ namespace cAlgo
     {
         private void RenderAll()
         {
-            RenderZones();
+            RenderZones(true);
             RenderStructure();
             RenderEqualAndSweeps();
             RenderRef();
@@ -86,11 +86,82 @@ namespace cAlgo
             return end <= zone.StartTime ? zone.StartTime.Add(_barSpan) : end;
         }
 
-        private void RenderZones()
+        /// <summary>
+        /// Reads a buffered chart viewport. Logical zones remain in history; only zones intersecting
+        /// the visible time/price range (plus a small cache margin) need chart objects.
+        /// </summary>
+        private bool TryGetZoneViewport(
+            out DateTime timeStart,
+            out DateTime timeEnd,
+            out double priceTop,
+            out double priceBottom)
+        {
+            timeStart = DateTime.MinValue;
+            timeEnd = DateTime.MaxValue;
+            priceTop = double.MaxValue;
+            priceBottom = double.MinValue;
+
+            int count = Bars.Count;
+            if (count <= 0 || Chart.Width <= 0 || Chart.Height <= 0)
+                return false;
+
+            int first = Chart.FirstVisibleBarIndex;
+            int last = Chart.LastVisibleBarIndex;
+            if (first < 0 || last < first || first >= count)
+                return false;
+
+            if (last >= count)
+                last = count - 1;
+
+            int visibleBars = last - first + 1;
+            int bufferBars = Math.Max(5, (int)Math.Ceiling(visibleBars * 0.10));
+            first = Math.Max(0, first - bufferBars);
+            last = Math.Min(count - 1, last + bufferBars);
+
+            double top = Chart.TopY;
+            double bottom = Chart.BottomY;
+            if (double.IsNaN(top) || double.IsInfinity(top)
+                || double.IsNaN(bottom) || double.IsInfinity(bottom)
+                || top <= bottom)
+                return false;
+
+            double priceBuffer = (top - bottom) * 0.10;
+            timeStart = Bars.OpenTimes[first];
+            timeEnd = Bars.OpenTimes[last];
+            priceTop = top + priceBuffer;
+            priceBottom = bottom - priceBuffer;
+            return true;
+        }
+
+        private bool ZoneIntersectsViewport(
+            Zone zone,
+            DateTime timeStart,
+            DateTime timeEnd,
+            double priceTop,
+            double priceBottom)
+        {
+            if (zone.Upper < priceBottom || zone.Lower > priceTop)
+                return false;
+
+            DateTime end = ZoneEndTime(zone);
+            return zone.StartTime <= timeEnd && end >= timeStart;
+        }
+
+        private void RenderZones(bool refreshMetadata)
         {
             int nowIndex = _lastProcessed;
             double price = _lastClose;
             double atrNow = AtrAt(nowIndex);
+
+            DateTime viewStart, viewEnd;
+            double viewTop, viewBottom;
+            bool hasViewport = TryGetZoneViewport(
+                out viewStart, out viewEnd, out viewTop, out viewBottom);
+
+            // Preserve global rank semantics for explicit global ranking/per-kind limits.
+            // In the common AllInLookback mode, first constrain work to the chart viewport.
+            bool globalSelection = DisplayMode == SznpDisplayMode.TopRanked
+                || MaxZonesPerKind > 0;
 
             bool needScore = MinScore > 0
                 || DisplayMode == SznpDisplayMode.TopRanked
@@ -106,6 +177,13 @@ namespace cAlgo
                 zone.Want = ZoneWanted(zone, price, atrNow);
                 if (!zone.Want)
                     continue;
+
+                if (hasViewport && !globalSelection
+                    && !ZoneIntersectsViewport(zone, viewStart, viewEnd, viewTop, viewBottom))
+                {
+                    zone.Want = false;
+                    continue;
+                }
 
                 if (needScore && zone.State != SznpState.Broken)
                     zone.Score = ComputeScore(zone, nowIndex, price, atrNow);
@@ -125,6 +203,18 @@ namespace cAlgo
 
             if (perKind != int.MaxValue)
                 LimitPerKind(perKind);
+
+            // Global ranking is preserved, but only viewport-intersecting rectangles are instantiated.
+            if (hasViewport && globalSelection)
+            {
+                for (int k = 0; k < _cand.Count; k++)
+                {
+                    Zone zone = _cand[k];
+                    if (zone.Want && !ZoneIntersectsViewport(
+                        zone, viewStart, viewEnd, viewTop, viewBottom))
+                        zone.Want = false;
+                }
+            }
 
             if (OverlapDeclutter)
                 Declutter();
@@ -155,7 +245,7 @@ namespace cAlgo
             for (int k = 0; k < _zones.Count; k++)
             {
                 Zone zone = _zones[k];
-                SyncZone(zone);
+                SyncZone(zone, refreshMetadata);
                 if (zone.Shown)
                     shown++;
             }
@@ -281,7 +371,7 @@ namespace cAlgo
                 KindTag(zone), zone.State, zone.Lower, zone.Upper, zone.TouchCount, ScoreText(zone));
         }
 
-        private void SyncZone(Zone zone)
+        private void SyncZone(Zone zone, bool refreshMetadata)
         {
             if (!zone.Want)
             {
@@ -302,8 +392,13 @@ namespace cAlgo
             if (zone.Shown && (missingRectangle || missingMidline || missingLabel))
                 RemoveZoneObjects(zone);
 
-            string comment = ZoneComment(zone);
-            string labelText = ShowZoneLabels ? LabelText(zone) : null;
+            bool createView = !zone.Shown;
+            string comment = refreshMetadata || createView
+                ? ZoneComment(zone)
+                : zone.AppComment;
+            string labelText = !ShowZoneLabels
+                ? null
+                : (refreshMetadata || createView ? LabelText(zone) : zone.AppLabelText);
 
             if (!zone.Shown)
             {

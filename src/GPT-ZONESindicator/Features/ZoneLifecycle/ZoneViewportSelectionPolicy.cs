@@ -5,15 +5,13 @@ namespace cAlgo
     {
         public static bool UseActiveZoneIndex(
             bool hasViewport,
-            bool globalSelection,
             bool showFilledZones,
             bool showBrokenZones,
             bool showBreakerHistory)
         {
-            // Active-zone indexes do not include terminal records. Terminal-history view
-            // must scan the logical collection to avoid silently omitting filled/broken zones.
+            // Rank/cap operations are viewport-local. The active index is therefore valid
+            // for ranked modes too, unless terminal records are explicitly requested.
             return hasViewport
-                && !globalSelection
                 && !showFilledZones
                 && !showBrokenZones
                 && !showBreakerHistory;

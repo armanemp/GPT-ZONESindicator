@@ -1,0 +1,22 @@
+# .NET build output
+bin/
+obj/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+
+# IDE state
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# cTrader output
+*.algo
+
+# Operating system
+.DS_Store
+Thumbs.db

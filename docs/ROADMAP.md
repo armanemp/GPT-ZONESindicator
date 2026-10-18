@@ -73,7 +73,7 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 - [x] Synchronize only the previous and current viewport candidates during ordinary rendering; global ranking and opt-in terminal-history modes retain complete-history selection.
 - [x] Derive each zone midline from the rendered zone hue, use a subtle 12% darkening, and keep opacity configurable; live-chart visual verification remains pending.
 - [x] Default major structure, liquidity, reference and zone midlines to dotted strokes.
-- [x] Place line labels 40 nominal bars to the right of the current candle, pack overlapping labels vertically within the visible price range, and reflow after viewport changes; labels use larger, non-bold Segoe UI Light typography. Live-chart verification remains pending.
+- [x] Place line labels using the observed time span of the latest 40 bar intervals to the right of the current candle, pack overlapping labels vertically within the visible price range, and reflow after viewport changes; labels use larger, non-bold Segoe UI Light typography. Dotted strokes and level labels are enforced at initialization to override older saved settings. Live-chart verification remains pending.
 - [x] Keep broken/fill history hidden by default while retaining the existing opt-in display switches.
 - [x] Include phase/* branches in the build workflow trigger.
 - [ ] Verify all valid zones appear while panning and zooming in cTrader, including breaker zones through the chart's right edge.

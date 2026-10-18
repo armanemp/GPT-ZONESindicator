@@ -15,16 +15,16 @@ This document describes the source ownership boundaries for the composite Smart 
 |---|---|---|---|
 | Fair Value Gaps | `Features/FairValueGaps/SmartZonesNativePro.Fvg.cs` | `Configuration/Parameters.FairValueGaps.cs` | Shared zone lifecycle and `Rendering/SmartZonesNativePro.ZoneRenderer.cs` |
 | Price Gaps | `Features/PriceGaps/SmartZonesNativePro.PriceGaps.cs` | `Configuration/Parameters.PriceGaps.cs` | Shared zone lifecycle and zone renderer |
-| Market Structure (BOS/CHoCH) | `Features/MarketStructure/` | `Configuration/Parameters.MarketStructure.cs` | `Rendering/SmartZonesNativePro.ItemAndStructureRenderer.cs` |
+| Market Structure (BOS/CHoCH) | `Features/MarketStructure/` | `Configuration/Parameters.MarketStructure.cs` | `Rendering/SmartZonesNativePro.StructureRenderer.cs` |
 | Order Blocks | `Features/OrderBlocks/` | `Configuration/Parameters.OrderBlocks.cs` | Shared zone lifecycle; structure breaks provide OB confirmation |
 | Breaker Blocks | Breaker creation in `Features/ZoneLifecycle/SmartZonesNativePro.ZoneStateAndScoring.cs` and `ZoneBreakerFactory.cs` | `Configuration/Parameters.Breakers.cs` | Shared zone lifecycle and zone renderer |
-| Equal Highs/Lows | `Features/EqualLevels/` | `Configuration/Parameters.EqualLevels.cs` | Item renderer; clusters are built from confirmed swings |
-| Liquidity Sweeps | `Features/LiquiditySweeps/` | `Configuration/Parameters.LiquiditySweeps.cs` | Item renderer; consumes swing/equal-level state |
+| Equal Highs/Lows | `Features/EqualLevels/` | `Configuration/Parameters.EqualLevels.cs` | `Rendering/SmartZonesNativePro.LiquidityRenderer.cs`; clusters are built from confirmed swings |
+| Liquidity Sweeps | `Features/LiquiditySweeps/` | `Configuration/Parameters.LiquiditySweeps.cs` | `Rendering/SmartZonesNativePro.LiquidityRenderer.cs`; consumes swing/equal-level state |
 | M15 overlay | `Features/HigherTimeframe/` | `Configuration/Parameters.HigherTimeframe.cs` | Shared zone lifecycle, with closed-M15 confirmation |
-| Reference levels | `Features/ReferenceLevels/SmartZonesNativePro.ReferenceLevels.cs` | `Configuration/Parameters.KeyLevels.cs` and `Parameters.Sessions.cs` | `Rendering/SmartZonesNativePro.ItemAndStructureRenderer.cs` |
-| Psychological levels | `Rendering/SmartZonesNativePro.StatusAndRoundLevels.cs` | `Configuration/Parameters.RoundLevels.cs` | Item renderer |
+| Reference levels | `Features/ReferenceLevels/SmartZonesNativePro.ReferenceLevels.cs` | `Configuration/Parameters.KeyLevels.cs` and `Parameters.Sessions.cs` | `Rendering/SmartZonesNativePro.ReferenceRenderer.cs` |
+| Psychological levels | `Rendering/SmartZonesNativePro.RoundLevelsRenderer.cs` | `Configuration/Parameters.RoundLevels.cs` | Shared `Rendering/SmartZonesNativePro.ChartItemRenderer.cs` |
 
-## Intentional shared contracts
+The shared rendering contract lives in `Rendering/SmartZonesNativePro.ChartItemRenderer.cs`; feature-specific renderers only calculate their own drawing items and ask the shared renderer to virtualize/update them.\n\n## Intentional shared contracts
 
 Zone types intentionally share one lifecycle evaluator, interval index, zone identity, and renderer. That is required so an FVG, gap, OB, M15 zone, and breaker obey the same Fresh/Touched/Partial/Filled/Broken transitions. This shared zone core is not a reason for the detectors to share filtering rules.
 

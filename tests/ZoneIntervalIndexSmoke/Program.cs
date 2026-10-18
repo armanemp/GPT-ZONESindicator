@@ -871,10 +871,13 @@ namespace ZoneIntervalIndexSmoke
                 }
 
                 AssertReplayStateEqual(reference, indexed, barIndex);
-            }
 
-            Assert(reference[8].State == SznpState.Partial && reference[8].TouchCount == 2,
-                "Crafted touch/exit/re-entry scenario must reach Partial with two touches.");
+                if (barIndex == 6)
+                {
+                    Assert(reference[8].State == SznpState.Partial && reference[8].TouchCount == 2,
+                        "Crafted touch/exit/re-entry scenario must reach Partial with two touches at bar 6.");
+                }
+            }
             for (int i = 0; i < 4; i++)
             {
                 Assert(reference[i].State == SznpState.Broken,

@@ -129,6 +129,8 @@ namespace cAlgo
             if (OverlapDeclutter)
                 Declutter();
 
+            // Render budget only: keep every detected zone in the logical state/history.
+            // Lower-ranked zones are hidden as chart objects, never removed from _zones/_alive.
             _hiddenByBudget = 0;
             if (MaxChartObjects > 0)
             {

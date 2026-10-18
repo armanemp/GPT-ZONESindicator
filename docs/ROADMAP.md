@@ -26,6 +26,7 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 
 - [ ] Add deterministic tests/replay fixtures for Fresh, Touched, Partial, Filled and Broken transitions.
 - [ ] Test all break modes: CandleClose, BodyBeyond and WickBeyond.
+- [x] Extract the closed-bar lifecycle decision step into a pure evaluator and add regression cases for both directions, strict break boundaries, fill/break priority, touch re-entry and terminal Broken state (CI execution pending).
 - [ ] Verify breaker creation begins at the break confirmation time and preserves parent/child identity.
 - [ ] Verify hiding, ranking, overlap decluttering and chart-object budgets never mutate logical state.
 

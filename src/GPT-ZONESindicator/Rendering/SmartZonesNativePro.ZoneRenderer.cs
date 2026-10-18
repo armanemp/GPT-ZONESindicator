@@ -8,7 +8,6 @@ namespace cAlgo
     {
         private void RenderAll()
         {
-            _occupiedLineLabelPrices.Clear();
             RenderZones(true);
             RenderStructure();
             RenderEqualAndSweeps();

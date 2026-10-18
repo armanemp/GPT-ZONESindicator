@@ -48,7 +48,7 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 - [ ] Verify each feature's show/hide toggle only affects rendering, not detection state.
 - [ ] Verify chart-object cleanup only removes the instance prefix.
 - [x] Implement reconciliation when a zone rectangle or an enabled midline/label is missing, and refresh changed zone comments/labels without rewriting unchanged properties (CI build passed).
-- [ ] Replace the arbitrary default 300-zone cap with buffered viewport-aware rendering: keep only time/price-intersecting zones plus a small margin as chart objects; refresh on scroll, zoom, resize and price-scale changes; cache comments/labels on viewport-only redraws. Logical detection, ranking semantics for global modes, and lifecycle history are preserved. CI and cTrader acceptance are pending.
+- [ ] Replace the arbitrary default 300-zone cap with buffered viewport-aware rendering: keep only time/price-intersecting zones plus a small margin as chart objects; refresh on scroll, zoom, and resize events supported by the project's Automate API package; cache comments/labels on viewport-only redraws. Logical detection, ranking semantics for global modes, and lifecycle history are preserved. CI and cTrader acceptance are pending.
 - [ ] Verify deleted chart objects are recreated and partially deleted renderer objects are reconciled in cTrader.
 - [ ] Verify panning across history shows all qualifying zones in each viewport, zoom/price-scale changes refresh the visible set, and chart-object count tracks the viewport rather than total historical zones.
 - [ ] Verify color, alpha, labels, midlines and line styles update predictably.

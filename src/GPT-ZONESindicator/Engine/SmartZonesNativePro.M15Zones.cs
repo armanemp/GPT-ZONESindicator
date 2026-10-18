@@ -6,6 +6,41 @@ namespace cAlgo
 {
     public partial class SmartZonesNativePro
     {
+        private DateTime ComputeFutureZoneTime()
+        {
+            if (Bars.Count <= 0)
+                return DateTime.UtcNow.Add(TimeSpan.FromMinutes(200));
+
+            int last = Bars.Count - 1;
+            long spanTicks = Math.Max(1L, _barSpan.Ticks);
+            if (Bars.Count > 40)
+            {
+                long observedTicks = (Bars.OpenTimes[last] - Bars.OpenTimes[last - 40]).Ticks;
+                if (observedTicks > 0)
+                    spanTicks = observedTicks;
+            }
+            else
+            {
+                try
+                {
+                    spanTicks = checked(spanTicks * 40L);
+                }
+                catch (OverflowException)
+                {
+                    spanTicks = TimeSpan.FromDays(14).Ticks;
+                }
+            }
+
+            try
+            {
+                return Bars.OpenTimes[last].AddTicks(spanTicks);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return Bars.OpenTimes[last].AddDays(14);
+            }
+        }
+
         private void SetupM15Bars()
         {
             if (!ShowM15Zones)

@@ -8,12 +8,9 @@ namespace cAlgo
     {
         private void RenderAll()
         {
-            RenderZones(true);
-            RenderStructure();
-            RenderEqualAndSweeps();
-            RenderRef();
-            RenderRound();
-            RenderStatus();
+            UpdateItemViewport();
+            if (_featurePipeline != null)
+                _featurePipeline.Render(true);
         }
 
         private static int CompareScoreDesc(Zone a, Zone b)

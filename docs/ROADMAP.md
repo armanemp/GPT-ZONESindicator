@@ -48,6 +48,7 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 - [ ] Verify each feature's show/hide toggle only affects rendering, not detection state.
 - [ ] Verify chart-object cleanup only removes the instance prefix.
 - [x] Implement reconciliation when a zone rectangle or an enabled midline/label is missing, and refresh changed zone comments/labels without rewriting unchanged properties (CI build passed).
+- [x] Keep default zone drawings to native filled rectangles with labels/midlines opt-in, and cap visible rectangles at 300 by default; the rendering budget hides only lower-ranked chart objects and does not remove logical zones (CI and cTrader acceptance pending).
 - [ ] Verify deleted chart objects are recreated and partially deleted renderer objects are reconciled in cTrader.
 - [ ] Verify color, alpha, labels, midlines and line styles update predictably.
 

@@ -71,9 +71,9 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 
 - [x] Reuse the active-zone price interval index to discover zones intersecting the visible price range in the common viewport mode.
 - [x] Synchronize only the previous and current viewport candidates during ordinary rendering; global ranking and opt-in terminal-history modes retain complete-history selection.
-- [x] Derive each zone midline from the rendered zone hue, use a subtle 12% darkening, and keep opacity configurable; live-chart visual verification remains pending.
-- [x] Default major structure, liquidity, reference and zone midlines to dotted strokes.
-- [x] Extend active zone rectangles and their midlines by forty nominal intervals of the active chart timeframe (not a wall-clock span that can be inflated by a historical weekend/session gap); place readable zone labels at the right edge in the zone's RGB hue. Keep line labels at their logical positions (including BOS/CHoCH break levels and EQH/EQL midpoints), using larger, non-bold Segoe UI Light typography. Dotted strokes and zone/level labels are enforced at initialization. Live-chart verification remains pending.
+- [x] Make each zone midline's RGB exactly match the zone RGB; keep alpha separately configurable. Live-chart visual verification remains pending.
+- [x] Set dotted line styles as editable defaults rather than forcibly overriding a user's saved style parameters.
+- [x] Extend active valid zone rectangles and their midlines by forty nominal intervals of the active chart timeframe; terminal filled/broken history ends at the actual lifecycle event. Keep line endpoints separate from semantic text locations so BOS/CHoCH labels remain at their breaks. Live-chart verification remains pending.
 - [x] Add an M15 overlay on lower-timeframe charts for closed-bar FVGs, price gaps, and major-structure order blocks; M15 order blocks can produce breakers after M5 lifecycle confirmation. Keep M5/M15 duplicate identities separate and align M15 detection history with loaded M5 history. Replay closed M5 candles for retrospective M15 OBs and gaps so zones already filled/broken are not shown as fresh. No-lookahead close timing has deterministic boundary tests; live chart acceptance remains pending.
 - [x] Keep broken/fill history hidden by default while retaining the existing opt-in display switches.
 - [x] Include phase/* branches in the build workflow trigger.
@@ -83,7 +83,22 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 
 **Exit gate:** CI build passes and a cTrader chart acceptance/replay check confirms visual and logical parity. Native chart objects are created only for the active viewport in the ordinary mode; no custom canvas replacement is claimed.
 
-## Phase 8 — Release acceptance
+
+## Phase 8 — Feature boundaries and lightweight chart-object management
+
+- [x] Register closed-bar processing and render passes through a feature pipeline with per-module exception isolation; preserve the deliberate dependency order.
+- [x] Separate FVG, Price Gap, Market Structure, Order Block, Breaker, Equal Level, Liquidity Sweep, Higher-Timeframe, Zone Lifecycle and Reference Level source files into feature-owned folders.
+- [x] Separate parameter files by feature family, including visibility, scoring, colors, line presentation, key levels, sessions and psychological levels. Initialization no longer forcibly rewrites each feature's toggle/style settings.
+- [x] Apply viewport/price filtering to line and label objects and release off-screen chart objects while preserving logical history for panning back.
+- [x] Use separate configurable viewport budgets for structure, liquidity and reference items; off-screen history no longer consumes these budgets.
+- [x] Reduce zone label-collision scanning to a cached per-render label layout rather than repeatedly scanning every chart object for each candidate.
+- [ ] Move all feature-private detector state out of the shared partial indicator host into independent module service classes with explicit immutable events/snapshots. The shared zone lifecycle remains intentional, but full state encapsulation is not yet complete.
+- [ ] Verify that no valid active zone is omitted because of viewport selection or saved display parameters; use the status/diagnostic counts to distinguish detection rejection from display filtering.
+- [ ] Confirm scrolling/zooming behavior and live object counts on the actual cTrader chart.
+
+**Exit gate:** All CI build and deterministic tests pass, feature toggles do not affect unrelated modules, and live cTrader testing confirms viewport virtualization and zone visibility. Do not describe the modules as fully state-isolated until the first open item above is complete.
+
+## Phase 9 — Release acceptance
 
 - [ ] Run the same closed-bar sequence through history replay and live/demo operation and compare resulting logical states.
 - [ ] Verify behavior on at least one time-based chart and one symbol with a different pip/tick configuration.

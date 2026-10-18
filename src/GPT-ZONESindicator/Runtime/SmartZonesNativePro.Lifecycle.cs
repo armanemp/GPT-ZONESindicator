@@ -7,19 +7,6 @@ namespace cAlgo
 {
     public partial class SmartZonesNativePro
     {
-        private void ApplyLineLabelPresentation()
-        {
-            // Preserve the user's zone detection, scoring, and non-zone overlay choices.
-            // Keep zone tags visible; their vertical layout now avoids stacking them together.
-            MidlineStyle = LineStyle.Dots;
-            StructStyle = LineStyle.Dots;
-            InternalStyle = LineStyle.Dots;
-            LiquidityStyle = LineStyle.Dots;
-            RefStyle = LineStyle.Dots;
-            SessionStyle = LineStyle.Dots;
-            RoundStyle = LineStyle.Dots;
-        }
-
         protected override void Initialize()
         {
             long t0 = Stopwatch.GetTimestamp();
@@ -27,7 +14,6 @@ namespace cAlgo
             _lowPriceAt = L;
             _openPriceAt = O;
             _closePriceAt = C;
-            ApplyLineLabelPresentation();
             string tag = string.IsNullOrWhiteSpace(InstanceTag) ? "SZNP" : InstanceTag.Trim();
             _prefix = tag + "_";
             _pip = Symbol.PipSize > 0 ? Symbol.PipSize : 0.0001;

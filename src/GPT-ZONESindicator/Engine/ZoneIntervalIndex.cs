@@ -51,7 +51,7 @@ namespace cAlgo
             double lower = _lower(item);
             double upper = _upper(item);
             if (double.IsNaN(lower) || double.IsNaN(upper) || lower > upper)
-                throw new ArgumentException("An indexed interval must have finite-orderable bounds with lower <= upper.", nameof(item));
+                throw new ArgumentException("An indexed interval must have non-NaN bounds with lower <= upper.", nameof(item));
 
             if (ContainsKey(item))
                 throw new InvalidOperationException("An interval with the same lower bound and identity is already indexed.");

@@ -189,6 +189,7 @@ namespace cAlgo
         private readonly List<Zone> _breakScratch = new List<Zone>();
         private readonly List<Zone> _renderQueryScratch = new List<Zone>();
         private readonly List<Zone> _renderTracked = new List<Zone>();
+        private readonly List<double> _zoneLabelRows = new List<double>(128);
         private readonly Dictionary<long, Zone> _dupe = new Dictionary<long, Zone>();
         private readonly Dictionary<int, Zone> _obByCandle = new Dictionary<int, Zone>();
         private Engine _engMajor, _engInt;

@@ -63,7 +63,7 @@ namespace cAlgo
         private void RenderSweeps()
         {
             int sweepCap = SweepMaxVisible > 0 ? SweepMaxVisible : int.MaxValue;
-            count = 0;
+            int count = 0;
             for (int k = _liquiditySweepState.Events.Count - 1; k >= 0; k--)
             {
                 SweepEv sweep = _liquiditySweepState.Events[k];

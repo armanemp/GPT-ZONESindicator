@@ -81,7 +81,7 @@ namespace cAlgo
                 _marketStructureState.InternalEngine.Swings.Count,
                 _equalLevelsState.Clusters.Count,
                 _liquiditySweepState.Events.Count,
-                _referenceLevelState.Items.Count));
+                _referenceLevelRenderingState.Items.Count));
 
             if (_rej.Count > 0)
             {

@@ -95,6 +95,7 @@ namespace cAlgo
         {
             _zones.Clear();
             _alive.Clear();
+            ResetZoneLifecycleIndexes();
             _dupe.Clear();
             _obByCandle.Clear();
             _eqs.Clear();
@@ -300,11 +301,7 @@ namespace cAlgo
 
             double atr = AtrAt(i);
 
-            int aliveCount = _alive.Count;
-            for (int k = 0; k < aliveCount; k++)
-                UpdateZone(_alive[k], i, true);
-
-            _alive.RemoveAll(IsDeadZone);
+            ProcessIndexedZones(i);
 
             ProcessStructure(i, atr);
 

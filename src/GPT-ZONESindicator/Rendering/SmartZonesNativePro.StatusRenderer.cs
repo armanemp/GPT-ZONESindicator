@@ -21,8 +21,8 @@ namespace cAlgo
                 return;
             }
 
-            string text = "SZNP  zones shown " + _shownZones + " / tracked " + _zones.Count
-                + (_hiddenByBudget > 0 ? "  |  hidden by object budget: " + _hiddenByBudget : "");
+            string text = "SZNP  zones shown " + _zoneRenderingState.ShownZones + " / tracked " + _zones.Count
+                + (_zoneRenderingState.HiddenByBudget > 0 ? "  |  hidden by object budget: " + _zoneRenderingState.HiddenByBudget : "");
 
             if (_status == null)
             {
@@ -75,13 +75,13 @@ namespace cAlgo
             Print(string.Format(
                 CultureInfo.InvariantCulture,
                 "[SZNP] chart rectangles drawn {0} | hidden by object budget {1} | swings major {2} / internal {3} | equal levels {4} | sweeps {5} | reference items {6}",
-                _shownZones,
-                _hiddenByBudget,
-                _engMajor.Swings.Count,
-                _engInt.Swings.Count,
-                _eqs.Count,
-                _sweeps.Count,
-                _refItems.Count));
+                _zoneRenderingState.ShownZones,
+                _zoneRenderingState.HiddenByBudget,
+                _marketStructureState.MajorEngine.Swings.Count,
+                _marketStructureState.InternalEngine.Swings.Count,
+                _equalLevelsState.Clusters.Count,
+                _liquiditySweepState.Events.Count,
+                _referenceLevelState.Items.Count));
 
             if (_rej.Count > 0)
             {

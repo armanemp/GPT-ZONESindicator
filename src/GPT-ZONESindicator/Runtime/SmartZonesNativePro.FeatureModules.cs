@@ -51,7 +51,7 @@ namespace cAlgo
 
             _featurePipeline.AddProcessor(
                 "M15 overlay",
-                delegate { return DetectM15Zones && _m15Bars != null; },
+                delegate { return DetectM15Zones && _higherTimeframeState.Bars != null; },
                 delegate (int index, double atr) { ProcessClosedM15Bars(index); });
 
             // Chart rendering is also independent. A renderer failure is logged and isolated;
@@ -90,7 +90,7 @@ namespace cAlgo
         /// <summary>Computes one cached viewport shared by every line/label renderer.</summary>
         private void UpdateItemViewport()
         {
-            _itemViewportValid = false;
+            _chartViewportState.Valid = false;
             int count = Bars.Count;
             if (count <= 0 || Chart.Width <= 0 || Chart.Height <= 0)
                 return;
@@ -111,49 +111,49 @@ namespace cAlgo
                 return;
 
             double pad = (top - bottom) * 0.06;
-            _itemViewTop = top + pad;
-            _itemViewBottom = bottom - pad;
-            _itemViewStart = Bars.OpenTimes[first];
+            _chartViewportState.Top = top + pad;
+            _chartViewportState.Bottom = bottom - pad;
+            _chartViewportState.Start = Bars.OpenTimes[first];
 
             try
             {
                 // A small time buffer is enough: future line endpoints can extend past this
                 // window, and segment/viewport intersection still keeps the visible section.
-                _itemViewEnd = Bars.OpenTimes[last].Add(_barSpan.Ticks > 0
+                _chartViewportState.End = Bars.OpenTimes[last].Add(_barSpan.Ticks > 0
                     ? TimeSpan.FromTicks(checked(_barSpan.Ticks * 3L))
                     : TimeSpan.FromMinutes(15));
             }
             catch (ArgumentOutOfRangeException)
             {
-                _itemViewEnd = DateTime.MaxValue;
+                _chartViewportState.End = DateTime.MaxValue;
             }
             catch (OverflowException)
             {
-                _itemViewEnd = DateTime.MaxValue;
+                _chartViewportState.End = DateTime.MaxValue;
             }
 
-            _itemViewportValid = true;
+            _chartViewportState.Valid = true;
         }
 
         private bool ItemLineIntersectsViewport(Item item, DateTime end)
         {
-            if (!_itemViewportValid)
+            if (!_chartViewportState.Valid)
                 return true;
 
-            if (item.Y < _itemViewBottom || item.Y > _itemViewTop)
+            if (item.Y < _chartViewportState.Bottom || item.Y > _chartViewportState.Top)
                 return false;
 
             DateTime start = item.T1;
-            return start <= _itemViewEnd && end >= _itemViewStart;
+            return start <= _chartViewportState.End && end >= _chartViewportState.Start;
         }
 
         private bool ItemLabelIntersectsViewport(DateTime time, double price)
         {
-            if (!_itemViewportValid)
+            if (!_chartViewportState.Valid)
                 return true;
 
-            return time >= _itemViewStart && time <= _itemViewEnd
-                && price >= _itemViewBottom && price <= _itemViewTop;
+            return time >= _chartViewportState.Start && time <= _chartViewportState.End
+                && price >= _chartViewportState.Bottom && price <= _chartViewportState.Top;
         }
     }
 }

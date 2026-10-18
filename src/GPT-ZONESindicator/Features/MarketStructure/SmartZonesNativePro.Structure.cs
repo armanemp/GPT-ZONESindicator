@@ -7,10 +7,10 @@ namespace cAlgo
     {
         private void ProcessStructure(int index, double atr)
         {
-            ScanPivots(_engMajor, index, atr);
-            ScanPivots(_engInt, index, atr);
-            CheckBreaks(_engMajor, index, atr);
-            CheckBreaks(_engInt, index, atr);
+            ScanPivots(_marketStructureState.MajorEngine, index, atr);
+            ScanPivots(_marketStructureState.InternalEngine, index, atr);
+            CheckBreaks(_marketStructureState.MajorEngine, index, atr);
+            CheckBreaks(_marketStructureState.InternalEngine, index, atr);
         }
 
         /// <summary>A pivot is confirmed only after all configured right-hand bars have closed.</summary>
@@ -119,9 +119,9 @@ namespace cAlgo
             engine.Trend = classification.NextTrend;
 
             if (bullishBreak)
-                _lastBullBreak = index;
+                _marketStructureState.LastBullBreak = index;
             else
-                _lastBearBreak = index;
+                _marketStructureState.LastBearBreak = index;
 
             bool sourceAllowed = OrderBlockRules.IsSourceAllowed(ObSource, engine.Major);
 
@@ -131,11 +131,11 @@ namespace cAlgo
 
         private double StructFactorFor(bool bull, int index)
         {
-            int breakIndex = bull ? _lastBullBreak : _lastBearBreak;
+            int breakIndex = bull ? _marketStructureState.LastBullBreak : _marketStructureState.LastBearBreak;
             if (breakIndex >= index - 2)
                 return 1.0;
 
-            int sweepIndex = bull ? _lastSweepBull : _lastSweepBear;
+            int sweepIndex = bull ? _liquiditySweepState.LastBullSweep : _liquiditySweepState.LastBearSweep;
             if (sweepIndex >= index - 10)
                 return 0.6;
 

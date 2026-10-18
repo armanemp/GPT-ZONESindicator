@@ -75,7 +75,7 @@ namespace cAlgo
 
             int key = candidate * 2 + (bullish ? 1 : 0);
             Zone existing;
-            if (_obByCandle.TryGetValue(key, out existing))
+            if (_orderBlockState.ByCandle.TryGetValue(key, out existing))
             {
                 if (engine.Major)
                     existing.Major = true;
@@ -107,7 +107,7 @@ namespace cAlgo
             };
 
             AddZone(zone);
-            _obByCandle[key] = zone;
+            _orderBlockState.ByCandle[key] = zone;
             ReplayZone(zone, candidate + 1, breakIndex);
         }
     }

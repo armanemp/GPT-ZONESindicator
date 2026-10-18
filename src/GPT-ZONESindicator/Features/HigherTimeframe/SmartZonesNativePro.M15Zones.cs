@@ -8,7 +8,7 @@ namespace cAlgo
     {
         private DateTime M15CloseTimeAt(int index)
         {
-            return _m15Bars.OpenTimes[index].AddMinutes(15);
+            return _higherTimeframeState.Bars.OpenTimes[index].AddMinutes(15);
         }
 
         private DateTime ComputeFutureZoneTime()
@@ -27,62 +27,62 @@ namespace cAlgo
 
             try
             {
-                _m15Bars = MarketData.GetBars(TimeFrame.Minute15);
-                if (_m15Bars != null)
+                _higherTimeframeState.Bars = MarketData.GetBars(TimeFrame.Minute15);
+                if (_higherTimeframeState.Bars != null)
                 {
-                    _m15Bars.HistoryLoaded += OnM15HistoryChanged;
-                    _m15Bars.Reloaded += OnM15HistoryChanged;
+                    _higherTimeframeState.Bars.HistoryLoaded += OnM15HistoryChanged;
+                    _higherTimeframeState.Bars.Reloaded += OnM15HistoryChanged;
                     EnsureM15History();
                 }
             }
             catch (Exception ex)
             {
-                _m15Bars = null;
+                _higherTimeframeState.Bars = null;
                 LogError("GetBars(M15)", ex);
             }
         }
 
         private void OnM15HistoryChanged(BarsHistoryLoadedEventArgs args)
         {
-            if (!_histLoading && !_m15HistoryLoading)
+            if (!_histLoading && !_higherTimeframeState.HistoryLoading)
                 _rebuildPending = true;
         }
 
         private void EnsureM15History()
         {
-            if (_m15Bars == null || _m15Bars.Count == 0 || Bars.Count == 0 || _m15HistoryLoading)
+            if (_higherTimeframeState.Bars == null || _higherTimeframeState.Bars.Count == 0 || Bars.Count == 0 || _higherTimeframeState.HistoryLoading)
                 return;
 
-            if (_m15Bars.OpenTimes[0] <= Bars.OpenTimes[0])
+            if (_higherTimeframeState.Bars.OpenTimes[0] <= Bars.OpenTimes[0])
                 return;
 
-            _m15HistoryLoading = true;
-            _m15HistoryRequests = 0;
+            _higherTimeframeState.HistoryLoading = true;
+            _higherTimeframeState.HistoryRequests = 0;
             RequestMoreM15History();
         }
 
         private void RequestMoreM15History()
         {
-            if (_m15Bars == null || _m15Bars.Count == 0
-                || _m15Bars.OpenTimes[0] <= Bars.OpenTimes[0]
-                || _m15HistoryRequests >= 400)
+            if (_higherTimeframeState.Bars == null || _higherTimeframeState.Bars.Count == 0
+                || _higherTimeframeState.Bars.OpenTimes[0] <= Bars.OpenTimes[0]
+                || _higherTimeframeState.HistoryRequests >= 400)
             {
-                _m15HistoryLoading = false;
+                _higherTimeframeState.HistoryLoading = false;
                 _rebuildPending = true;
                 return;
             }
 
-            _m15HistoryRequests++;
-            _m15Bars.LoadMoreHistoryAsync(OnM15HistoryChunkLoaded);
+            _higherTimeframeState.HistoryRequests++;
+            _higherTimeframeState.Bars.LoadMoreHistoryAsync(OnM15HistoryChunkLoaded);
         }
 
         private void OnM15HistoryChunkLoaded(BarsHistoryLoadedEventArgs args)
         {
             bool canContinue = args != null && args.Count > 0
-                && _m15Bars != null
-                && _m15Bars.Count > 0
-                && _m15Bars.OpenTimes[0] > Bars.OpenTimes[0]
-                && _m15HistoryRequests < 400;
+                && _higherTimeframeState.Bars != null
+                && _higherTimeframeState.Bars.Count > 0
+                && _higherTimeframeState.Bars.OpenTimes[0] > Bars.OpenTimes[0]
+                && _higherTimeframeState.HistoryRequests < 400;
 
             if (canContinue)
             {
@@ -90,23 +90,23 @@ namespace cAlgo
                 return;
             }
 
-            _m15HistoryLoading = false;
+            _higherTimeframeState.HistoryLoading = false;
             _rebuildPending = true;
         }
 
         private int FindM15IndexAtOrBefore(DateTime time)
         {
-            if (_m15Bars == null || _m15Bars.Count == 0)
+            if (_higherTimeframeState.Bars == null || _higherTimeframeState.Bars.Count == 0)
                 return 0;
 
             int low = 0;
-            int high = _m15Bars.Count - 1;
+            int high = _higherTimeframeState.Bars.Count - 1;
             int best = 0;
 
             while (low <= high)
             {
                 int middle = low + (high - low) / 2;
-                if (_m15Bars.OpenTimes[middle] <= time)
+                if (_higherTimeframeState.Bars.OpenTimes[middle] <= time)
                 {
                     best = middle;
                     low = middle + 1;
@@ -156,38 +156,38 @@ namespace cAlgo
 
         private double M15AtrAt(int index)
         {
-            if (_m15Bars == null || index < 0)
+            if (_higherTimeframeState.Bars == null || index < 0)
                 return _tick;
 
             int period = Math.Max(1, AtrPeriod);
-            while (_m15Atr.Count <= index)
+            while (_higherTimeframeState.Atr.Count <= index)
             {
-                int k = _m15Atr.Count;
-                double tr = _m15Bars.HighPrices[k] - _m15Bars.LowPrices[k];
+                int k = _higherTimeframeState.Atr.Count;
+                double tr = _higherTimeframeState.Bars.HighPrices[k] - _higherTimeframeState.Bars.LowPrices[k];
 
                 if (k > 0)
                 {
-                    double previousClose = _m15Bars.ClosePrices[k - 1];
+                    double previousClose = _higherTimeframeState.Bars.ClosePrices[k - 1];
                     tr = Math.Max(tr, Math.Max(
-                        Math.Abs(_m15Bars.HighPrices[k] - previousClose),
-                        Math.Abs(_m15Bars.LowPrices[k] - previousClose)));
+                        Math.Abs(_higherTimeframeState.Bars.HighPrices[k] - previousClose),
+                        Math.Abs(_higherTimeframeState.Bars.LowPrices[k] - previousClose)));
                 }
 
                 double atr;
                 if (k < period)
                 {
-                    _m15TrSum += tr;
-                    atr = _m15TrSum / (k + 1);
+                    _higherTimeframeState.TrueRangeSum += tr;
+                    atr = _higherTimeframeState.TrueRangeSum / (k + 1);
                 }
                 else
                 {
-                    atr = (_m15Atr[k - 1] * (period - 1) + tr) / period;
+                    atr = (_higherTimeframeState.Atr[k - 1] * (period - 1) + tr) / period;
                 }
 
-                _m15Atr.Add(atr);
+                _higherTimeframeState.Atr.Add(atr);
             }
 
-            return Math.Max(_m15Atr[index], _tick);
+            return Math.Max(_higherTimeframeState.Atr[index], _tick);
         }
 
         /// <summary>
@@ -197,18 +197,18 @@ namespace cAlgo
         /// </summary>
         private void ProcessClosedM15Bars(int chartIndex)
         {
-            if (!DetectM15Zones || _m15Bars == null || _m15Bars.Count < 4 || chartIndex < 0)
+            if (!DetectM15Zones || _higherTimeframeState.Bars == null || _higherTimeframeState.Bars.Count < 4 || chartIndex < 0)
                 return;
 
             DateTime chartCloseTime = CloseTimeOf(chartIndex);
-            while (_lastM15Processed + 1 < _m15Bars.Count)
+            while (_higherTimeframeState.LastProcessed + 1 < _higherTimeframeState.Bars.Count)
             {
-                int m15Index = _lastM15Processed + 1;
+                int m15Index = _higherTimeframeState.LastProcessed + 1;
                 DateTime m15CloseTime = M15CloseTimeAt(m15Index);
                 if (!HigherTimeframeTimingEvaluator.IsClosed(m15CloseTime, chartCloseTime))
                     break;
 
-                _lastM15Processed = m15Index;
+                _higherTimeframeState.LastProcessed = m15Index;
                 int confirmingChartIndex = FindMainIndexForClosedTime(m15CloseTime);
                 ProcessM15Bar(m15Index, confirmingChartIndex);
             }
@@ -236,9 +236,9 @@ namespace cAlgo
                 MajorLeft,
                 MajorRight,
                 index,
-                _m15StartIndex,
-                delegate (int barIndex) { return _m15Bars.HighPrices[barIndex]; },
-                delegate (int barIndex) { return _m15Bars.LowPrices[barIndex]; });
+                _higherTimeframeState.StartIndex,
+                delegate (int barIndex) { return _higherTimeframeState.Bars.HighPrices[barIndex]; },
+                delegate (int barIndex) { return _higherTimeframeState.Bars.LowPrices[barIndex]; });
 
             if (!evaluation.IsReady)
                 return;
@@ -251,10 +251,10 @@ namespace cAlgo
 
         private void AddM15Swing(int index, bool high, double atr)
         {
-            HigherTimeframeSwing opposite = high ? _m15LastLow : _m15LastHigh;
+            HigherTimeframeSwing opposite = high ? _higherTimeframeState.LastLow : _higherTimeframeState.LastHigh;
             if (opposite != null)
             {
-                double price = high ? _m15Bars.HighPrices[index] : _m15Bars.LowPrices[index];
+                double price = high ? _higherTimeframeState.Bars.HighPrices[index] : _higherTimeframeState.Bars.LowPrices[index];
                 double minimum = Math.Max(MajorMinSwingPips * _pip, MajorMinSwingAtr * atr);
                 if (minimum > 0 && Math.Abs(price - opposite.Price) < minimum)
                     return;
@@ -264,49 +264,49 @@ namespace cAlgo
             {
                 Index = index,
                 High = high,
-                Price = high ? _m15Bars.HighPrices[index] : _m15Bars.LowPrices[index]
+                Price = high ? _higherTimeframeState.Bars.HighPrices[index] : _higherTimeframeState.Bars.LowPrices[index]
             };
 
-            _m15Swings.Add(swing);
-            _m15OpenSwings.Add(swing);
+            _higherTimeframeState.Swings.Add(swing);
+            _higherTimeframeState.OpenSwings.Add(swing);
             if (high)
-                _m15LastHigh = swing;
+                _higherTimeframeState.LastHigh = swing;
             else
-                _m15LastLow = swing;
+                _higherTimeframeState.LastLow = swing;
         }
 
         private void CheckM15Breaks(int index, int confirmingChartIndex, double atr)
         {
-            double close = _m15Bars.ClosePrices[index];
-            for (int k = 0; k < _m15OpenSwings.Count; k++)
+            double close = _higherTimeframeState.Bars.ClosePrices[index];
+            for (int k = 0; k < _higherTimeframeState.OpenSwings.Count; k++)
             {
-                HigherTimeframeSwing swing = _m15OpenSwings[k];
+                HigherTimeframeSwing swing = _higherTimeframeState.OpenSwings[k];
                 if (swing.Broken || !StructureBreakEvaluator.IsLevelCrossed(swing.High, close, swing.Price))
                     continue;
 
                 swing.Broken = true;
                 bool latestSwing = swing.High
-                    ? swing == _m15LastHigh
-                    : swing == _m15LastLow;
+                    ? swing == _higherTimeframeState.LastHigh
+                    : swing == _higherTimeframeState.LastLow;
 
                 if (!latestSwing)
                     continue;
 
                 bool bullishBreak = swing.High;
                 StructureBreakClassification classification =
-                    StructureBreakEvaluator.Classify(_m15Trend, bullishBreak);
-                _m15Trend = classification.NextTrend;
+                    StructureBreakEvaluator.Classify(_higherTimeframeState.Trend, bullishBreak);
+                _higherTimeframeState.Trend = classification.NextTrend;
 
                 if (bullishBreak)
-                    _m15LastBullBreak = index;
+                    _higherTimeframeState.LastBullBreak = index;
                 else
-                    _m15LastBearBreak = index;
+                    _higherTimeframeState.LastBearBreak = index;
 
                 if (DetectOb && OrderBlockRules.IsSourceAllowed(ObSource, true))
                     TryCreateM15OrderBlock(swing.Index, index, confirmingChartIndex, atr, bullishBreak);
             }
 
-            _m15OpenSwings.RemoveAll(delegate (HigherTimeframeSwing swing) { return swing.Broken; });
+            _higherTimeframeState.OpenSwings.RemoveAll(delegate (HigherTimeframeSwing swing) { return swing.Broken; });
         }
 
         private void TryCreateM15OrderBlock(
@@ -322,17 +322,17 @@ namespace cAlgo
                 return;
             }
 
-            double breakClose = _m15Bars.ClosePrices[breakIndex];
-            double swingPrice = _m15Bars.HighPrices[swingIndex];
+            double breakClose = _higherTimeframeState.Bars.ClosePrices[breakIndex];
+            double swingPrice = _higherTimeframeState.Bars.HighPrices[swingIndex];
             if (!bullish)
-                swingPrice = _m15Bars.LowPrices[swingIndex];
+                swingPrice = _higherTimeframeState.Bars.LowPrices[swingIndex];
 
             double strength = bullish ? breakClose - swingPrice : swingPrice - breakClose;
             if (strength < ObMinBreakAtr * atr)
                 return;
 
             if (ObRequireDisplacement
-                && Math.Abs(_m15Bars.ClosePrices[breakIndex] - _m15Bars.OpenPrices[breakIndex])
+                && Math.Abs(_higherTimeframeState.Bars.ClosePrices[breakIndex] - _higherTimeframeState.Bars.OpenPrices[breakIndex])
                     < ObMinBreakBodyAtr * atr)
                 return;
 
@@ -340,20 +340,20 @@ namespace cAlgo
                 bullish,
                 swingIndex,
                 breakIndex,
-                delegate (int barIndex) { return _m15Bars.HighPrices[barIndex]; },
-                delegate (int barIndex) { return _m15Bars.LowPrices[barIndex]; },
-                delegate (int barIndex) { return _m15Bars.OpenPrices[barIndex]; },
-                delegate (int barIndex) { return _m15Bars.ClosePrices[barIndex]; });
+                delegate (int barIndex) { return _higherTimeframeState.Bars.HighPrices[barIndex]; },
+                delegate (int barIndex) { return _higherTimeframeState.Bars.LowPrices[barIndex]; },
+                delegate (int barIndex) { return _higherTimeframeState.Bars.OpenPrices[barIndex]; },
+                delegate (int barIndex) { return _higherTimeframeState.Bars.ClosePrices[barIndex]; });
 
             int candidate = search.CandidateIndex;
             if (candidate < 0 || candidate - swingIndex > ObMaxBarsFromSwing)
                 return;
 
             OrderBlockBoundsResult bounds = OrderBlockRules.EvaluateBounds(
-                _m15Bars.LowPrices[candidate],
-                _m15Bars.HighPrices[candidate],
-                _m15Bars.OpenPrices[candidate],
-                _m15Bars.ClosePrices[candidate],
+                _higherTimeframeState.Bars.LowPrices[candidate],
+                _higherTimeframeState.Bars.HighPrices[candidate],
+                _higherTimeframeState.Bars.OpenPrices[candidate],
+                _higherTimeframeState.Bars.ClosePrices[candidate],
                 ObRangeMode,
                 ObMaxSizeAtr * atr,
                 ObUseBodyIfOversize,
@@ -366,8 +366,8 @@ namespace cAlgo
             for (int k = candidate; k <= breakIndex; k++)
             {
                 double move = bullish
-                    ? _m15Bars.HighPrices[k] - bounds.Lower
-                    : bounds.Upper - _m15Bars.LowPrices[k];
+                    ? _higherTimeframeState.Bars.HighPrices[k] - bounds.Lower
+                    : bounds.Upper - _higherTimeframeState.Bars.LowPrices[k];
                 if (move > impulse)
                     impulse = move;
             }
@@ -378,9 +378,9 @@ namespace cAlgo
                 Bull = bullish,
                 Lower = bounds.Lower,
                 Upper = bounds.Upper,
-                OriginIdx = FindMainIndexAtOrBefore(_m15Bars.OpenTimes[candidate]),
+                OriginIdx = FindMainIndexAtOrBefore(_higherTimeframeState.Bars.OpenTimes[candidate]),
                 ConfirmIdx = confirmingChartIndex,
-                StartTime = _m15Bars.OpenTimes[candidate],
+                StartTime = _higherTimeframeState.Bars.OpenTimes[candidate],
                 Atr = atr,
                 Momentum = impulse / atr,
                 StructFactor = 1.0,
@@ -396,10 +396,10 @@ namespace cAlgo
 
             int first = index - 2;
             int middle = index - 1;
-            double firstHigh = _m15Bars.HighPrices[first];
-            double firstLow = _m15Bars.LowPrices[first];
-            double thirdHigh = _m15Bars.HighPrices[index];
-            double thirdLow = _m15Bars.LowPrices[index];
+            double firstHigh = _higherTimeframeState.Bars.HighPrices[first];
+            double firstLow = _higherTimeframeState.Bars.LowPrices[first];
+            double thirdHigh = _higherTimeframeState.Bars.HighPrices[index];
+            double thirdLow = _higherTimeframeState.Bars.LowPrices[index];
 
             bool bullish = thirdLow > firstHigh;
             bool bearish = thirdHigh < firstLow;
@@ -413,10 +413,10 @@ namespace cAlgo
             if (size < _tick * 0.5 || size < minSize)
                 return;
 
-            double open = _m15Bars.OpenPrices[middle];
-            double close = _m15Bars.ClosePrices[middle];
+            double open = _higherTimeframeState.Bars.OpenPrices[middle];
+            double close = _higherTimeframeState.Bars.ClosePrices[middle];
             double body = Math.Abs(close - open);
-            double range = _m15Bars.HighPrices[middle] - _m15Bars.LowPrices[middle];
+            double range = _higherTimeframeState.Bars.HighPrices[middle] - _higherTimeframeState.Bars.LowPrices[middle];
 
             if (FvgRequireDisplacement
                 && (body < FvgMinBodyAtr * atr
@@ -426,8 +426,8 @@ namespace cAlgo
                 return;
 
             DateTime zoneStart = FvgStartMode == SznpStartMode.FirstCandle
-                ? _m15Bars.OpenTimes[first]
-                : _m15Bars.OpenTimes[index];
+                ? _higherTimeframeState.Bars.OpenTimes[first]
+                : _higherTimeframeState.Bars.OpenTimes[index];
 
             AddM15Zone(new Zone
             {
@@ -435,7 +435,7 @@ namespace cAlgo
                 Bull = bullish,
                 Lower = lower,
                 Upper = upper,
-                OriginIdx = FindMainIndexAtOrBefore(_m15Bars.OpenTimes[first]),
+                OriginIdx = FindMainIndexAtOrBefore(_higherTimeframeState.Bars.OpenTimes[first]),
                 ConfirmIdx = confirmingChartIndex,
                 StartTime = zoneStart,
                 Atr = atr,
@@ -450,8 +450,8 @@ namespace cAlgo
             if (index < 1 || confirmingChartIndex < _startIdx)
                 return;
 
-            double previousClose = _m15Bars.ClosePrices[index - 1];
-            double currentOpen = _m15Bars.OpenPrices[index];
+            double previousClose = _higherTimeframeState.Bars.ClosePrices[index - 1];
+            double currentOpen = _higherTimeframeState.Bars.OpenPrices[index];
             double minSize = Math.Max(
                 Math.Max(GapMinSizePips * _pip, GapMinSizeAtr * atr),
                 _tick);
@@ -487,8 +487,8 @@ namespace cAlgo
 
             if (wantRange)
             {
-                double previousHigh = _m15Bars.HighPrices[index - 1];
-                double previousLow = _m15Bars.LowPrices[index];
+                double previousHigh = _higherTimeframeState.Bars.HighPrices[index - 1];
+                double previousLow = _higherTimeframeState.Bars.LowPrices[index];
                 if (previousLow > previousHigh)
                 {
                     hasRange = true;
@@ -496,12 +496,12 @@ namespace cAlgo
                     rangeLower = previousHigh;
                     rangeUpper = previousLow;
                 }
-                else if (_m15Bars.HighPrices[index] < _m15Bars.LowPrices[index - 1])
+                else if (_higherTimeframeState.Bars.HighPrices[index] < _higherTimeframeState.Bars.LowPrices[index - 1])
                 {
                     hasRange = true;
                     rangeBull = false;
-                    rangeLower = _m15Bars.HighPrices[index];
-                    rangeUpper = _m15Bars.LowPrices[index - 1];
+                    rangeLower = _higherTimeframeState.Bars.HighPrices[index];
+                    rangeUpper = _higherTimeframeState.Bars.LowPrices[index - 1];
                 }
 
                 if (hasRange && rangeUpper - rangeLower < minSize)
@@ -536,9 +536,9 @@ namespace cAlgo
                 Bull = bullish,
                 Lower = lower,
                 Upper = upper,
-                OriginIdx = FindMainIndexAtOrBefore(_m15Bars.OpenTimes[index]),
+                OriginIdx = FindMainIndexAtOrBefore(_higherTimeframeState.Bars.OpenTimes[index]),
                 ConfirmIdx = confirmingChartIndex,
-                StartTime = _m15Bars.OpenTimes[index],
+                StartTime = _higherTimeframeState.Bars.OpenTimes[index],
                 Atr = atr,
                 Momentum = (upper - lower) / atr,
                 StructFactor = M15StructureFactor(index),
@@ -548,13 +548,13 @@ namespace cAlgo
 
         private void AddM15Zone(Zone zone, int m15Index, int confirmingChartIndex)
         {
-            if (!DetectM15Zones || _m15Bars == null
+            if (!DetectM15Zones || _higherTimeframeState.Bars == null
                 || confirmingChartIndex < _startIdx
-                || m15Index < 0 || m15Index >= _m15Bars.Count)
+                || m15Index < 0 || m15Index >= _higherTimeframeState.Bars.Count)
                 return;
 
             DateTime m15CloseTime = M15CloseTimeAt(m15Index);
-            if (m15CloseTime < _m15ZoneStartTime)
+            if (m15CloseTime < _higherTimeframeState.ZoneStartTime)
                 return;
 
             if (IsDuplicate(zone.Kind, zone.Bull, zone.Lower, zone.Upper, true))
@@ -586,7 +586,7 @@ namespace cAlgo
 
         private double M15StructureFactor(int index)
         {
-            if (index - _m15LastBullBreak <= 2 || index - _m15LastBearBreak <= 2)
+            if (index - _higherTimeframeState.LastBullBreak <= 2 || index - _higherTimeframeState.LastBearBreak <= 2)
                 return 1.0;
             return 0.0;
         }

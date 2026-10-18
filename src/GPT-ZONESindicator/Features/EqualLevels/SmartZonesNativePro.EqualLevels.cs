@@ -64,8 +64,8 @@ namespace cAlgo
 
                     candidate.Cluster = cluster;
                     swing.Cluster = cluster;
-                    _eqs.Add(cluster);
-                    _eqOpen.Add(cluster);
+                    _equalLevelsState.Clusters.Add(cluster);
+                    _equalLevelsState.OpenClusters.Add(cluster);
                 }
 
                 return;

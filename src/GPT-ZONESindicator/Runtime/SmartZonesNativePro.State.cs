@@ -152,20 +152,6 @@ namespace cAlgo
 
         private Func<int, double> _highPriceAt, _lowPriceAt, _openPriceAt, _closePriceAt;
         private FeatureModulePipeline _featurePipeline;
-        private bool _itemViewportValid;
-        private DateTime _itemViewStart, _itemViewEnd;
-        private double _itemViewTop, _itemViewBottom;
-        private Bars _m15Bars;
-        private int _m15StartIndex, _lastM15Processed = -1;
-        private int _m15HistoryRequests;
-        private bool _m15HistoryLoading;
-        private DateTime _m15ZoneStartTime;
-        private double _m15TrSum;
-        private int _m15Trend, _m15LastBullBreak = -1, _m15LastBearBreak = -1;
-        private HigherTimeframeSwing _m15LastHigh, _m15LastLow;
-        private readonly List<double> _m15Atr = new List<double>();
-        private readonly List<HigherTimeframeSwing> _m15Swings = new List<HigherTimeframeSwing>();
-        private readonly List<HigherTimeframeSwing> _m15OpenSwings = new List<HigherTimeframeSwing>();
         private string _prefix = "SZNP_";
         private double _pip = 0.01, _tick = 0.01;
         private TimeSpan _barSpan = TimeSpan.FromMinutes(5);
@@ -201,25 +187,8 @@ namespace cAlgo
         private readonly SznpBreakMode[] _breakModes = new SznpBreakMode[4];
         private readonly List<Zone> _overlapScratch = new List<Zone>();
         private readonly List<Zone> _breakScratch = new List<Zone>();
-        private readonly List<Zone> _renderQueryScratch = new List<Zone>();
-        private readonly List<Zone> _renderTracked = new List<Zone>();
-        private readonly Dictionary<int, ZoneRenderState> _zoneRenderStates =
-            new Dictionary<int, ZoneRenderState>();
-        private readonly List<ZoneLabelSlot> _zoneLabelRows = new List<ZoneLabelSlot>(128);
         private readonly Dictionary<long, Zone> _dupe = new Dictionary<long, Zone>();
-        private readonly Dictionary<int, Zone> _obByCandle = new Dictionary<int, Zone>();
-        private Engine _engMajor, _engInt;
-        private readonly List<EqCluster> _eqs = new List<EqCluster>();
-        private readonly List<EqCluster> _eqOpen = new List<EqCluster>();
-        private readonly List<SweepEv> _sweeps = new List<SweepEv>();
-        private int _lastBullBreak, _lastBearBreak, _lastSweepBull, _lastSweepBear;
         private int _nameSeq;
-        private readonly List<Item> _refItems = new List<Item>();
-        private readonly List<HtfTrack> _htf = new List<HtfTrack>();
-        private readonly List<SessionTrack> _sess = new List<SessionTrack>();
-        private readonly Dictionary<long, Item> _round = new Dictionary<long, Item>();
-        private long _roundCenter = long.MinValue;
-        private double _roundStepUsed;
         private ChartStaticText _status;
         private readonly Dictionary<string, ChartObject> _reg = new Dictionary<string, ChartObject>();
 
@@ -230,7 +199,6 @@ namespace cAlgo
         private Color _cPrevDay, _cPrevWeek, _cPrevMonth, _cOpen, _cAsia, _cLondon, _cNy, _cRound, _cRoundMajor;
 
         private readonly Dictionary<string, int> _rej = new Dictionary<string, int>();
-        private int _hiddenByBudget, _shownZones;
         private long _procTicks, _procBars, _renderTicks, _renderCount, _initTicks;
 
         private static readonly Predicate<Swing> IsClosedSwing = delegate (Swing s) { return s.Broken || s.Swept; };

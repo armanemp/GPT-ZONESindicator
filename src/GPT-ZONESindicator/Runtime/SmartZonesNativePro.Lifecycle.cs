@@ -54,10 +54,10 @@ namespace cAlgo
                 Chart.ScrollChanged -= OnChartScrollChanged;
                 Chart.ZoomChanged -= OnChartZoomChanged;
                 Chart.SizeChanged -= OnChartSizeChanged;
-                if (_m15Bars != null)
+                if (_higherTimeframeState.Bars != null)
                 {
-                    _m15Bars.HistoryLoaded -= OnM15HistoryChanged;
-                    _m15Bars.Reloaded -= OnM15HistoryChanged;
+                    _higherTimeframeState.Bars.HistoryLoaded -= OnM15HistoryChanged;
+                    _higherTimeframeState.Bars.Reloaded -= OnM15HistoryChanged;
                 }
                 RemoveOwnObjects();
             }
@@ -109,42 +109,42 @@ namespace cAlgo
             _zones.Clear();
             _alive.Clear();
             ResetZoneLifecycleIndexes();
-            _renderQueryScratch.Clear();
-            _renderTracked.Clear();
-            _zoneRenderStates.Clear();
+            _zoneRenderingState.QueryScratch.Clear();
+            _zoneRenderingState.Tracked.Clear();
+            _zoneRenderingState.States.Clear();
             _dupe.Clear();
-            _obByCandle.Clear();
-            _eqs.Clear();
-            _eqOpen.Clear();
-            _sweeps.Clear();
-            _refItems.Clear();
-            _round.Clear();
-            _roundCenter = long.MinValue;
+            _orderBlockState.ByCandle.Clear();
+            _equalLevelsState.Clusters.Clear();
+            _equalLevelsState.OpenClusters.Clear();
+            _liquiditySweepState.Events.Clear();
+            _referenceLevelState.Items.Clear();
+            _psychologicalLevelState.Items.Clear();
+            _psychologicalLevelState.Center = long.MinValue;
             _status = null;
             _atr.Clear();
             _trSum = 0;
-            _m15Atr.Clear();
-            _m15TrSum = 0;
-            _m15Swings.Clear();
-            _m15OpenSwings.Clear();
-            _m15LastHigh = null;
-            _m15LastLow = null;
-            _m15Trend = 0;
-            _m15LastBullBreak = -1;
-            _m15LastBearBreak = -1;
+            _higherTimeframeState.Atr.Clear();
+            _higherTimeframeState.TrueRangeSum = 0;
+            _higherTimeframeState.Swings.Clear();
+            _higherTimeframeState.OpenSwings.Clear();
+            _higherTimeframeState.LastHigh = null;
+            _higherTimeframeState.LastLow = null;
+            _higherTimeframeState.Trend = 0;
+            _higherTimeframeState.LastBullBreak = -1;
+            _higherTimeframeState.LastBearBreak = -1;
             _rej.Clear();
 
             _nextId = 1;
             _nameSeq = 0;
-            _hiddenByBudget = 0;
-            _shownZones = 0;
+            _zoneRenderingState.HiddenByBudget = 0;
+            _zoneRenderingState.ShownZones = 0;
             _procTicks = 0;
             _procBars = 0;
             _renderTicks = 0;
             _renderCount = 0;
             _errorCount = 0;
 
-            _engMajor = new Engine
+            _marketStructureState.MajorEngine = new Engine
             {
                 Major = true,
                 Left = MajorLeft,
@@ -152,7 +152,7 @@ namespace cAlgo
                 MinAtr = MajorMinSwingAtr,
                 MinPips = MajorMinSwingPips
             };
-            _engInt = new Engine
+            _marketStructureState.InternalEngine = new Engine
             {
                 Major = false,
                 Left = InternalLeft,
@@ -162,19 +162,19 @@ namespace cAlgo
             };
 
             int never = int.MinValue / 2;
-            _lastBullBreak = never;
-            _lastBearBreak = never;
-            _lastSweepBull = never;
-            _lastSweepBear = never;
+            _marketStructureState.LastBullBreak = never;
+            _marketStructureState.LastBearBreak = never;
+            _liquiditySweepState.LastBullSweep = never;
+            _liquiditySweepState.LastBearSweep = never;
 
-            foreach (HtfTrack tr in _htf)
+            foreach (HtfTrack tr in _referenceLevelState.Tracks)
             {
                 tr.Cur = -1;
                 tr.Current = null;
                 tr.Groups.Clear();
             }
 
-            foreach (SessionTrack session in _sess)
+            foreach (SessionTrack session in _referenceLevelState.Sessions)
             {
                 session.WinStart = DateTime.MinValue;
                 session.HiItem = null;
@@ -186,18 +186,18 @@ namespace cAlgo
             _firstOpenTime = n > 0 ? Bars.OpenTimes[0] : DateTime.MinValue;
             _startIdx = LookbackBars > 0 ? Math.Max(2, n - 1 - LookbackBars) : 2;
             _lastProcessed = _startIdx - 1;
-            _m15ZoneStartTime = n > 0 ? Bars.OpenTimes[Math.Min(_startIdx, n - 1)] : DateTime.MinValue;
-            if (_m15Bars != null && _m15Bars.Count > 0)
+            _higherTimeframeState.ZoneStartTime = n > 0 ? Bars.OpenTimes[Math.Min(_startIdx, n - 1)] : DateTime.MinValue;
+            if (_higherTimeframeState.Bars != null && _higherTimeframeState.Bars.Count > 0)
             {
-                int htfAtLookback = FindM15IndexAtOrBefore(_m15ZoneStartTime);
+                int htfAtLookback = FindM15IndexAtOrBefore(_higherTimeframeState.ZoneStartTime);
                 int warmupBars = Math.Max(100, Math.Max(AtrPeriod * 5, MajorLeft + MajorRight + ObMaxBarsFromSwing));
-                _m15StartIndex = Math.Max(2, htfAtLookback - warmupBars);
+                _higherTimeframeState.StartIndex = Math.Max(2, htfAtLookback - warmupBars);
             }
             else
             {
-                _m15StartIndex = 0;
+                _higherTimeframeState.StartIndex = 0;
             }
-            _lastM15Processed = _m15StartIndex - 1;
+            _higherTimeframeState.LastProcessed = _higherTimeframeState.StartIndex - 1;
             _renderDirty = true;
             _viewportDirty = true;
 

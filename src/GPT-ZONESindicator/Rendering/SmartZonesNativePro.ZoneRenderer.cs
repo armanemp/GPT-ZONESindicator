@@ -16,10 +16,10 @@ namespace cAlgo
         private ZoneRenderState GetZoneRenderState(Zone zone)
         {
             ZoneRenderState view;
-            if (!_zoneRenderStates.TryGetValue(zone.Id, out view))
+            if (!_zoneRenderingState.States.TryGetValue(zone.Id, out view))
             {
                 view = new ZoneRenderState();
-                _zoneRenderStates.Add(zone.Id, view);
+                _zoneRenderingState.States.Add(zone.Id, view);
             }
 
             return view;
@@ -219,23 +219,23 @@ namespace cAlgo
                 || OverlapDeclutter
                 || ShowZoneLabels;
 
-            for (int k = 0; k < _renderTracked.Count; k++)
+            for (int k = 0; k < _zoneRenderingState.Tracked.Count; k++)
             {
                 ZoneRenderState previous;
-                if (_zoneRenderStates.TryGetValue(_renderTracked[k].Id, out previous))
+                if (_zoneRenderingState.States.TryGetValue(_zoneRenderingState.Tracked[k].Id, out previous))
                     previous.Want = false;
             }
 
             _cand.Clear();
             if (indexedViewportSelection)
             {
-                _renderQueryScratch.Clear();
-                _zoneIntervalIndex.Query(viewBottom, viewTop, _renderQueryScratch);
+                _zoneRenderingState.QueryScratch.Clear();
+                _zoneIntervalIndex.Query(viewBottom, viewTop, _zoneRenderingState.QueryScratch);
 
-                for (int k = 0; k < _renderQueryScratch.Count; k++)
+                for (int k = 0; k < _zoneRenderingState.QueryScratch.Count; k++)
                 {
                     TryAddRenderCandidate(
-                        _renderQueryScratch[k], price, atrNow, nowIndex,
+                        _zoneRenderingState.QueryScratch[k], price, atrNow, nowIndex,
                         viewStart, viewEnd, viewTop, viewBottom, needScore);
                 }
             }
@@ -260,7 +260,7 @@ namespace cAlgo
                 Declutter();
 
             // This is a chart-object budget only: it never deletes/mutates logical zones.
-            _hiddenByBudget = 0;
+            _zoneRenderingState.HiddenByBudget = 0;
             if (MaxChartObjects > 0)
             {
                 _tmp.Clear();
@@ -275,7 +275,7 @@ namespace cAlgo
                     _tmp.Sort(CompareScoreDesc);
                     for (int k = MaxChartObjects; k < _tmp.Count; k++)
                         GetZoneRenderState(_tmp[k]).Want = false;
-                    _hiddenByBudget = _tmp.Count - MaxChartObjects;
+                    _zoneRenderingState.HiddenByBudget = _tmp.Count - MaxChartObjects;
                 }
             }
 
@@ -287,7 +287,7 @@ namespace cAlgo
                 if ((view.Want || view.Shown) && !view.RenderTracked)
                 {
                     view.RenderTracked = true;
-                    _renderTracked.Add(zone);
+                    _zoneRenderingState.Tracked.Add(zone);
                 }
             }
 
@@ -297,27 +297,27 @@ namespace cAlgo
             {
                 Zone zone = _cand[k];
                 ZoneRenderState view;
-                if (_zoneRenderStates.TryGetValue(zone.Id, out view)
+                if (_zoneRenderingState.States.TryGetValue(zone.Id, out view)
                     && !view.Want && !view.Shown && !view.RenderTracked)
-                    _zoneRenderStates.Remove(zone.Id);
+                    _zoneRenderingState.States.Remove(zone.Id);
             }
 
             int shown = 0;
             int write = 0;
-            int trackedCount = _renderTracked.Count;
+            int trackedCount = _zoneRenderingState.Tracked.Count;
             if (ShowZoneLabels)
             {
-                _renderTracked.Sort(delegate (Zone a, Zone b) { return a.Id.CompareTo(b.Id); });
+                _zoneRenderingState.Tracked.Sort(delegate (Zone a, Zone b) { return a.Id.CompareTo(b.Id); });
                 PrepareZoneLabelRows();
             }
             else
             {
-                _zoneLabelRows.Clear();
+                _zoneRenderingState.LabelRows.Clear();
             }
 
             for (int k = 0; k < trackedCount; k++)
             {
-                Zone zone = _renderTracked[k];
+                Zone zone = _zoneRenderingState.Tracked[k];
                 SyncZone(zone, refreshMetadata);
                 ZoneRenderState view = GetZoneRenderState(zone);
 
@@ -326,18 +326,18 @@ namespace cAlgo
 
                 if (view.Want || view.Shown)
                 {
-                    _renderTracked[write++] = zone;
+                    _zoneRenderingState.Tracked[write++] = zone;
                 }
                 else
                 {
                     view.RenderTracked = false;
-                    _zoneRenderStates.Remove(zone.Id);
+                    _zoneRenderingState.States.Remove(zone.Id);
                 }
             }
 
-            if (write < _renderTracked.Count)
-                _renderTracked.RemoveRange(write, _renderTracked.Count - write);
-            _shownZones = shown;
+            if (write < _zoneRenderingState.Tracked.Count)
+                _zoneRenderingState.Tracked.RemoveRange(write, _zoneRenderingState.Tracked.Count - write);
+            _zoneRenderingState.ShownZones = shown;
         }
 
         private void LimitPerKind(int limit)
@@ -474,7 +474,7 @@ namespace cAlgo
         /// </summary>
         private void PrepareZoneLabelRows()
         {
-            _zoneLabelRows.Clear();
+            _zoneRenderingState.LabelRows.Clear();
             long tolerance = Math.Max(1L, _barSpan.Ticks) * 2L;
 
             // Reserve positions used by other feature labels near zone right edges.
@@ -486,15 +486,15 @@ namespace cAlgo
                     || text.Name.StartsWith(_prefix + "Z", StringComparison.Ordinal))
                     continue;
 
-                _zoneLabelRows.Add(new ZoneLabelSlot { Time = text.Time, Y = text.Y });
+                _zoneRenderingState.LabelRows.Add(new ZoneLabelSlot { Time = text.Time, Y = text.Y });
             }
         }
 
         private bool ZoneLabelRowCollides(DateTime time, double price, double separation, long tolerance)
         {
-            for (int i = 0; i < _zoneLabelRows.Count; i++)
+            for (int i = 0; i < _zoneRenderingState.LabelRows.Count; i++)
             {
-                ZoneLabelSlot row = _zoneLabelRows[i];
+                ZoneLabelSlot row = _zoneRenderingState.LabelRows[i];
                 if (Math.Abs((row.Time - time).Ticks) <= tolerance
                     && Math.Abs(row.Y - price) < separation)
                     return true;
@@ -505,7 +505,7 @@ namespace cAlgo
 
         private void ReserveZoneLabelRow(DateTime time, double price)
         {
-            _zoneLabelRows.Add(new ZoneLabelSlot { Time = time, Y = price });
+            _zoneRenderingState.LabelRows.Add(new ZoneLabelSlot { Time = time, Y = price });
         }
 
         /// <summary>
@@ -533,7 +533,7 @@ namespace cAlgo
 
             long tolerance = Math.Max(1L, _barSpan.Ticks) * 2L;
             double preferred = zone.Bull ? 1.0 : -1.0;
-            int attempts = Math.Min(48, Math.Max(8, _renderTracked.Count * 2 + 2));
+            int attempts = Math.Min(48, Math.Max(8, _zoneRenderingState.Tracked.Count * 2 + 2));
 
             for (int attempt = 0; attempt < attempts; attempt++)
             {
@@ -701,7 +701,7 @@ namespace cAlgo
         private void RemoveZoneObjects(Zone zone)
         {
             ZoneRenderState view;
-            if (!_zoneRenderStates.TryGetValue(zone.Id, out view)) return;
+            if (!_zoneRenderingState.States.TryGetValue(zone.Id, out view)) return;
 
             string name = _prefix + "Z" + zone.Id.ToString(CultureInfo.InvariantCulture);
             KillObject(view.Rectangle, name);

@@ -11,7 +11,7 @@ namespace cAlgo
         {
             if (!ShowRoundLevels)
             {
-                foreach (KeyValuePair<long, Item> entry in _round)
+                foreach (KeyValuePair<long, Item> entry in _psychologicalLevelState.Items)
                     SyncItem(entry.Value, false);
                 return;
             }
@@ -19,7 +19,7 @@ namespace cAlgo
             double price = _lastClose;
             if (price <= 0)
             {
-                foreach (KeyValuePair<long, Item> entry in _round)
+                foreach (KeyValuePair<long, Item> entry in _psychologicalLevelState.Items)
                     SyncItem(entry.Value, false);
                 return;
             }
@@ -32,17 +32,17 @@ namespace cAlgo
                 return;
 
             long center = (long)Math.Round(price / step);
-            bool stepChanged = Math.Abs(step - _roundStepUsed) > 1e-12;
-            bool refreshLevels = center != _roundCenter || stepChanged;
+            bool stepChanged = Math.Abs(step - _psychologicalLevelState.StepUsed) > 1e-12;
+            bool refreshLevels = center != _psychologicalLevelState.Center || stepChanged;
             int radius = RoundLevelsEachSide;
 
             if (refreshLevels)
             {
-                _roundCenter = center;
-                _roundStepUsed = step;
+                _psychologicalLevelState.Center = center;
+                _psychologicalLevelState.StepUsed = step;
 
                 List<long> remove = new List<long>();
-                foreach (KeyValuePair<long, Item> entry in _round)
+                foreach (KeyValuePair<long, Item> entry in _psychologicalLevelState.Items)
                 {
                     if (stepChanged || entry.Key < center - radius || entry.Key > center + radius)
                         remove.Add(entry.Key);
@@ -51,16 +51,16 @@ namespace cAlgo
                 for (int k = 0; k < remove.Count; k++)
                 {
                     long key = remove[k];
-                    SyncItem(_round[key], false);
-                    _round.Remove(key);
+                    SyncItem(_psychologicalLevelState.Items[key], false);
+                    _psychologicalLevelState.Items.Remove(key);
                 }
 
                 for (long key = center - radius; key <= center + radius; key++)
                 {
-                    if (key <= 0 || _round.ContainsKey(key))
+                    if (key <= 0 || _psychologicalLevelState.Items.ContainsKey(key))
                         continue;
 
-                    _round[key] = new Item
+                    _psychologicalLevelState.Items[key] = new Item
                     {
                         Name = _prefix + "RN" + key.ToString(CultureInfo.InvariantCulture),
                         T1 = Bars.OpenTimes[0],
@@ -74,7 +74,7 @@ namespace cAlgo
                 }
             }
 
-            foreach (KeyValuePair<long, Item> entry in _round)
+            foreach (KeyValuePair<long, Item> entry in _psychologicalLevelState.Items)
             {
                 long key = entry.Key;
                 Item item = entry.Value;

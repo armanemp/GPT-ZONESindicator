@@ -8,7 +8,7 @@ namespace cAlgo
     {
         private void SetupHtf()
         {
-            _htf.Clear();
+            _referenceLevelState.Tracks.Clear();
             AddHtfTrack("PD", "Day Open", TimeFrame.Daily, ShowPrevDay, ShowPrevDayMid, ShowDayOpen, DailyPeriodsKept, _cPrevDay);
             AddHtfTrack("PW", "Week Open", TimeFrame.Weekly, ShowPrevWeek, ShowPrevWeekMid, ShowWeekOpen, WeeklyPeriodsKept, _cPrevWeek);
             AddHtfTrack("PM", "Month Open", TimeFrame.Monthly, ShowPrevMonth, ShowPrevMonthMid, ShowMonthOpen, MonthlyPeriodsKept, _cPrevMonth);
@@ -49,23 +49,23 @@ namespace cAlgo
             }
 
             if (track.Data != null)
-                _htf.Add(track);
+                _referenceLevelState.Tracks.Add(track);
         }
 
         private void SetupSessions()
         {
-            _sess.Clear();
-            _sess.Add(new SessionTrack
+            _referenceLevelState.Sessions.Clear();
+            _referenceLevelState.Sessions.Add(new SessionTrack
             {
                 Name = "Asia", Enabled = ShowAsia, StartH = AsiaStartHour, EndH = AsiaEndHour,
                 Dst = SznpDst.None, Col = _cAsia
             });
-            _sess.Add(new SessionTrack
+            _referenceLevelState.Sessions.Add(new SessionTrack
             {
                 Name = "London", Enabled = ShowLondon, StartH = LondonStartHour, EndH = LondonEndHour,
                 Dst = LondonDst, Col = _cLondon
             });
-            _sess.Add(new SessionTrack
+            _referenceLevelState.Sessions.Add(new SessionTrack
             {
                 Name = "NewYork", Enabled = ShowNewYork, StartH = NyStartHour, EndH = NyEndHour,
                 Dst = NyDst, Col = _cNy
@@ -75,13 +75,13 @@ namespace cAlgo
         private void UpdateReference(int index)
         {
             DateTime time = T(index);
-            for (int k = 0; k < _htf.Count; k++)
-                AdvanceHtf(_htf[k], time);
+            for (int k = 0; k < _referenceLevelState.Tracks.Count; k++)
+                AdvanceHtf(_referenceLevelState.Tracks[k], time);
 
-            for (int k = 0; k < _sess.Count; k++)
+            for (int k = 0; k < _referenceLevelState.Sessions.Count; k++)
             {
-                if (_sess[k].Enabled)
-                    UpdateSession(_sess[k], index);
+                if (_referenceLevelState.Sessions[k].Enabled)
+                    UpdateSession(_referenceLevelState.Sessions[k], index);
             }
         }
 
@@ -104,7 +104,7 @@ namespace cAlgo
                 LabelV = VerticalAlignment.Bottom
             };
 
-            _refItems.Add(item);
+            _referenceLevelState.Items.Add(item);
             return item;
         }
 
@@ -267,8 +267,8 @@ namespace cAlgo
                 LabelV = VerticalAlignment.Top
             };
 
-            _refItems.Add(session.HiItem);
-            _refItems.Add(session.LoItem);
+            _referenceLevelState.Items.Add(session.HiItem);
+            _referenceLevelState.Items.Add(session.LoItem);
         }
 
         /// <summary>Only bars inside the active session window contribute to its range.</summary>

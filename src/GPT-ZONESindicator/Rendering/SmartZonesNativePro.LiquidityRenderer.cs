@@ -11,9 +11,9 @@ namespace cAlgo
             int equalCap = EqualMaxVisible > 0 ? EqualMaxVisible : int.MaxValue;
             int count = 0;
 
-            for (int k = _eqs.Count - 1; k >= 0; k--)
+            for (int k = _equalLevelsState.Clusters.Count - 1; k >= 0; k--)
             {
-                EqCluster cluster = _eqs[k];
+                EqCluster cluster = _equalLevelsState.Clusters[k];
                 bool ended = cluster.Swept || cluster.Broken;
                 bool eligible = ShowEqual && (!ended || ShowSweptEqual);
 
@@ -57,9 +57,9 @@ namespace cAlgo
 
             int sweepCap = SweepMaxVisible > 0 ? SweepMaxVisible : int.MaxValue;
             count = 0;
-            for (int k = _sweeps.Count - 1; k >= 0; k--)
+            for (int k = _liquiditySweepState.Events.Count - 1; k >= 0; k--)
             {
-                SweepEv sweep = _sweeps[k];
+                SweepEv sweep = _liquiditySweepState.Events[k];
                 if (!ShowSweeps)
                 {
                     if (sweep.Vis != null)

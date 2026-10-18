@@ -16,16 +16,16 @@ namespace cAlgo
             double close = C(index);
 
             if (SweepMajor)
-                SweepSwings(_engMajor, index, high, low, open, close, minPenetration, minReturn);
+                SweepSwings(_marketStructureState.MajorEngine, index, high, low, open, close, minPenetration, minReturn);
             if (SweepInternal)
-                SweepSwings(_engInt, index, high, low, open, close, minPenetration, minReturn);
+                SweepSwings(_marketStructureState.InternalEngine, index, high, low, open, close, minPenetration, minReturn);
 
-            if (_eqOpen.Count == 0)
+            if (_equalLevelsState.OpenClusters.Count == 0)
                 return;
 
-            for (int k = 0; k < _eqOpen.Count; k++)
+            for (int k = 0; k < _equalLevelsState.OpenClusters.Count; k++)
             {
-                EqCluster cluster = _eqOpen[k];
+                EqCluster cluster = _equalLevelsState.OpenClusters[k];
                 if (cluster.Swept || cluster.Broken)
                     continue;
 
@@ -49,7 +49,7 @@ namespace cAlgo
                 }
             }
 
-            _eqOpen.RemoveAll(IsClosedCluster);
+            _equalLevelsState.OpenClusters.RemoveAll(IsClosedCluster);
         }
 
         private void SweepSwings(
@@ -110,9 +110,9 @@ namespace cAlgo
         private void AddSweep(bool bull, double level, DateTime startTime, int index)
         {
             DateTime endTime = T(index);
-            for (int k = _sweeps.Count - 1; k >= 0; k--)
+            for (int k = _liquiditySweepState.Events.Count - 1; k >= 0; k--)
             {
-                SweepEv previous = _sweeps[k];
+                SweepEv previous = _liquiditySweepState.Events[k];
                 if (previous.T2 != endTime)
                     break;
 
@@ -123,11 +123,11 @@ namespace cAlgo
                     return;
             }
 
-            _sweeps.Add(new SweepEv { Bull = bull, Level = level, T1 = startTime, T2 = endTime });
+            _liquiditySweepState.Events.Add(new SweepEv { Bull = bull, Level = level, T1 = startTime, T2 = endTime });
             if (bull)
-                _lastSweepBull = index;
+                _liquiditySweepState.LastBullSweep = index;
             else
-                _lastSweepBear = index;
+                _liquiditySweepState.LastBearSweep = index;
         }
     }
 }

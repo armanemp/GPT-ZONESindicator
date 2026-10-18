@@ -8,7 +8,17 @@ namespace cAlgo
     {
         private void RenderStructure()
         {
+            RenderMajorStructure();
+            RenderInternalStructure();
+        }
+
+        private void RenderMajorStructure()
+        {
             SyncEngine(_marketStructureState.MajorEngine, ShowMajorBos, ShowMajorChoch, ShowMajorSwings, ShowMajorActiveLevels);
+        }
+
+        private void RenderInternalStructure()
+        {
             SyncEngine(_marketStructureState.InternalEngine, ShowInternalBos, ShowInternalChoch, ShowInternalSwings, ShowInternalActiveLevels);
         }
 

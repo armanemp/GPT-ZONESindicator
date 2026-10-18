@@ -6,7 +6,7 @@ namespace cAlgo
 {
     public partial class SmartZonesNativePro
     {
-        private void RenderEqualAndSweeps()
+        private void RenderEqualLevels()
         {
             int equalCap = EqualMaxVisible > 0 ? EqualMaxVisible : int.MaxValue;
             int count = 0;
@@ -58,6 +58,10 @@ namespace cAlgo
                 }
             }
 
+        }
+
+        private void RenderSweeps()
+        {
             int sweepCap = SweepMaxVisible > 0 ? SweepMaxVisible : int.MaxValue;
             count = 0;
             for (int k = _liquiditySweepState.Events.Count - 1; k >= 0; k--)

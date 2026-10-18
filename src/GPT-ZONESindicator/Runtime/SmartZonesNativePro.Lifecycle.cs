@@ -123,7 +123,7 @@ namespace cAlgo
             _equalLevelsState.PendingSwings.Clear();
             _equalLevelsState.ClusterBySwing.Clear();
             _liquiditySweepState.Events.Clear();
-            _referenceLevelState.Items.Clear();
+            _referenceLevelRenderingState.Items.Clear();
             _psychologicalLevelState.Items.Clear();
             _psychologicalLevelState.Center = long.MinValue;
             _status = null;
@@ -173,14 +173,14 @@ namespace cAlgo
             _liquiditySweepState.LastBullSweep = never;
             _liquiditySweepState.LastBearSweep = never;
 
-            foreach (HtfTrack tr in _referenceLevelState.Tracks)
+            foreach (HtfTrack tr in _higherTimeframeReferenceState.Tracks)
             {
                 tr.Cur = -1;
                 tr.Current = null;
                 tr.Groups.Clear();
             }
 
-            foreach (SessionTrack session in _referenceLevelState.Sessions)
+            foreach (SessionTrack session in _sessionRangeState.Sessions)
             {
                 session.WinStart = DateTime.MinValue;
                 session.HiItem = null;

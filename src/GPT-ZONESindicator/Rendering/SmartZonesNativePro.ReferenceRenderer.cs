@@ -10,14 +10,14 @@ namespace cAlgo
             int cap = ReferenceMaxVisible > 0 ? ReferenceMaxVisible : int.MaxValue;
             int count = 0;
 
-            for (int k = _referenceLevelState.Items.Count - 1; k >= 0; k--)
+            for (int k = _referenceLevelRenderingState.Items.Count - 1; k >= 0; k--)
             {
-                Item item = _referenceLevelState.Items[k];
+                Item item = _referenceLevelRenderingState.Items[k];
 
                 if (item.Dead)
                 {
                     SyncItem(item, false);
-                    _referenceLevelState.Items.RemoveAt(k);
+                    _referenceLevelRenderingState.Items.RemoveAt(k);
                     continue;
                 }
 

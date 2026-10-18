@@ -56,10 +56,18 @@ namespace cAlgo
             public readonly List<HigherTimeframeSwing> OpenSwings = new List<HigherTimeframeSwing>();
         }
 
-        private sealed class ReferenceLevelFeatureState
+        private sealed class ReferenceLevelRenderingFeatureState
         {
             public readonly List<Item> Items = new List<Item>();
+        }
+
+        private sealed class HigherTimeframeReferenceFeatureState
+        {
             public readonly List<HtfTrack> Tracks = new List<HtfTrack>();
+        }
+
+        private sealed class SessionRangeFeatureState
+        {
             public readonly List<SessionTrack> Sessions = new List<SessionTrack>();
         }
 
@@ -114,7 +122,9 @@ namespace cAlgo
         private readonly EqualLevelsFeatureState _equalLevelsState = new EqualLevelsFeatureState();
         private readonly LiquiditySweepFeatureState _liquiditySweepState = new LiquiditySweepFeatureState();
         private readonly HigherTimeframeFeatureState _higherTimeframeState = new HigherTimeframeFeatureState();
-        private readonly ReferenceLevelFeatureState _referenceLevelState = new ReferenceLevelFeatureState();
+        private readonly ReferenceLevelRenderingFeatureState _referenceLevelRenderingState = new ReferenceLevelRenderingFeatureState();
+        private readonly HigherTimeframeReferenceFeatureState _higherTimeframeReferenceState = new HigherTimeframeReferenceFeatureState();
+        private readonly SessionRangeFeatureState _sessionRangeState = new SessionRangeFeatureState();
         private readonly PsychologicalLevelFeatureState _psychologicalLevelState = new PsychologicalLevelFeatureState();
         private readonly ChartViewportFeatureState _chartViewportState = new ChartViewportFeatureState();
         private readonly ZoneRenderingFeatureState _zoneRenderingState = new ZoneRenderingFeatureState();

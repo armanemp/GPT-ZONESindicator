@@ -55,9 +55,14 @@ namespace cAlgo
                 delegate (int index, double atr) { DetectGapAt(index, atr); });
 
             _featurePipeline.AddProcessor(
-                "Reference level updates",
+                "HTF reference levels",
                 delegate { return true; },
-                delegate (int index, double atr) { UpdateReference(index); });
+                delegate (int index, double atr) { UpdateHtfReferenceLevels(index); });
+
+            _featurePipeline.AddProcessor(
+                "Session ranges",
+                delegate { return true; },
+                delegate (int index, double atr) { UpdateSessionRanges(index); });
 
             _featurePipeline.AddProcessor(
                 "M15 overlay",
@@ -72,14 +77,24 @@ namespace cAlgo
                 delegate (bool refreshMetadata) { RenderZones(refreshMetadata); });
 
             _featurePipeline.AddRenderer(
-                "BOS and CHoCH",
+                "Major market structure",
                 delegate { return true; },
-                delegate (bool refreshMetadata) { RenderStructure(); });
+                delegate (bool refreshMetadata) { RenderMajorStructure(); });
 
             _featurePipeline.AddRenderer(
-                "Equal levels and sweeps",
+                "Internal market structure",
                 delegate { return true; },
-                delegate (bool refreshMetadata) { RenderEqualAndSweeps(); });
+                delegate (bool refreshMetadata) { RenderInternalStructure(); });
+
+            _featurePipeline.AddRenderer(
+                "Equal levels",
+                delegate { return true; },
+                delegate (bool refreshMetadata) { RenderEqualLevels(); });
+
+            _featurePipeline.AddRenderer(
+                "Liquidity sweeps",
+                delegate { return true; },
+                delegate (bool refreshMetadata) { RenderSweeps(); });
 
             _featurePipeline.AddRenderer(
                 "Reference levels",

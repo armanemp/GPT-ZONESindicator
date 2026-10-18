@@ -12,11 +12,19 @@ namespace cAlgo
         private void RenderRound()
         {
             if (!ShowRoundLevels)
+            {
+                foreach (KeyValuePair<long, Item> entry in _round)
+                    SyncItem(entry.Value, false);
                 return;
+            }
 
             double price = _lastClose;
             if (price <= 0)
+            {
+                foreach (KeyValuePair<long, Item> entry in _round)
+                    SyncItem(entry.Value, false);
                 return;
+            }
 
             double step = RoundStep > 0
                 ? RoundStep
@@ -91,7 +99,14 @@ namespace cAlgo
         private void RenderStatus()
         {
             if (!ShowStatusText)
+            {
+                if (_status != null)
+                {
+                    KillObject(_status, _prefix + "status");
+                    _status = null;
+                }
                 return;
+            }
 
             string text = "SZNP  zones shown " + _shownZones + " / tracked " + _zones.Count
                 + (_hiddenByBudget > 0 ? "  |  hidden by object budget: " + _hiddenByBudget : "");

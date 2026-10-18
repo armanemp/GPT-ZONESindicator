@@ -99,7 +99,6 @@ namespace cAlgo
                     zone.TouchCount++;
                 zone.LastEnteredIdx = index;
             }
-            }
 
             if (zone.State == SznpState.Filled)
                 return;

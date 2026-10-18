@@ -123,7 +123,7 @@ namespace cAlgo
                         Comment = view.AppliedComment,
                         BorderThickness = zone.IsHigherTimeframe
                             ? Math.Max(1, ZoneBorderThickness)
-                            : Math.Max(1, ZoneBorderThickness),
+                            : ZoneBorderThickness,
                         DottedBorder = zone.IsHigherTimeframe
                     });
                 }

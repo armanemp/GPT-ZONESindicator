@@ -137,6 +137,10 @@ namespace cAlgo
         }
 
         private Func<int, double> _highPriceAt, _lowPriceAt, _openPriceAt, _closePriceAt;
+        private FeatureModulePipeline _featurePipeline;
+        private bool _itemViewportValid;
+        private DateTime _itemViewStart, _itemViewEnd;
+        private double _itemViewTop, _itemViewBottom;
         private Bars _m15Bars;
         private int _m15StartIndex, _lastM15Processed = -1;
         private int _m15HistoryRequests;

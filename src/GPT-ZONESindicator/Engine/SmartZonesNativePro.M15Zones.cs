@@ -17,12 +17,7 @@ namespace cAlgo
                 return DateTime.UtcNow.Add(TimeSpan.FromMinutes(200));
 
             int last = Bars.Count - 1;
-            TimeSpan observedSpan = TimeSpan.Zero;
-            if (Bars.Count > 40)
-                observedSpan = Bars.OpenTimes[last] - Bars.OpenTimes[last - 40];
-
-            TimeSpan span = FutureBarTimeEvaluator.GetFortyBarSpan(
-                Bars.Count, _barSpan, observedSpan);
+            TimeSpan span = FutureBarTimeEvaluator.GetFortyBarSpan(_barSpan);
 
             try
             {

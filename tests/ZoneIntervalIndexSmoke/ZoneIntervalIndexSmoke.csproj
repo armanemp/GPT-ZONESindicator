@@ -10,6 +10,7 @@
   <ItemGroup>
     <Compile Include="../../src/GPT-ZONESindicator/Engine/ZoneIntervalIndex.cs" Link="ZoneIntervalIndex.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Engine/ZoneLifecycleEvaluator.cs" Link="ZoneLifecycleEvaluator.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Engine/ZoneBreakerFactory.cs" Link="ZoneBreakerFactory.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Domain/ZoneTypes.cs" Link="ZoneTypes.cs" />
   </ItemGroup>
 </Project>

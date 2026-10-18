@@ -9,25 +9,10 @@ namespace cAlgo
     {
         private void ApplyLineLabelPresentation()
         {
-            // Enforce the requested presentation even when cTrader restores an older
-            // parameter preset that still contains solid/line styles or hidden level labels.
-            ShowLevelLabels = true;
-            ShowZoneLabels = true;
-            DetectFvg = true;
-            ShowFvg = true;
-            DetectGap = true;
-            ShowGap = true;
-            DetectOb = true;
-            ShowOb = true;
-            DetectBreaker = true;
-            ShowBreaker = true;
-            ShowTouchedZones = true;
+            // Preserve the user's display/detection choices. Earlier builds forcibly enabled
+            // every zone type and all zone labels, which made the chart unnecessarily busy.
+            // M15 overlay and dotted drawing styles remain the requested defaults.
             ShowM15Zones = true;
-            DisplayMode = SznpDisplayMode.AllInLookback;
-            MinScore = 0;
-            MaxZonesPerKind = 0;
-            MaxChartObjects = 0;
-            OverlapDeclutter = false;
             MidlineStyle = LineStyle.Dots;
             StructStyle = LineStyle.Dots;
             InternalStyle = LineStyle.Dots;

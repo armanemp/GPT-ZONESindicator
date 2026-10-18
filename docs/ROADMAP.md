@@ -27,7 +27,7 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 - [x] Add deterministic lifecycle unit cases for Fresh, Touched, Partial, Filled and Broken states (the full history/live replay fixture remains outstanding).
 - [x] Test all break modes: CandleClose, BodyBeyond and WickBeyond for bullish/bearish zones, including exact-boundary cases.
 - [x] Extract the closed-bar lifecycle decision step into a pure evaluator and add regression cases for both directions, strict break boundaries, fill/break priority, touch re-entry and terminal Broken state (CI passed; full history/live replay remains outstanding).
-- [x] Extract and test the pure breaker spec: reverse direction, preserve parent identity/bounds/scoring context, and start exactly at confirmation time (CI passed; end-to-end runtime link/chart verification remains pending).
+- [x] Validate breaker eligibility (broken OB parent only, no duplicate child, valid bounds/scoring inputs, confirmation after origin), reverse direction, preserve identity/bounds/scoring context, and start at confirmation time (CI pending for latest runtime guard).
 - [ ] Verify in cTrader that the parent's ChildId points to the generated breaker and the rendered breaker begins at the break confirmation time.
 - [ ] Verify hiding, ranking, overlap decluttering and chart-object budgets never mutate logical state.
 
@@ -71,7 +71,7 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 
 - [x] Reuse the active-zone price interval index to discover zones intersecting the visible price range in the common viewport mode.
 - [x] Synchronize only the previous and current viewport candidates during ordinary rendering; global ranking and opt-in terminal-history modes retain complete-history selection.
-- [x] Add a default 1px dashed, higher-contrast same-hue midline to every visible zone; increase breaker fill visibility and darken default FVG/order-block palette.
+- [x] Derive each 1px dashed midline from the rendered zone color and darken its RGB channels by 26%, keeping hue consistent and opacity configurable; increase breaker fill visibility and darken default FVG/order-block palette (color transform covered by regression test; live-chart contrast verification remains pending).
 - [x] Keep broken/fill history hidden by default while retaining the existing opt-in display switches.
 - [x] Include phase/* branches in the build workflow trigger.
 - [ ] Verify all valid zones appear while panning and zooming in cTrader, including breaker zones through the chart's right edge.

@@ -101,9 +101,24 @@ namespace cAlgo
         /// <summary>A broken order block can create a same-boundary breaker with reversed direction.</summary>
         private void CreateBreaker(Zone orderBlock, int index)
         {
+            // Guard the creation boundary itself, not just the caller: this prevents
+            // duplicate or stale breaker children if this path is ever reused.
+            if (orderBlock == null
+                || orderBlock.Kind != SznpKind.OrderBlock
+                || orderBlock.State != SznpState.Broken
+                || orderBlock.BreakIdx != index
+                || orderBlock.ChildId > 0)
+            {
+                Reject("breaker: parent not eligible");
+                return;
+            }
+
             ZoneBreakerSpec spec = ZoneBreakerFactory.Create(new ZoneBreakerInput
             {
                 ParentId = orderBlock.Id,
+                ParentKind = orderBlock.Kind,
+                ParentState = orderBlock.State,
+                ExistingChildId = orderBlock.ChildId,
                 ParentBull = orderBlock.Bull,
                 Lower = orderBlock.Lower,
                 Upper = orderBlock.Upper,

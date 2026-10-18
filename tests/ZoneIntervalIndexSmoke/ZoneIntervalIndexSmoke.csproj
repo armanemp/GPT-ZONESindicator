@@ -17,6 +17,7 @@
     <Compile Include="../../src/GPT-ZONESindicator/Engine/ZoneBreakCandidateIndex.cs" Link="ZoneBreakCandidateIndex.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Engine/ZoneLifecycleEvaluator.cs" Link="ZoneLifecycleEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Engine/ZoneBreakerFactory.cs" Link="ZoneBreakerFactory.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Engine/ZoneMidlineColorEvaluator.cs" Link="ZoneMidlineColorEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Engine/StructureBreakEvaluator.cs" Link="StructureBreakEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Engine/LiquiditySweepEvaluator.cs" Link="LiquiditySweepEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Domain/ZoneTypes.cs" Link="ZoneTypes.cs" />

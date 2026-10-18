@@ -425,15 +425,14 @@ namespace cAlgo
 
         private Color ZoneMidlineColor(Zone zone)
         {
-            // Keep the zone hue, but lift RGB toward white for a contrasting 1px
-            // dashed midline. Opacity remains a user-configurable parameter.
+            // Derive the line from the actual current zone hue, then darken RGB by
+            // a restrained 26%. Keep line opacity configurable and the 1px dashed
+            // style subtle so the midpoint is legible without competing with candles.
             Color source = ZoneColor(zone);
-            const double lift = 0.38;
-            byte r = (byte)Math.Max(0, Math.Min(255, Math.Round(source.R + (255 - source.R) * lift)));
-            byte g = (byte)Math.Max(0, Math.Min(255, Math.Round(source.G + (255 - source.G) * lift)));
-            byte b = (byte)Math.Max(0, Math.Min(255, Math.Round(source.B + (255 - source.B) * lift)));
+            ZoneMidlineRgb darker = ZoneMidlineColorEvaluator.Darken(
+                source.R, source.G, source.B);
             byte alpha = (byte)Math.Max(0, Math.Min(255, Math.Round(MidlineOpacity * 2.55)));
-            return Color.FromArgb(alpha, r, g, b);
+            return Color.FromArgb(alpha, darker.R, darker.G, darker.B);
         }
 
         private static string KindTag(Zone zone)

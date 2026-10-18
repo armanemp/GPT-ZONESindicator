@@ -376,6 +376,9 @@ namespace ZoneIntervalIndexSmoke
             ZoneBreakerInput input = new ZoneBreakerInput
             {
                 ParentId = 42,
+                ParentKind = SznpKind.OrderBlock,
+                ParentState = SznpState.Broken,
+                ExistingChildId = -1,
                 ParentBull = true,
                 Lower = 1.1000,
                 Upper = 1.1050,
@@ -431,8 +434,93 @@ namespace ZoneIntervalIndexSmoke
                 rejectedBounds = true;
             }
             Assert(rejectedBounds, "Breaker specs must reject non-positive-width bounds.");
+
+            bool rejectedNonOrderBlock = false;
+            try
+            {
+                input.ParentKind = SznpKind.Fvg;
+                ZoneBreakerFactory.Create(input);
+            }
+            catch (InvalidOperationException)
+            {
+                rejectedNonOrderBlock = true;
+            }
+            Assert(rejectedNonOrderBlock, "Only a broken order block may create a breaker.");
+            input.ParentKind = SznpKind.OrderBlock;
+
+            bool rejectedUnbroken = false;
+            try
+            {
+                input.ParentState = SznpState.Fresh;
+                ZoneBreakerFactory.Create(input);
+            }
+            catch (InvalidOperationException)
+            {
+                rejectedUnbroken = true;
+            }
+            Assert(rejectedUnbroken, "An unbroken order block must not create a breaker.");
+            input.ParentState = SznpState.Broken;
+
+            bool rejectedDuplicate = false;
+            try
+            {
+                input.ExistingChildId = 43;
+                ZoneBreakerFactory.Create(input);
+            }
+            catch (InvalidOperationException)
+            {
+                rejectedDuplicate = true;
+            }
+            Assert(rejectedDuplicate, "A parent order block must not create more than one breaker.");
+            input.ExistingChildId = -1;
+
+            bool rejectedTimeline = false;
+            try
+            {
+                input.ConfirmationIndex = input.OriginIndex;
+                ZoneBreakerFactory.Create(input);
+            }
+            catch (ArgumentException)
+            {
+                rejectedTimeline = true;
+            }
+            Assert(rejectedTimeline, "A breaker must be confirmed after its order-block origin.");
+            input.ConfirmationIndex = 17;
+
+            bool rejectedAtr = false;
+            try
+            {
+                input.Atr = double.NaN;
+                ZoneBreakerFactory.Create(input);
+            }
+            catch (ArgumentException)
+            {
+                rejectedAtr = true;
+            }
+            Assert(rejectedAtr, "Breaker scoring context must reject invalid ATR values.");
+            input.Atr = 0.0035;
         }
 
+
+
+        private static void VerifyZoneMidlineColor()
+        {
+            ZoneMidlineRgb source = ZoneMidlineColorEvaluator.Darken(22, 160, 166);
+            Assert(source.R < 22 && source.G < 160 && source.B < 166,
+                "Midline RGB channels must be darker than the current zone base color.");
+            Assert(source.R == 16 && source.G == 118 && source.B == 123,
+                "Midline should apply the documented 26% darkening deterministically.");
+
+            ZoneMidlineRgb neutral = ZoneMidlineColorEvaluator.Darken(128, 128, 128);
+            Assert(neutral.R == 95 && neutral.G == 95 && neutral.B == 95,
+                "The midline transform must also preserve neutral/grayscale hues.");
+
+            ZoneMidlineRgb black = ZoneMidlineColorEvaluator.Darken(0, 0, 0);
+            Assert(black.R == 0 && black.G == 0 && black.B == 0,
+                "Darkening black must remain black without overflow.");
+
+            Console.WriteLine("PASS: midlines retain zone hue and darken the RGB channels by 26%.");
+        }
 
 
         private static void VerifyEqualLevelPairRules()
@@ -1126,6 +1214,7 @@ namespace ZoneIntervalIndexSmoke
                 VerifyLifecycleSequenceAndTouchCounts();
                 VerifyInvalidLifecycleInput();
                 VerifyBreakerFactory();
+                VerifyZoneMidlineColor();
                 VerifyPivotConfirmationAndTieRules();
                 VerifyEqualLevelPairRules();
                 VerifyOrderBlockRules();

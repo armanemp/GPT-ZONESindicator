@@ -33,3 +33,6 @@ jobs:
         run: |
           test -f bin/Release/net6.0/GPT-ZONESindicator.algo
           ls -lh bin/Release/net6.0/GPT-ZONESindicator.algo
+
+      - name: Verify interval index against brute-force reference
+        run: dotnet run --project tests/ZoneIntervalIndexSmoke/ZoneIntervalIndexSmoke.csproj --configuration Release

@@ -31,7 +31,6 @@ namespace cAlgo
             {
                 Short = shortName,
                 OpenName = openName,
-                Tf = timeframe,
                 ShowHL = showHighLow,
                 ShowMid = showMid,
                 ShowOpen = showOpen,
@@ -233,7 +232,6 @@ namespace cAlgo
 
             Color color = WithOpacity(session.Col, RefOpacity);
             session.WinStart = windowStart;
-            session.WinEnd = windowEnd;
             session.Hi = H(index);
             session.Lo = L(index);
 

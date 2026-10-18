@@ -338,7 +338,6 @@ namespace cAlgo
                 }
 
                 zone.Shown = true;
-                zone.AppT1 = start;
                 zone.AppT2 = end;
                 zone.AppCol = color;
                 return;

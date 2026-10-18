@@ -152,7 +152,6 @@ namespace cAlgo
                     continue;
 
                 swing.Swept = true;
-                swing.SweepIdx = index;
                 any = true;
                 AddSweep(!swing.High, swing.Price, swing.Time, index);
             }

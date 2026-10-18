@@ -177,9 +177,6 @@ namespace cAlgo
 
         public override void Calculate(int index)
         {
-            if (_disabled)
-                return;
-
             try
             {
                 if (Bars.Count < 5)

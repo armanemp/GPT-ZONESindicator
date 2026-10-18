@@ -29,9 +29,8 @@ namespace cAlgo
             public ChartRectangle Rect;
             public ChartTrendLine Mid;
             public ChartText Lbl;
-            public DateTime AppT1, AppT2;
+            public DateTime AppT2;
             public Color AppCol;
-            public bool AppMid, AppLbl;
         }
 
         /// <summary>Line, optional label, and last-applied view snapshot.</summary>
@@ -65,7 +64,7 @@ namespace cAlgo
             public double Price;
             public bool High, Major;
             public bool Broken, SilentBreak, Choch, BreakBull, Swept;
-            public int BreakIdx = -1, SweepIdx = -1;
+            public int BreakIdx = -1;
             public DateTime BreakTime;
             public EqCluster Cluster;
             public Item Level, Mark;
@@ -103,7 +102,6 @@ namespace cAlgo
         private sealed class HtfTrack
         {
             public string Short, OpenName;
-            public TimeFrame Tf;
             public Bars Data;
             public int Cur = -1, Keep = 1;
             public bool ShowHL, ShowMid, ShowOpen;
@@ -119,7 +117,7 @@ namespace cAlgo
             public double StartH, EndH;
             public SznpDst Dst;
             public Color Col;
-            public DateTime WinStart = DateTime.MinValue, WinEnd;
+            public DateTime WinStart = DateTime.MinValue;
             public double Hi, Lo;
             public Item HiItem, LoItem;
             public readonly Queue<Item[]> Past = new Queue<Item[]>();
@@ -131,7 +129,7 @@ namespace cAlgo
         private DateTime _futureTime;
         private int _startIdx, _lastProcessed;
         private DateTime _firstOpenTime;
-        private bool _rebuildPending, _histLoading, _renderDirty, _disabled;
+        private bool _rebuildPending, _histLoading, _renderDirty;
         private int _histRequests, _errorCount, _nextId = 1;
         private double _lastClose;
         private DateTime _lastBarTime;

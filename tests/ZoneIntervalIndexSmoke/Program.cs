@@ -434,6 +434,8 @@ namespace ZoneIntervalIndexSmoke
                 rejectedBounds = true;
             }
             Assert(rejectedBounds, "Breaker specs must reject non-positive-width bounds.");
+            input.Lower = 1.1000;
+            input.Upper = 1.1050;
 
             bool rejectedNonOrderBlock = false;
             try

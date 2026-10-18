@@ -274,7 +274,10 @@ namespace cAlgo
             double close = C(index);
             double low = L(index);
             double high = H(index);
+            _breakScratch.Clear();
 
+            // Collect candidates from every kind before mutating any index. Sorting by
+            // zone identity preserves the old chronological _alive processing order.
             for (int kind = 0; kind < 4; kind++)
             {
                 SznpBreakMode mode = ModeFor((SznpKind)kind);
@@ -294,7 +297,6 @@ namespace cAlgo
                 }
 
                 SortedSet<Zone> bullish = _bullishBreakIndex[kind];
-                _breakScratch.Clear();
                 if (bullish != null && bullish.Count > 0)
                 {
                     // Bullish zones break when their lower boundary is strictly above
@@ -307,9 +309,6 @@ namespace cAlgo
                             _breakScratch.Add(zone);
                     }
                 }
-
-                for (int i = 0; i < _breakScratch.Count; i++)
-                    UpdateZone(_breakScratch[i], index, true);
 
                 double bearishReference;
                 switch (mode)
@@ -326,7 +325,6 @@ namespace cAlgo
                 }
 
                 SortedSet<Zone> bearish = _bearishBreakIndex[kind];
-                _breakScratch.Clear();
                 if (bearish != null && bearish.Count > 0)
                 {
                     // Bearish zones break when their upper boundary is strictly below
@@ -339,9 +337,18 @@ namespace cAlgo
                             _breakScratch.Add(zone);
                     }
                 }
+            }
 
-                for (int i = 0; i < _breakScratch.Count; i++)
-                    UpdateZone(_breakScratch[i], index, true);
+            _breakScratch.Sort(delegate (Zone left, Zone right)
+            {
+                return left.Id.CompareTo(right.Id);
+            });
+
+            for (int i = 0; i < _breakScratch.Count; i++)
+            {
+                Zone zone = _breakScratch[i];
+                if (zone.Indexed && zone.ConfirmIdx < index)
+                    UpdateZone(zone, index, true);
             }
 
             _breakScratch.Clear();

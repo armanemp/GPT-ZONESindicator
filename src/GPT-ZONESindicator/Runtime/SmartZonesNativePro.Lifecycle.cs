@@ -13,6 +13,16 @@ namespace cAlgo
             // parameter preset that still contains solid/line styles or hidden level labels.
             ShowLevelLabels = true;
             ShowZoneLabels = true;
+            DetectFvg = true;
+            ShowFvg = true;
+            DetectGap = true;
+            ShowGap = true;
+            DetectOb = true;
+            ShowOb = true;
+            DetectBreaker = true;
+            ShowBreaker = true;
+            ShowTouchedZones = true;
+            ShowM15Zones = true;
             DisplayMode = SznpDisplayMode.AllInLookback;
             MinScore = 0;
             MaxZonesPerKind = 0;

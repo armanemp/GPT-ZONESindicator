@@ -633,7 +633,7 @@ namespace ZoneIntervalIndexSmoke
             Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(false, false),
                 "Without a valid viewport, rendering must not claim active-index viewport mode.");
 
-            Console.WriteLine("PASS: viewport-local ranking uses the active index; only opt-in filled history needs a full-history selection.");
+            Console.WriteLine("PASS: viewport selection uses the active index except for opt-in filled or breaker-parent history.");
         }
 
         private static void VerifyBreakerLifecycleDirection()

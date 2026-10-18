@@ -8,7 +8,7 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 - [x] Separate configuration parameters by feature group.
 - [x] Separate lifecycle, domain state, detection engines, reference levels and renderers into partial-class files.
 - [x] Keep the existing public indicator type and feature parameter names/defaults.
-- [ ] Build against the target cTrader Automate package and resolve any compile-time API incompatibilities.
+- [x] Build against the target cTrader Automate package and resolve compile-time API incompatibilities (GitHub Actions restore + Release build passed).
 - [ ] Compare the modular source against the pasted baseline for parameter and feature parity.
 
 **Exit gate:** successful build and source-level parity review. Runtime acceptance remains pending until loaded in cTrader.

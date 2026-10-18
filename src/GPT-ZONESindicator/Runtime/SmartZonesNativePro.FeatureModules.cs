@@ -25,9 +25,14 @@ namespace cAlgo
                 delegate (int index, double atr) { ProcessIndexedZones(index); });
 
             _featurePipeline.AddProcessor(
-                "Market structure",
+                "Major market structure",
                 delegate { return true; },
-                delegate (int index, double atr) { ProcessStructure(index, atr); });
+                delegate (int index, double atr) { ProcessMajorStructure(index, atr); });
+
+            _featurePipeline.AddProcessor(
+                "Internal market structure",
+                delegate { return true; },
+                delegate (int index, double atr) { ProcessInternalStructure(index, atr); });
 
             _featurePipeline.AddProcessor(
                 "Order blocks",

@@ -5,12 +5,20 @@ namespace cAlgo
 {
     public partial class SmartZonesNativePro
     {
-        private void ProcessStructure(int index, double atr)
+        private void ProcessMajorStructure(int index, double atr)
         {
-            ScanPivots(_marketStructureState.MajorEngine, index, atr);
-            ScanPivots(_marketStructureState.InternalEngine, index, atr);
-            CheckBreaks(_marketStructureState.MajorEngine, index, atr);
-            CheckBreaks(_marketStructureState.InternalEngine, index, atr);
+            ProcessStructureEngine(_marketStructureState.MajorEngine, index, atr);
+        }
+
+        private void ProcessInternalStructure(int index, double atr)
+        {
+            ProcessStructureEngine(_marketStructureState.InternalEngine, index, atr);
+        }
+
+        private void ProcessStructureEngine(Engine engine, int index, double atr)
+        {
+            ScanPivots(engine, index, atr);
+            CheckBreaks(engine, index, atr);
         }
 
         /// <summary>A pivot is confirmed only after all configured right-hand bars have closed.</summary>

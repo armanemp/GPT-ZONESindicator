@@ -221,11 +221,19 @@ namespace cAlgo
             try
             {
                 ScanM15Pivots(index, atr);
+            }
+            catch (Exception ex)
+            {
+                LogError("M15 pivot detector", ex);
+            }
+
+            try
+            {
                 CheckM15Breaks(index, confirmingChartIndex, atr);
             }
             catch (Exception ex)
             {
-                LogError("M15 market structure", ex);
+                LogError("M15 structure-break detector", ex);
             }
 
             if (DetectFvg)

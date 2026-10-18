@@ -198,7 +198,7 @@ namespace cAlgo
         [Parameter("Zone midline thickness", Group = G20, DefaultValue = 1, MinValue = 1, MaxValue = 5)]
         public int MidlineThickness { get; set; }
 
-        [Parameter("Zone midline style", Group = G20, DefaultValue = LineStyle.Lines)]
+        [Parameter("Zone midline style", Group = G20, DefaultValue = LineStyle.Dots)]
         public LineStyle MidlineStyle { get; set; }
 
         [Parameter("Zone border thickness (0 = none)", Group = G20, DefaultValue = 0, MinValue = 0, MaxValue = 5)]

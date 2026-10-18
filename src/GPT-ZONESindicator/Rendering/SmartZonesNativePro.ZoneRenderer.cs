@@ -204,13 +204,12 @@ namespace cAlgo
             // find zones intersecting visible prices instead of scanning all historical zones.
             // Explicit terminal-history display falls back to the complete collection so those
             // opt-in history records remain available.
-            bool indexedViewportSelection = hasViewport
-                && !globalSelection
-                // The active-zone interval index intentionally excludes terminal states.
-                // Fall back to the full logical zone list whenever terminal history is enabled.
-                && !ShowFilledZones
-                && !ShowBrokenZones
-                && !ShowObHistoryOfBreakers;
+            bool indexedViewportSelection = ZoneViewportSelectionPolicy.UseActiveZoneIndex(
+                hasViewport,
+                globalSelection,
+                ShowFilledZones,
+                ShowBrokenZones,
+                ShowObHistoryOfBreakers);
 
             bool needScore = MinScore > 0
                 || DisplayMode == SznpDisplayMode.TopRanked

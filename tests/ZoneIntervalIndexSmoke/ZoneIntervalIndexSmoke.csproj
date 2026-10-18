@@ -8,20 +8,20 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="../../src/GPT-ZONESindicator/Engine/ZoneIntervalIndex.cs" Link="ZoneIntervalIndex.cs" />
-    <Compile Include="../../src/GPT-ZONESindicator/Engine/HigherTimeframeTimingEvaluator.cs" Link="HigherTimeframeTimingEvaluator.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Features/ZoneLifecycle/ZoneIntervalIndex.cs" Link="ZoneIntervalIndex.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Features/HigherTimeframe/HigherTimeframeTimingEvaluator.cs" Link="HigherTimeframeTimingEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Engine/FutureBarTimeEvaluator.cs" Link="FutureBarTimeEvaluator.cs" />
-    <Compile Include="../../src/GPT-ZONESindicator/Engine/PivotEvaluator.cs" Link="PivotEvaluator.cs" />
-    <Compile Include="../../src/GPT-ZONESindicator/Engine/EqualLevelEvaluator.cs" Link="EqualLevelEvaluator.cs" />
-    <Compile Include="../../src/GPT-ZONESindicator/Engine/OrderBlockRules.cs" Link="OrderBlockRules.cs" />
-    <Compile Include="../../src/GPT-ZONESindicator/Engine/OrderBlockCandidateEvaluator.cs" Link="OrderBlockCandidateEvaluator.cs" />
-    <Compile Include="../../src/GPT-ZONESindicator/Engine/LiquiditySweepDuplicateEvaluator.cs" Link="LiquiditySweepDuplicateEvaluator.cs" />
-    <Compile Include="../../src/GPT-ZONESindicator/Engine/ZoneBreakCandidateIndex.cs" Link="ZoneBreakCandidateIndex.cs" />
-    <Compile Include="../../src/GPT-ZONESindicator/Engine/ZoneLifecycleEvaluator.cs" Link="ZoneLifecycleEvaluator.cs" />
-    <Compile Include="../../src/GPT-ZONESindicator/Engine/ZoneBreakerFactory.cs" Link="ZoneBreakerFactory.cs" />
-    <Compile Include="../../src/GPT-ZONESindicator/Engine/ZoneMidlineColorEvaluator.cs" Link="ZoneMidlineColorEvaluator.cs" />
-    <Compile Include="../../src/GPT-ZONESindicator/Engine/StructureBreakEvaluator.cs" Link="StructureBreakEvaluator.cs" />
-    <Compile Include="../../src/GPT-ZONESindicator/Engine/LiquiditySweepEvaluator.cs" Link="LiquiditySweepEvaluator.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Features/MarketStructure/PivotEvaluator.cs" Link="PivotEvaluator.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Features/EqualLevels/EqualLevelEvaluator.cs" Link="EqualLevelEvaluator.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Features/OrderBlocks/OrderBlockRules.cs" Link="OrderBlockRules.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Features/OrderBlocks/OrderBlockCandidateEvaluator.cs" Link="OrderBlockCandidateEvaluator.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Features/LiquiditySweeps/LiquiditySweepDuplicateEvaluator.cs" Link="LiquiditySweepDuplicateEvaluator.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Features/ZoneLifecycle/ZoneBreakCandidateIndex.cs" Link="ZoneBreakCandidateIndex.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Features/ZoneLifecycle/ZoneLifecycleEvaluator.cs" Link="ZoneLifecycleEvaluator.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Features/ZoneLifecycle/ZoneBreakerFactory.cs" Link="ZoneBreakerFactory.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Features/ZoneLifecycle/ZoneMidlineColorEvaluator.cs" Link="ZoneMidlineColorEvaluator.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Features/MarketStructure/StructureBreakEvaluator.cs" Link="StructureBreakEvaluator.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Features/LiquiditySweeps/LiquiditySweepEvaluator.cs" Link="LiquiditySweepEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Domain/ZoneTypes.cs" Link="ZoneTypes.cs" />
   </ItemGroup>
 </Project>

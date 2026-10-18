@@ -33,6 +33,7 @@ namespace cAlgo
             public ChartTrendLine Mid;
             public ChartText Lbl;
             public DateTime AppT2;
+            public double AppLabelY;
             public Color AppCol;
             public string AppComment, AppLabelText;
         }

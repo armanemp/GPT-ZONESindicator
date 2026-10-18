@@ -12,6 +12,12 @@ namespace cAlgo
             // Enforce the requested presentation even when cTrader restores an older
             // parameter preset that still contains solid/line styles or hidden level labels.
             ShowLevelLabels = true;
+            ShowZoneLabels = true;
+            DisplayMode = SznpDisplayMode.AllInLookback;
+            MinScore = 0;
+            MaxZonesPerKind = 0;
+            MaxChartObjects = 0;
+            OverlapDeclutter = false;
             MidlineStyle = LineStyle.Dots;
             StructStyle = LineStyle.Dots;
             InternalStyle = LineStyle.Dots;

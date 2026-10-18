@@ -146,8 +146,19 @@ namespace cAlgo
                 delegate (Zone zone) { return zone.Lower; },
                 delegate (Zone zone) { return zone.Upper; },
                 delegate (Zone zone) { return zone.Id; });
-        private readonly SortedSet<Zone>[] _bullishBreakIndex = new SortedSet<Zone>[4];
-        private readonly SortedSet<Zone>[] _bearishBreakIndex = new SortedSet<Zone>[4];
+        private readonly ZoneBreakCandidateIndex<Zone> _zoneBreakCandidateIndex =
+            new ZoneBreakCandidateIndex<Zone>(
+                delegate (Zone zone) { return zone.Lower; },
+                delegate (Zone zone) { return zone.Upper; },
+                delegate (Zone zone) { return zone.Id; },
+                delegate (Zone zone) { return zone.ConfirmIdx; },
+                delegate (bool lowerBound, double price, int id)
+                {
+                    return lowerBound
+                        ? new Zone { Lower = price, Id = id }
+                        : new Zone { Upper = price, Id = id };
+                });
+        private readonly SznpBreakMode[] _breakModes = new SznpBreakMode[4];
         private readonly List<Zone> _overlapScratch = new List<Zone>();
         private readonly List<Zone> _breakScratch = new List<Zone>();
         private readonly List<Zone> _renderQueryScratch = new List<Zone>();

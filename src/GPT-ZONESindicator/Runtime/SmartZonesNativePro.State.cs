@@ -19,7 +19,8 @@ namespace cAlgo
             public SznpState State;
             public int TouchCount;
             public double MaxDepth;
-            public bool InsideLast;
+            public int LastEnteredIdx = -1;
+            public bool Indexed;
             public double Atr, Momentum, StructFactor;
             public int Confluence;
             public bool Major;
@@ -139,6 +140,11 @@ namespace cAlgo
         private double _trSum;
         private readonly List<Zone> _zones = new List<Zone>();
         private readonly List<Zone> _alive = new List<Zone>();
+        private ZoneIntervalNode _zoneIntervalRoot;
+        private readonly SortedSet<Zone>[] _bullishBreakIndex = new SortedSet<Zone>[4];
+        private readonly SortedSet<Zone>[] _bearishBreakIndex = new SortedSet<Zone>[4];
+        private readonly List<Zone> _overlapScratch = new List<Zone>();
+        private readonly List<Zone> _breakScratch = new List<Zone>();
         private readonly Dictionary<long, Zone> _dupe = new Dictionary<long, Zone>();
         private readonly Dictionary<int, Zone> _obByCandle = new Dictionary<int, Zone>();
         private Engine _engMajor, _engInt;
@@ -166,7 +172,6 @@ namespace cAlgo
         private int _hiddenByBudget, _shownZones;
         private long _procTicks, _procBars, _renderTicks, _renderCount, _initTicks;
 
-        private static readonly Predicate<Zone> IsDeadZone = delegate (Zone z) { return z.State == SznpState.Broken; };
         private static readonly Predicate<Swing> IsClosedSwing = delegate (Swing s) { return s.Broken || s.Swept; };
         private static readonly Predicate<EqCluster> IsClosedCluster = delegate (EqCluster c) { return c.Swept || c.Broken; };
         private readonly double[] _fac = new double[7];

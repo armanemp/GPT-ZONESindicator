@@ -141,7 +141,11 @@ namespace cAlgo
         private double _trSum;
         private readonly List<Zone> _zones = new List<Zone>();
         private readonly List<Zone> _alive = new List<Zone>();
-        private ZoneIntervalNode _zoneIntervalRoot;
+        private readonly ZoneIntervalIndex<Zone> _zoneIntervalIndex =
+            new ZoneIntervalIndex<Zone>(
+                delegate (Zone zone) { return zone.Lower; },
+                delegate (Zone zone) { return zone.Upper; },
+                delegate (Zone zone) { return zone.Id; });
         private readonly SortedSet<Zone>[] _bullishBreakIndex = new SortedSet<Zone>[4];
         private readonly SortedSet<Zone>[] _bearishBreakIndex = new SortedSet<Zone>[4];
         private readonly List<Zone> _overlapScratch = new List<Zone>();

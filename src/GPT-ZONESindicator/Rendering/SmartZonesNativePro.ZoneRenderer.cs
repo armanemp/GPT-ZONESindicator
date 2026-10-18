@@ -466,7 +466,7 @@ namespace cAlgo
         /// Places zone labels just off the midpoint and vertically separates labels that
         /// would otherwise overlap at the common forty-bar right edge.
         /// </summary>
-        private double ComputeZoneLabelY(Zone zone)
+        private double ComputeZoneLabelY(Zone zone, DateTime end)
         {
             double middle = (zone.Upper + zone.Lower) * 0.5;
             if (!ShowZoneLabels)
@@ -494,14 +494,17 @@ namespace cAlgo
                 double candidate = middle + direction * level * separation;
                 bool collision = false;
 
-                for (int k = 0; k < _renderTracked.Count; k++)
+                long timeTolerance = Math.Max(1L, _barSpan.Ticks) * 2L;
+                foreach (ChartObject chartObject in _reg.Values)
                 {
-                    Zone other = _renderTracked[k];
-                    if (other == zone || !other.Want || !other.Shown
-                        || other.Lbl == null || !other.Lbl.IsAlive)
+                    ChartText otherText = chartObject as ChartText;
+                    if (otherText == null || otherText == zone.Lbl || !otherText.IsAlive)
                         continue;
 
-                    if (Math.Abs(other.Lbl.Y - candidate) < separation)
+                    if (Math.Abs((otherText.Time - end).Ticks) > timeTolerance)
+                        continue;
+
+                    if (Math.Abs(otherText.Y - candidate) < separation)
                     {
                         collision = true;
                         break;
@@ -534,7 +537,7 @@ namespace cAlgo
 
             DateTime start = zone.StartTime;
             DateTime end = ZoneEndTime(zone);
-            double labelY = ComputeZoneLabelY(zone);
+            double labelY = ComputeZoneLabelY(zone, end);
             Color color = ZoneColor(zone);
 
             bool missingRectangle = zone.Rect == null || !zone.Rect.IsAlive;

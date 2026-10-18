@@ -58,6 +58,7 @@ namespace cAlgo
                 {
                     _m15Bars.HistoryLoaded += OnM15HistoryChanged;
                     _m15Bars.Reloaded += OnM15HistoryChanged;
+                    EnsureM15History();
                 }
             }
             catch (Exception ex)
@@ -69,8 +70,54 @@ namespace cAlgo
 
         private void OnM15HistoryChanged(BarsHistoryLoadedEventArgs args)
         {
-            if (!_histLoading)
+            if (!_histLoading && !_m15HistoryLoading)
                 _rebuildPending = true;
+        }
+
+        private void EnsureM15History()
+        {
+            if (_m15Bars == null || _m15Bars.Count == 0 || Bars.Count == 0 || _m15HistoryLoading)
+                return;
+
+            if (_m15Bars.OpenTimes[0] <= Bars.OpenTimes[0])
+                return;
+
+            _m15HistoryLoading = true;
+            _m15HistoryRequests = 0;
+            RequestMoreM15History();
+        }
+
+        private void RequestMoreM15History()
+        {
+            if (_m15Bars == null || _m15Bars.Count == 0
+                || _m15Bars.OpenTimes[0] <= Bars.OpenTimes[0]
+                || _m15HistoryRequests >= 400)
+            {
+                _m15HistoryLoading = false;
+                _rebuildPending = true;
+                return;
+            }
+
+            _m15HistoryRequests++;
+            _m15Bars.LoadMoreHistoryAsync(OnM15HistoryChunkLoaded);
+        }
+
+        private void OnM15HistoryChunkLoaded(BarsHistoryLoadedEventArgs args)
+        {
+            bool canContinue = args != null && args.Count > 0
+                && _m15Bars != null
+                && _m15Bars.Count > 0
+                && _m15Bars.OpenTimes[0] > Bars.OpenTimes[0]
+                && _m15HistoryRequests < 400;
+
+            if (canContinue)
+            {
+                RequestMoreM15History();
+                return;
+            }
+
+            _m15HistoryLoading = false;
+            _rebuildPending = true;
         }
 
         private int FindM15IndexAtOrBefore(DateTime time)

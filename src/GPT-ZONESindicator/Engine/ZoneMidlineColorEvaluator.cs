@@ -13,7 +13,7 @@ namespace cAlgo
     /// </summary>
     internal static class ZoneMidlineColorEvaluator
     {
-        public const double Darkness = 0.26;
+        public const double Darkness = 0.12;
 
         public static ZoneMidlineRgb Darken(byte red, byte green, byte blue)
         {

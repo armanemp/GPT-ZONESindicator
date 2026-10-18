@@ -15,8 +15,9 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 
 ## Phase 1 — Compile and API compatibility
 
-- [ ] Restore NuGet packages with a current .NET SDK.
-- [ ] Build Debug and Release.
+- [x] Restore NuGet packages with the .NET 6 SDK in GitHub Actions.
+- [x] Build Release and verify the packaged `GPT-ZONESindicator.algo` artifact in GitHub Actions (0 warnings, 0 errors).
+- [ ] Build Debug.
 - [ ] Record cTrader version, target framework, and exact build output.
 - [ ] Confirm all chart object API members against the installed cTrader API.
 - [ ] Load the indicator on a chart and confirm no initialization exceptions.
@@ -46,7 +47,8 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 
 - [ ] Verify each feature's show/hide toggle only affects rendering, not detection state.
 - [ ] Verify chart-object cleanup only removes the instance prefix.
-- [ ] Verify deleted chart objects are recreated and partially deleted renderer objects are reconciled.
+- [x] Implement reconciliation when a zone rectangle or an enabled midline/label is missing, and refresh changed zone comments/labels without rewriting unchanged properties (CI build passed).
+- [ ] Verify deleted chart objects are recreated and partially deleted renderer objects are reconciled in cTrader.
 - [ ] Verify color, alpha, labels, midlines and line styles update predictably.
 
 ## Phase 6 — Performance and fault isolation

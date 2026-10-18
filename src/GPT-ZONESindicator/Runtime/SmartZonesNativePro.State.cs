@@ -31,6 +31,7 @@ namespace cAlgo
             public ChartText Lbl;
             public DateTime AppT2;
             public Color AppCol;
+            public string AppComment, AppLabelText;
         }
 
         /// <summary>Line, optional label, and last-applied view snapshot.</summary>

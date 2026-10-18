@@ -47,8 +47,8 @@ The indicator is a single cTrader Automate type, `cAlgo.SmartZonesNativePro`. Th
 The project uses the official `cTrader.Automate` NuGet package and targets .NET 6. Build it from a recent .NET SDK environment:
 
 ```powershell
-dotnet restore src/GPT-ZONESindicator/GPT-ZONESindicator.csproj
-dotnet build src/GPT-ZONESindicator/GPT-ZONESindicator.csproj --no-restore
+dotnet restore GPT-ZONESindicator.csproj
+dotnet build GPT-ZONESindicator.csproj --no-restore
 ```
 
 For platform packaging and runtime acceptance, also rebuild/load it in cTrader Windows. A successful generic build is not a substitute for checking actual drawings and lifecycle behavior on a chart.

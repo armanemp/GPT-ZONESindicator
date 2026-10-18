@@ -81,10 +81,7 @@ namespace cAlgo
             };
         }
     }
-}
 
-namespace cAlgo
-{
     /// <summary>Allows only the specific invalidated OB that owns a breaker to render as history.</summary>
     internal static class ZoneBreakerVisibilityPolicy
     {
@@ -102,3 +99,5 @@ namespace cAlgo
                 && hasMatchingBreakerChild;
         }
     }
+
+}

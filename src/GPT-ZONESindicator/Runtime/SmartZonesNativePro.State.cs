@@ -141,6 +141,8 @@ namespace cAlgo
         private Func<int, double> _highPriceAt, _lowPriceAt, _openPriceAt, _closePriceAt;
         private Bars _m15Bars;
         private int _m15StartIndex, _lastM15Processed = -1;
+        private int _m15HistoryRequests;
+        private bool _m15HistoryLoading;
         private DateTime _m15ZoneStartTime;
         private double _m15TrSum;
         private int _m15Trend, _m15LastBullBreak = -1, _m15LastBearBreak = -1;

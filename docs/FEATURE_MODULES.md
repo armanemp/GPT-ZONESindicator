@@ -51,11 +51,11 @@ Do not duplicate those shared evaluations inside each detector. Change the ownin
 
 The source/state separation pass is implemented on `phase-9/feature-module-isolation`:
 
-- Mutable detector state is grouped by owner in `Runtime/SmartZonesNativePro.FeatureStateOwners.cs`; the rendering caches for zones, structure swings, equal clusters and sweep events are kept in separate render-state owners.
-- Logical `Zone`, `Swing`, `EqCluster`, and `SweepEv` records no longer carry their chart-item/line/text handles. Rendering is a disposable view of the logical records.
+- Mutable detector state is grouped by owner in `Runtime/SmartZonesNativePro.FeatureStateOwners.cs`; the rendering caches for zones, structure swings, equal clusters, sweep events, higher-timeframe references, session ranges and psychological levels are kept in separate render-state owners.
+- Logical `Zone`, `Swing`, `EqCluster`, `SweepEv`, `HtfTrack` and `SessionTrack` records no longer carry their chart-item/line/text handles. Rendering is a disposable view of the logical records.
 - Structure sends **immutable value-only** `OrderBlockSignal` and `EqualLevelSignal` messages. Equal-level clusters map to swings in the equal-level owner rather than mutating a cluster pointer embedded inside `Swing`.
 - FVG and Price Gap rules are pure detector evaluators reused by the M5 and M15 adapters. M15 OB, FVG and Price Gap adapters are in their owning feature folders.
-- Each pipeline processor/renderer has an exception boundary, and M15 sub-detectors are wrapped separately so one detector exception does not suppress the others for the same closed M15 bar.
+- Each pipeline processor/renderer has an exception boundary; major/internal structure, equal levels, sweeps, reference levels and sessions have separate processor/render boundaries. M15 pivot, structure-break, OB, FVG and gap paths are wrapped separately. Auxiliary line/label caches are allocated only after viewport checks and are released when objects move off-screen; an invalid viewport does not trigger a history-wide chart-object burst.
 - Deterministic tests cover detector thresholds/combine modes and pipeline error isolation; CI also builds/packages the cTrader artifact.
 
 The cTrader-facing indicator remains one `SmartZonesNativePro` type. Its thin partial-class adapters still read platform bars/parameters and register logical zones, but detector decisions, mutable feature state, event hand-offs, and drawing state are separated by responsibility. The zone repository/lifecycle/registration and shared chart-item synchronizer are intentionally common infrastructure, not per-detector logic.

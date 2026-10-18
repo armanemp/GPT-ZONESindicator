@@ -104,6 +104,9 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 - [x] Extract shared FVG and Price Gap rule evaluators and reuse them for both M5 and M15 detectors; split M15 detector adapters by owning feature.
 - [x] Add deterministic FVG/Price Gap threshold/combine-mode tests and verify a failing pipeline processor/renderer does not suppress later modules (CI passed).
 - [x] Keep common zone registration/lifecycle/indexing shared by design, while keeping detector decisions, feature state and render caches separate. The single cTrader entry point remains a partial class that supplies platform access; feature modules are internal boundaries, not separate deployable assemblies.
+- [x] Move reference-track/session item handles and psychological-level draw caches to render-state owners; logical reference/session records no longer hold chart-item objects.
+- [x] Split major and internal structure processing/rendering and equal-level/sweep rendering into independent pipeline modules.
+- [x] Allocate auxiliary structure/equal/sweep drawing items only after viewport and per-feature budget checks; release off-screen cache entries and skip auxiliary drawing while viewport measurements are invalid.
 - [ ] Verify that no valid active zone is omitted because of viewport selection or saved display parameters; use the status/diagnostic counts to distinguish detection rejection from display filtering. Rank and per-kind quotas are now viewport-local by design.
 - [ ] Confirm scrolling/zooming behavior and live object counts on the actual cTrader chart.
 

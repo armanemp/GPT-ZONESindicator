@@ -112,6 +112,9 @@ namespace cAlgo
             _zoneRenderingState.QueryScratch.Clear();
             _zoneRenderingState.Tracked.Clear();
             _zoneRenderingState.States.Clear();
+            _marketStructureRenderingState.BySwing.Clear();
+            _equalLevelsRenderingState.ByCluster.Clear();
+            _liquiditySweepRenderingState.ByEvent.Clear();
             _dupe.Clear();
             _orderBlockState.ByCandle.Clear();
             _orderBlockState.PendingSignals.Clear();

@@ -24,14 +24,18 @@ namespace cAlgo
             for (int k = engine.Swings.Count - 1; k >= 0; k--)
             {
                 Swing swing = engine.Swings[k];
+                StructureSwingRenderState renderState;
+                _marketStructureRenderingState.BySwing.TryGetValue(swing, out renderState);
+
                 bool wantLevel = swing.Broken
                     ? (!swing.SilentBreak && (swing.Choch ? showChoch : showBos))
                     : showActive;
 
                 if (wantLevel)
                 {
-                    EnsureLevelItem(swing, engine.Major);
-                    Item level = swing.Level;
+                    renderState = GetStructureSwingRenderState(swing);
+                    EnsureLevelItem(swing, engine.Major, renderState);
+                    Item level = renderState.Level;
                     DateTime end = level.T2 <= level.T1 ? level.T1.Add(_barSpan) : level.T2;
                     bool inViewport = ItemLineIntersectsViewport(level, end)
                         || ItemLabelIntersectsViewport(level.LabelTime, level.LabelY);
@@ -47,15 +51,16 @@ namespace cAlgo
                         SyncItem(level, false);
                     }
                 }
-                else if (swing.Level != null)
+                else if (renderState != null && renderState.Level != null)
                 {
-                    SyncItem(swing.Level, false);
+                    SyncItem(renderState.Level, false);
                 }
 
                 if (showMarks)
                 {
-                    EnsureMarkItem(swing);
-                    Item mark = swing.Mark;
+                    renderState = GetStructureSwingRenderState(swing);
+                    EnsureMarkItem(swing, renderState);
+                    Item mark = renderState.Mark;
                     bool inViewport = ItemLabelIntersectsViewport(mark.LabelTime, mark.LabelY);
                     if (inViewport && markCount < cap)
                     {
@@ -67,19 +72,30 @@ namespace cAlgo
                         SyncItem(mark, false);
                     }
                 }
-                else if (swing.Mark != null)
+                else if (renderState != null && renderState.Mark != null)
                 {
-                    SyncItem(swing.Mark, false);
+                    SyncItem(renderState.Mark, false);
                 }
             }
         }
 
-        private void EnsureLevelItem(Swing swing, bool major)
+        private StructureSwingRenderState GetStructureSwingRenderState(Swing swing)
         {
-            if (swing.Level == null)
-                swing.Level = new Item { Name = NextName("S") };
+            StructureSwingRenderState state;
+            if (_marketStructureRenderingState.BySwing.TryGetValue(swing, out state))
+                return state;
 
-            Item item = swing.Level;
+            state = new StructureSwingRenderState();
+            _marketStructureRenderingState.BySwing.Add(swing, state);
+            return state;
+        }
+
+        private void EnsureLevelItem(Swing swing, bool major, StructureSwingRenderState renderState)
+        {
+            if (renderState.Level == null)
+                renderState.Level = new Item { Name = NextName("S") };
+
+            Item item = renderState.Level;
             item.Y = swing.Price;
             item.T1 = swing.Time;
             item.Thick = StructThickness;
@@ -114,11 +130,11 @@ namespace cAlgo
             }
         }
 
-        private void EnsureMarkItem(Swing swing)
+        private void EnsureMarkItem(Swing swing, StructureSwingRenderState renderState)
         {
-            if (swing.Mark == null)
+            if (renderState.Mark == null)
             {
-                swing.Mark = new Item
+                renderState.Mark = new Item
                 {
                     Name = NextName("S"),
                     TextOnly = true,
@@ -126,7 +142,7 @@ namespace cAlgo
                 };
             }
 
-            Item item = swing.Mark;
+            Item item = renderState.Mark;
             item.Y = swing.Price;
             item.T1 = swing.Time;
             item.T2 = swing.Time;

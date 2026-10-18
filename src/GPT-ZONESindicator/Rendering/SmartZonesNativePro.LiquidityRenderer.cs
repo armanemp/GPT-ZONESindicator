@@ -17,17 +17,20 @@ namespace cAlgo
                 bool ended = cluster.Swept || cluster.Broken;
                 bool eligible = ShowEqual && (!ended || ShowSweptEqual);
 
+                Item item;
+                bool hasItem = _equalLevelsRenderingState.ByCluster.TryGetValue(cluster, out item);
                 if (!eligible)
                 {
-                    if (cluster.Vis != null)
-                        SyncItem(cluster.Vis, false);
+                    if (hasItem)
+                        SyncItem(item, false);
                     continue;
                 }
 
-                if (cluster.Vis == null)
-                    cluster.Vis = new Item { Name = NextName("E") };
-
-                Item item = cluster.Vis;
+                if (!hasItem)
+                {
+                    item = new Item { Name = NextName("E") };
+                    _equalLevelsRenderingState.ByCluster.Add(cluster, item);
+                }
                 item.Y = cluster.Level;
                 item.T1 = cluster.FirstTime;
                 item.T2 = ended ? cluster.EndTime : _futureTime;
@@ -60,17 +63,20 @@ namespace cAlgo
             for (int k = _liquiditySweepState.Events.Count - 1; k >= 0; k--)
             {
                 SweepEv sweep = _liquiditySweepState.Events[k];
+                Item item;
+                bool hasItem = _liquiditySweepRenderingState.ByEvent.TryGetValue(sweep, out item);
                 if (!ShowSweeps)
                 {
-                    if (sweep.Vis != null)
-                        SyncItem(sweep.Vis, false);
+                    if (hasItem)
+                        SyncItem(item, false);
                     continue;
                 }
 
-                if (sweep.Vis == null)
-                    sweep.Vis = new Item { Name = NextName("W") };
-
-                Item item = sweep.Vis;
+                if (!hasItem)
+                {
+                    item = new Item { Name = NextName("W") };
+                    _liquiditySweepRenderingState.ByEvent.Add(sweep, item);
+                }
                 item.Y = sweep.Level;
                 item.T1 = sweep.T1;
                 item.T2 = sweep.T2;

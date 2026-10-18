@@ -86,7 +86,6 @@ namespace cAlgo
             public bool Broken, SilentBreak, Choch, BreakBull, Swept;
             public int BreakIdx = -1;
             public DateTime BreakTime;
-            public Item Level, Mark;
         }
 
         private sealed class Engine
@@ -114,7 +113,6 @@ namespace cAlgo
             public int FirstIdx, LastIdx, Count, EndIdx = -1;
             public DateTime FirstTime, LastTime, EndTime;
             public bool Swept, Broken;
-            public Item Vis;
         }
 
         private sealed class SweepEv
@@ -122,7 +120,6 @@ namespace cAlgo
             public bool Bull;
             public double Level;
             public DateTime T1, T2;
-            public Item Vis;
         }
 
         private sealed class HtfTrack

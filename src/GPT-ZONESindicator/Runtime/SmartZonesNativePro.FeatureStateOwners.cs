@@ -77,6 +77,28 @@ namespace cAlgo
             public double Top, Bottom;
         }
 
+        private sealed class StructureSwingRenderState
+        {
+            public Item Level;
+            public Item Mark;
+        }
+
+        private sealed class MarketStructureRenderingFeatureState
+        {
+            public readonly Dictionary<Swing, StructureSwingRenderState> BySwing =
+                new Dictionary<Swing, StructureSwingRenderState>();
+        }
+
+        private sealed class EqualLevelsRenderingFeatureState
+        {
+            public readonly Dictionary<EqCluster, Item> ByCluster = new Dictionary<EqCluster, Item>();
+        }
+
+        private sealed class LiquiditySweepRenderingFeatureState
+        {
+            public readonly Dictionary<SweepEv, Item> ByEvent = new Dictionary<SweepEv, Item>();
+        }
+
         private sealed class ZoneRenderingFeatureState
         {
             public readonly Dictionary<int, ZoneRenderState> States = new Dictionary<int, ZoneRenderState>();
@@ -96,5 +118,8 @@ namespace cAlgo
         private readonly PsychologicalLevelFeatureState _psychologicalLevelState = new PsychologicalLevelFeatureState();
         private readonly ChartViewportFeatureState _chartViewportState = new ChartViewportFeatureState();
         private readonly ZoneRenderingFeatureState _zoneRenderingState = new ZoneRenderingFeatureState();
+        private readonly MarketStructureRenderingFeatureState _marketStructureRenderingState = new MarketStructureRenderingFeatureState();
+        private readonly EqualLevelsRenderingFeatureState _equalLevelsRenderingState = new EqualLevelsRenderingFeatureState();
+        private readonly LiquiditySweepRenderingFeatureState _liquiditySweepRenderingState = new LiquiditySweepRenderingFeatureState();
     }
 }

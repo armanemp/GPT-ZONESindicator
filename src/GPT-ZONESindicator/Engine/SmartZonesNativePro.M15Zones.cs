@@ -17,28 +17,16 @@ namespace cAlgo
                 return DateTime.UtcNow.Add(TimeSpan.FromMinutes(200));
 
             int last = Bars.Count - 1;
-            long spanTicks = Math.Max(1L, _barSpan.Ticks);
+            TimeSpan observedSpan = TimeSpan.Zero;
             if (Bars.Count > 40)
-            {
-                long observedTicks = (Bars.OpenTimes[last] - Bars.OpenTimes[last - 40]).Ticks;
-                if (observedTicks > 0)
-                    spanTicks = observedTicks;
-            }
-            else
-            {
-                try
-                {
-                    spanTicks = checked(spanTicks * 40L);
-                }
-                catch (OverflowException)
-                {
-                    spanTicks = TimeSpan.FromDays(14).Ticks;
-                }
-            }
+                observedSpan = Bars.OpenTimes[last] - Bars.OpenTimes[last - 40];
+
+            TimeSpan span = FutureBarTimeEvaluator.GetFortyBarSpan(
+                Bars.Count, _barSpan, observedSpan);
 
             try
             {
-                return Bars.OpenTimes[last].AddTicks(spanTicks);
+                return Bars.OpenTimes[last].Add(span);
             }
             catch (ArgumentOutOfRangeException)
             {

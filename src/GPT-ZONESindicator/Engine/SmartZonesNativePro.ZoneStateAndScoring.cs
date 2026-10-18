@@ -144,6 +144,7 @@ namespace cAlgo
                 Momentum = spec.Momentum,
                 StructFactor = spec.StructFactor,
                 Major = spec.Major,
+                IsHigherTimeframe = orderBlock.IsHigherTimeframe,
                 ParentId = spec.ParentId
             };
 

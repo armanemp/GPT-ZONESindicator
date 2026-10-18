@@ -383,7 +383,9 @@ namespace ZoneIntervalIndexSmoke
                 Lower = 1.1000,
                 Upper = 1.1050,
                 OriginIndex = 5,
+                ParentConfirmationIndex = 12,
                 ConfirmationIndex = 17,
+                ParentConfirmationTime = confirmedAt.AddMinutes(-25),
                 ConfirmationTime = confirmedAt,
                 Atr = 0.0035,
                 Momentum = 1.8,
@@ -488,6 +490,34 @@ namespace ZoneIntervalIndexSmoke
             }
             Assert(rejectedTimeline, "A breaker must be confirmed after its order-block origin.");
             input.ConfirmationIndex = 17;
+
+            bool rejectedBeforeParentConfirmation = false;
+            try
+            {
+                input.ConfirmationIndex = input.ParentConfirmationIndex;
+                ZoneBreakerFactory.Create(input);
+            }
+            catch (ArgumentException)
+            {
+                rejectedBeforeParentConfirmation = true;
+            }
+            Assert(rejectedBeforeParentConfirmation,
+                "A breaker must not be created on or before the parent's confirmation bar.");
+            input.ConfirmationIndex = 17;
+
+            bool rejectedConfirmationTime = false;
+            try
+            {
+                input.ConfirmationTime = input.ParentConfirmationTime;
+                ZoneBreakerFactory.Create(input);
+            }
+            catch (ArgumentException)
+            {
+                rejectedConfirmationTime = true;
+            }
+            Assert(rejectedConfirmationTime,
+                "A breaker confirmation timestamp must be later than its parent's confirmation timestamp.");
+            input.ConfirmationTime = confirmedAt;
 
             bool rejectedAtr = false;
             try
@@ -597,11 +627,63 @@ namespace ZoneIntervalIndexSmoke
             Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(true, true),
                 "Enabling filled zones must fall back to the full zone history.");
             Assert(ZoneViewportSelectionPolicy.UseActiveZoneIndex(true, false),
-                "Legacy broken-zone and breaker-parent-history toggles must not force a full-history scan.");
+                "Unrequested terminal history must not force a full-history scan.");
+            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(true, false, true),
+                "Explicit breaker-parent history must scan logical history, because broken parents leave the active index.");
             Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(false, false),
                 "Without a valid viewport, rendering must not claim active-index viewport mode.");
 
             Console.WriteLine("PASS: viewport-local ranking uses the active index; only opt-in filled history needs a full-history selection.");
+        }
+
+        private static void VerifyBreakerLifecycleDirection()
+        {
+            // A bullish OB becomes a bearish breaker: upward invalidation is correct;
+            // downward movement through the old OB's lower edge must not break it.
+            AssertBreak(false, SznpBreakMode.CandleClose, 104, 106, 103, 105.5, true,
+                "Bearish breaker closes above upper bound");
+            AssertBreak(false, SznpBreakMode.CandleClose, 100, 101, 98, 99, false,
+                "Bearish breaker must not break through lower bound");
+            AssertBreak(false, SznpBreakMode.BodyBeyond, 106, 107, 105.1, 105.5, true,
+                "Bearish breaker body is beyond upper bound");
+            AssertBreak(false, SznpBreakMode.WickBeyond, 104, 105.1, 103, 104.5, true,
+                "Bearish breaker wick crosses upper bound");
+
+            // A bearish OB becomes a bullish breaker: downward invalidation is correct.
+            AssertBreak(true, SznpBreakMode.CandleClose, 101, 102, 98, 99, true,
+                "Bullish breaker closes below lower bound");
+            AssertBreak(true, SznpBreakMode.CandleClose, 104, 107, 103, 106, false,
+                "Bullish breaker must not break through upper bound");
+            AssertBreak(true, SznpBreakMode.BodyBeyond, 99, 99.9, 98, 99.5, true,
+                "Bullish breaker body is beyond lower bound");
+            AssertBreak(true, SznpBreakMode.WickBeyond, 102, 103, 99.9, 101, true,
+                "Bullish breaker wick crosses lower bound");
+
+            Console.WriteLine("PASS: breaker invalidation uses the reverse direction and the configured break mode.");
+        }
+
+        private static void VerifyBreakerParentHistoryPolicy()
+        {
+            Assert(ZoneBreakerVisibilityPolicy.ShouldShowParentHistory(
+                    SznpKind.OrderBlock, SznpState.Broken, 9, true, true),
+                "Explicit history should allow a broken OB with its matching breaker child.");
+            Assert(!ZoneBreakerVisibilityPolicy.ShouldShowParentHistory(
+                    SznpKind.OrderBlock, SznpState.Broken, 9, true, false),
+                "The original OB history must remain hidden when its toggle is off.");
+            Assert(!ZoneBreakerVisibilityPolicy.ShouldShowParentHistory(
+                    SznpKind.OrderBlock, SznpState.Fresh, 9, true, true),
+                "History mode must not reinterpret an unbroken OB as breaker history.");
+            Assert(!ZoneBreakerVisibilityPolicy.ShouldShowParentHistory(
+                    SznpKind.OrderBlock, SznpState.Broken, -1, true, true),
+                "A broken OB without a child ID must not appear as breaker history.");
+            Assert(!ZoneBreakerVisibilityPolicy.ShouldShowParentHistory(
+                    SznpKind.OrderBlock, SznpState.Broken, 9, false, true),
+                "An OB must not appear as history when its child is not a matching breaker.");
+            Assert(!ZoneBreakerVisibilityPolicy.ShouldShowParentHistory(
+                    SznpKind.Fvg, SznpState.Broken, 9, true, true),
+                "Only an order block can appear as the parent of breaker history.");
+
+            Console.WriteLine("PASS: breaker parent history requires an explicit toggle and a valid parent-child link.");
         }
 
         private static void VerifyZoneMidlineColor()
@@ -1577,6 +1659,8 @@ namespace ZoneIntervalIndexSmoke
                 VerifyLifecycleSequenceAndTouchCounts();
                 VerifyInvalidLifecycleInput();
                 VerifyBreakerFactory();
+                VerifyBreakerLifecycleDirection();
+                VerifyBreakerParentHistoryPolicy();
                 VerifyZoneMidlineColor();
                 VerifyZoneVisibilityPolicy();
                 VerifyZoneViewportSelectionPolicy();

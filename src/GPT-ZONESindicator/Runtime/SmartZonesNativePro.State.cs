@@ -27,24 +27,32 @@ namespace cAlgo
             public double MaxDepth;
             public int LastEnteredIdx = -1;
             public bool Indexed;
-            public bool RenderTracked;
             public double Atr, Momentum, StructFactor;
             public int Confluence;
             public bool Major;
             public bool IsHigherTimeframe;
             public int ParentId = -1, ChildId = -1;
             public double Score;
-            public bool Want, Shown;
-            public ChartRectangle Rect;
-            public ChartTrendLine Mid;
-            public ChartText Lbl;
-            public DateTime AppT2;
-            public double AppLabelY;
-            public Color AppCol;
-            public string AppComment, AppLabelText;
         }
 
         /// <summary>Line, optional label, and last-applied view snapshot.</summary>
+        /// <summary>
+        /// Per-zone chart presentation cache. Detection and lifecycle logic must not
+        /// depend on these disposable native chart-object references.
+        /// </summary>
+        private sealed class ZoneRenderState
+        {
+            public bool RenderTracked, Want, Shown;
+            public double Score;
+            public ChartRectangle Rectangle;
+            public ChartTrendLine Midline;
+            public ChartText Label;
+            public DateTime AppliedEndTime;
+            public double AppliedLabelY;
+            public Color AppliedColor;
+            public string AppliedComment, AppliedLabelText;
+        }
+
         private sealed class Item
         {
             public string Name;
@@ -195,6 +203,8 @@ namespace cAlgo
         private readonly List<Zone> _breakScratch = new List<Zone>();
         private readonly List<Zone> _renderQueryScratch = new List<Zone>();
         private readonly List<Zone> _renderTracked = new List<Zone>();
+        private readonly Dictionary<int, ZoneRenderState> _zoneRenderStates =
+            new Dictionary<int, ZoneRenderState>();
         private readonly List<ZoneLabelSlot> _zoneLabelRows = new List<ZoneLabelSlot>(128);
         private readonly Dictionary<long, Zone> _dupe = new Dictionary<long, Zone>();
         private readonly Dictionary<int, Zone> _obByCandle = new Dictionary<int, Zone>();

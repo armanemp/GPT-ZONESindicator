@@ -110,7 +110,7 @@ namespace cAlgo
 
                 item.Col = WithOpacity(baseColor, StructOpacity);
                 item.Label = swing.Choch ? "CHoCH" : "BOS";
-                item.LabelTime = MidTime(item.T1, item.T2);
+                item.LabelTime = swing.BreakTime; // Anchor BOS/CHoCH text to the candle that broke the level.
                 item.LabelY = swing.Price;
                 item.LabelH = HorizontalAlignment.Center;
                 item.LabelV = swing.BreakBull ? VerticalAlignment.Bottom : VerticalAlignment.Top;

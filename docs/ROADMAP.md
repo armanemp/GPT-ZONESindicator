@@ -63,6 +63,19 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 - [ ] Add diagnostics for repeated failures without allowing one failed feature to disable unrelated features.
 - [ ] Confirm no unbounded object or history growth after prolonged chart operation.
 
+## Phase 7 — Viewport-aware lightweight rendering
+
+- [x] Reuse the active-zone price interval index to discover zones intersecting the visible price range in the common viewport mode.
+- [x] Synchronize only the previous and current viewport candidates during ordinary rendering; global ranking and opt-in terminal-history modes retain complete-history selection.
+- [x] Add a default 1px dashed, higher-contrast same-hue midline to every visible zone; increase breaker fill visibility and darken default FVG/order-block palette.
+- [x] Keep broken/fill history hidden by default while retaining the existing opt-in display switches.
+- [x] Include phase/* branches in the build workflow trigger.
+- [ ] Verify all valid zones appear while panning and zooming in cTrader, including breaker zones through the chart's right edge.
+- [ ] Compare indexed viewport selection against full-history selection and validate terminal-zone removal, chart-object count and visual contrast on a live cTrader chart.
+- [ ] Confirm equivalent feature availability to the prior renderer; cTrader still uses its native chart-object API, not MetaTrader 5's internal drawing engine.
+
+**Exit gate:** CI build passes and a cTrader chart acceptance/replay check confirms visual and logical parity. Native chart objects are created only for the active viewport in the ordinary mode; no custom canvas replacement is claimed.
+
 ## Phase 7 — Release acceptance
 
 - [ ] Run the same closed-bar sequence through history replay and live/demo operation and compare resulting logical states.

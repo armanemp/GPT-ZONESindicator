@@ -13,6 +13,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/GPT-ZONESindicator
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -23,7 +26,13 @@ jobs:
           dotnet-version: 6.0.x
 
       - name: Restore
-        run: dotnet restore src/GPT-ZONESindicator/GPT-ZONESindicator.csproj
+        run: dotnet restore .\GPT-ZONESindicator.csproj
 
       - name: Build
-        run: dotnet build src/GPT-ZONESindicator/GPT-ZONESindicator.csproj --configuration Release --no-restore
+        run: dotnet build .\GPT-ZONESindicator.csproj --configuration Release --no-restore
+
+      - name: Verify packaged algo artifact
+        shell: bash
+        run: |
+          test -f bin/Release/net6.0/GPT-ZONESindicator.algo
+          ls -lh bin/Release/net6.0/GPT-ZONESindicator.algo

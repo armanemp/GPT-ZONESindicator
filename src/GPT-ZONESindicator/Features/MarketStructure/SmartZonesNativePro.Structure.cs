@@ -37,25 +37,48 @@ namespace cAlgo
             if (!evaluation.IsReady)
                 return;
 
-            if (evaluation.IsHigh)
-                AddSwing(engine, evaluation.PivotIndex, index, true, atr);
-            if (evaluation.IsLow)
-                AddSwing(engine, evaluation.PivotIndex, index, false, atr);
+            // Both pivot candidates are evaluated against the engine state from before
+            // this candle. Adding the high first must not change the low candidate's filter.
+            Swing previousLastHigh = engine.LastHigh;
+            Swing previousLastLow = engine.LastLow;
+            bool isHigh = evaluation.IsHigh;
+            bool isLow = evaluation.IsLow;
+            double minimumDistance = Math.Max(engine.MinPips * _pip, engine.MinAtr * atr);
+
+            if (StructureSwingDistanceEvaluator.RejectDualPivotPair(
+                    isHigh, isLow, H(evaluation.PivotIndex), L(evaluation.PivotIndex), minimumDistance))
+            {
+                Reject(engine.Major
+                    ? "swing: major dual-pivot minimum distance"
+                    : "swing: internal dual-pivot minimum distance");
+                return;
+            }
+
+            if (isHigh)
+                AddSwing(engine, evaluation.PivotIndex, index, true, atr, previousLastLow);
+            if (isLow)
+                AddSwing(engine, evaluation.PivotIndex, index, false, atr, previousLastHigh);
         }
 
-        private void AddSwing(Engine engine, int pivot, int confirmedAt, bool high, double atr)
+        private void AddSwing(
+            Engine engine,
+            int pivot,
+            int confirmedAt,
+            bool high,
+            double atr,
+            Swing opposite)
         {
             double price = high ? H(pivot) : L(pivot);
-            Swing opposite = high ? engine.LastLow : engine.LastHigh;
+            double minimumDistance = Math.Max(engine.MinPips * _pip, engine.MinAtr * atr);
 
-            if (opposite != null)
+            if (!StructureSwingDistanceEvaluator.IsFarEnough(
+                    price,
+                    opposite != null,
+                    opposite == null ? 0 : opposite.Price,
+                    minimumDistance))
             {
-                double minDistance = Math.Max(engine.MinPips * _pip, engine.MinAtr * atr);
-                if (minDistance > 0 && Math.Abs(price - opposite.Price) < minDistance)
-                {
-                    Reject(engine.Major ? "swing: major min distance" : "swing: internal min distance");
-                    return;
-                }
+                Reject(engine.Major ? "swing: major min distance" : "swing: internal min distance");
+                return;
             }
 
             Swing swing = new Swing

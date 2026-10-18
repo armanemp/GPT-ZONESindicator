@@ -563,23 +563,18 @@ namespace ZoneIntervalIndexSmoke
 
         private static void VerifyZoneMidlineColor()
         {
-            ZoneMidlineRgb source = ZoneMidlineColorEvaluator.Lighten(22, 160, 166);
-            Assert(source.R > 22 && source.G > 160 && source.B > 166,
-                "Midline RGB channels must be lighter than the current zone base color.");
-            Assert(source.R == 55 && source.G == 173 && source.B == 178,
-                "Midline should apply the updated subtle 14% lightening deterministically.");
+            ZoneMidlineRgb source = ZoneMidlineColorEvaluator.Match(22, 160, 166);
+            Assert(source.R == 22 && source.G == 160 && source.B == 166,
+                "Zone midline RGB must match the zone exactly.");
+            ZoneMidlineRgb darkZone = ZoneMidlineColorEvaluator.Match(94, 12, 37);
+            Assert(darkZone.R == 94 && darkZone.G == 12 && darkZone.B == 37,
+                "Exact matching must work for dark bearish zone colours too.");
+            ZoneMidlineRgb neutral = ZoneMidlineColorEvaluator.Match(128, 128, 128);
+            Assert(neutral.R == 128 && neutral.G == 128 && neutral.B == 128,
+                "Exact matching must preserve neutral colours.");
 
-            ZoneMidlineRgb neutral = ZoneMidlineColorEvaluator.Lighten(128, 128, 128);
-            Assert(neutral.R == 146 && neutral.G == 146 && neutral.B == 146,
-                "The midline transform must also preserve neutral/grayscale hues.");
-
-            ZoneMidlineRgb black = ZoneMidlineColorEvaluator.Lighten(0, 0, 0);
-            Assert(black.R == 36 && black.G == 36 && black.B == 36,
-                "Lightening black must remain in range without overflow.");
-
-            Console.WriteLine("PASS: midlines retain zone hue and brighten RGB channels by 14%.");
+            Console.WriteLine("PASS: zone midlines use the exact zone RGB without tinting.");
         }
-
 
         private static void VerifyEqualLevelPairRules()
         {

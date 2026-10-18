@@ -8,7 +8,7 @@ namespace cAlgo
     {
         private void RenderAll()
         {
-            RenderZones();
+            RenderZones(true);
             RenderStructure();
             RenderEqualAndSweeps();
             RenderRef();
@@ -147,7 +147,7 @@ namespace cAlgo
             return zone.StartTime <= timeEnd && end >= timeStart;
         }
 
-        private void RenderZones()
+        private void RenderZones(bool refreshMetadata)
         {
             int nowIndex = _lastProcessed;
             double price = _lastClose;
@@ -245,7 +245,7 @@ namespace cAlgo
             for (int k = 0; k < _zones.Count; k++)
             {
                 Zone zone = _zones[k];
-                SyncZone(zone);
+                SyncZone(zone, refreshMetadata);
                 if (zone.Shown)
                     shown++;
             }
@@ -371,7 +371,7 @@ namespace cAlgo
                 KindTag(zone), zone.State, zone.Lower, zone.Upper, zone.TouchCount, ScoreText(zone));
         }
 
-        private void SyncZone(Zone zone)
+        private void SyncZone(Zone zone, bool refreshMetadata)
         {
             if (!zone.Want)
             {
@@ -392,8 +392,13 @@ namespace cAlgo
             if (zone.Shown && (missingRectangle || missingMidline || missingLabel))
                 RemoveZoneObjects(zone);
 
-            string comment = ZoneComment(zone);
-            string labelText = ShowZoneLabels ? LabelText(zone) : null;
+            bool createView = !zone.Shown;
+            string comment = refreshMetadata || createView
+                ? ZoneComment(zone)
+                : zone.AppComment;
+            string labelText = !ShowZoneLabels
+                ? null
+                : (refreshMetadata || createView ? LabelText(zone) : zone.AppLabelText);
 
             if (!zone.Shown)
             {

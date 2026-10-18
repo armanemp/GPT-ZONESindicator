@@ -505,6 +505,29 @@ namespace ZoneIntervalIndexSmoke
 
 
 
+        private static void VerifyFutureBarTime()
+        {
+            TimeSpan fiveMinutes = TimeSpan.FromMinutes(5);
+            TimeSpan regularFortyBars = FutureBarTimeEvaluator.GetFortyBarSpan(
+                40, fiveMinutes, TimeSpan.Zero);
+            Assert(regularFortyBars == TimeSpan.FromMinutes(200),
+                "Forty M5 bar intervals must extend the zone by exactly 200 nominal minutes.");
+
+            TimeSpan observedSpan = TimeSpan.FromHours(4);
+            TimeSpan historyAwareFortyBars = FutureBarTimeEvaluator.GetFortyBarSpan(
+                100, fiveMinutes, observedSpan);
+            Assert(historyAwareFortyBars == observedSpan,
+                "When more than forty bars exist, use the observed span of the last forty intervals.");
+
+            TimeSpan minimal = FutureBarTimeEvaluator.GetFortyBarSpan(
+                1, TimeSpan.Zero, TimeSpan.Zero);
+            Assert(minimal == TimeSpan.FromTicks(40),
+                "A missing nominal interval must remain safe and positive.");
+
+            Console.WriteLine("PASS: active zones use a deterministic forty-bar future extension.");
+        }
+
+
         private static void VerifyHigherTimeframeTiming()
         {
             DateTime[] m5OpenTimes =
@@ -1248,6 +1271,7 @@ namespace ZoneIntervalIndexSmoke
                 VerifyBreakerFactory();
                 VerifyZoneMidlineColor();
                 VerifyHigherTimeframeTiming();
+                VerifyFutureBarTime();
                 VerifyPivotConfirmationAndTieRules();
                 VerifyEqualLevelPairRules();
                 VerifyOrderBlockRules();

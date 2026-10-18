@@ -536,7 +536,7 @@ namespace cAlgo
                         labelText,
                         end,
                         (zone.Upper + zone.Lower) * 0.5,
-                        color);
+                        WithOpacity(color, 100));
                     label.FontSize = Math.Max(11, LabelFontSize + 2);
                     label.FontFamily = "Segoe UI Light";
                     label.IsBold = false;

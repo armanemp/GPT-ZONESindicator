@@ -561,28 +561,47 @@ namespace ZoneIntervalIndexSmoke
         }
 
 
+        private static void VerifyZoneVisibilityPolicy()
+        {
+            Assert(ZoneVisibilityPolicy.ShouldRender(SznpState.Fresh, false, false),
+                "Fresh zones should render regardless of touched/filled display switches.");
+            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Touched, false, false),
+                "Touched zones should respect the touched-zone display switch.");
+            Assert(ZoneVisibilityPolicy.ShouldRender(SznpState.Touched, true, false),
+                "Touched zones should render when enabled.");
+            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Partial, false, false),
+                "Partially filled zones should respect the touched-zone display switch.");
+            Assert(ZoneVisibilityPolicy.ShouldRender(SznpState.Partial, true, false),
+                "Partially filled zones should render when enabled.");
+            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Filled, true, false),
+                "Filled zones should remain hidden unless filled-zone history is enabled.");
+            Assert(ZoneVisibilityPolicy.ShouldRender(SznpState.Filled, true, true),
+                "Filled zones should render when filled-zone history is enabled.");
+
+            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Broken, false, false),
+                "Broken zones must never render when history toggles are off.");
+            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Broken, true, false),
+                "Broken zones must never render when touched zones are enabled.");
+            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Broken, false, true),
+                "Broken zones must never render when filled history is enabled.");
+            Assert(!ZoneVisibilityPolicy.ShouldRender(SznpState.Broken, true, true),
+                "Broken zones must never render under any supported display combination.");
+
+            Console.WriteLine("PASS: broken zones are terminal and cannot be rendered by any state visibility combination.");
+        }
+
         private static void VerifyZoneViewportSelectionPolicy()
         {
-            Assert(ZoneViewportSelectionPolicy.UseActiveZoneIndex(
-                    true, false, false, false),
+            Assert(ZoneViewportSelectionPolicy.UseActiveZoneIndex(true, false),
                 "Active-only viewport rendering should use the interval index.");
-            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(
-                    true, true, false, false),
+            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(true, true),
                 "Enabling filled zones must fall back to the full zone history.");
-            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(
-                    true, false, true, false),
-                "Enabling broken zones must fall back to the full zone history.");
-            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(
-                    true, false, false, true),
-                "Enabling breaker-parent history must fall back to the full zone history.");
-            Assert(ZoneViewportSelectionPolicy.UseActiveZoneIndex(
-                    true, false, false, false),
-                "Viewport-local ranking modes should still use the active-zone index.");
-            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(
-                    false, false, false, false),
+            Assert(ZoneViewportSelectionPolicy.UseActiveZoneIndex(true, false),
+                "Legacy broken-zone and breaker-parent-history toggles must not force a full-history scan.");
+            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(false, false),
                 "Without a valid viewport, rendering must not claim active-index viewport mode.");
 
-            Console.WriteLine("PASS: viewport-local ranking uses the active index unless terminal history is requested.");
+            Console.WriteLine("PASS: viewport-local ranking uses the active index; only opt-in filled history needs a full-history selection.");
         }
 
         private static void VerifyZoneMidlineColor()
@@ -1439,6 +1458,7 @@ namespace ZoneIntervalIndexSmoke
                 VerifyInvalidLifecycleInput();
                 VerifyBreakerFactory();
                 VerifyZoneMidlineColor();
+                VerifyZoneVisibilityPolicy();
                 VerifyZoneViewportSelectionPolicy();
                 VerifyHigherTimeframeTiming();
                 VerifyFutureBarTime();

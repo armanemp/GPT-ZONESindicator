@@ -109,6 +109,8 @@ namespace cAlgo
             _sweeps.Clear();
             _refItems.Clear();
             _round.Clear();
+            _lineLabelItems.Clear();
+            _occupiedLineLabelPrices.Clear();
             _roundCenter = long.MinValue;
             _status = null;
             _atr.Clear();
@@ -243,6 +245,7 @@ namespace cAlgo
                     else
                     {
                         RenderZones(false);
+                        ReflowLineLabels();
                         RenderStatus();
                     }
 

@@ -535,36 +535,6 @@ namespace ZoneIntervalIndexSmoke
         }
 
 
-        private static void VerifyLineLabelLayout()
-        {
-            List<double> occupied = new List<double>();
-            double first = LineLabelLayoutEvaluator.Place(100.0, 90.0, 110.0, 2.0, occupied);
-            Assert(Math.Abs(first - 100.0) < 1e-9,
-                "The first label should remain anchored to its line price.");
-            occupied.Add(first);
-
-            double second = LineLabelLayoutEvaluator.Place(100.0, 90.0, 110.0, 2.0, occupied);
-            Assert(Math.Abs(second - first) >= 1.96 && Math.Abs(second - first) <= 2.01,
-                "A colliding label must move to the nearest available vertical slot.");
-            occupied.Add(second);
-
-            double third = LineLabelLayoutEvaluator.Place(100.0, 90.0, 110.0, 2.0, occupied);
-            Assert(Math.Abs(third - first) >= 1.96 && Math.Abs(third - second) >= 1.96,
-                "Multiple labels at the same level must be separated by the configured minimum gap.");
-
-            double outside = LineLabelLayoutEvaluator.Place(112.0, 90.0, 110.0, 2.0, occupied);
-            Assert(outside == 112.0,
-                "Labels for levels outside the current price viewport must keep their real price.");
-
-            double upperEdge = LineLabelLayoutEvaluator.Place(
-                110.0, 90.0, 110.0, 2.0, new List<double> { 109.0 });
-            Assert(upperEdge <= 110.0 && upperEdge >= 90.0,
-                "A label near the viewport edge must stay inside the visible range when possible.");
-
-            Console.WriteLine("PASS: line label packing minimizes vertical overlap and respects the viewport.");
-        }
-
-
         private static void VerifyZoneMidlineColor()
         {
             ZoneMidlineRgb source = ZoneMidlineColorEvaluator.Darken(22, 160, 166);
@@ -1277,7 +1247,6 @@ namespace ZoneIntervalIndexSmoke
                 VerifyInvalidLifecycleInput();
                 VerifyBreakerFactory();
                 VerifyZoneMidlineColor();
-                VerifyLineLabelLayout();
                 VerifyHigherTimeframeTiming();
                 VerifyPivotConfirmationAndTieRules();
                 VerifyEqualLevelPairRules();

@@ -72,6 +72,12 @@ namespace cAlgo
                 zone.State = SznpState.Broken;
                 zone.BreakIdx = index;
                 zone.BreakTime = CloseTimeOf(index);
+
+                // Broken zones leave active lookup indexes immediately, but remain
+                // in _zones for historical rendering and diagnostics.
+                UnregisterZoneForLifecycle(zone);
+                _alive.Remove(zone);
+
                 if (zone.FillIdx < 0)
                 {
                     zone.FillIdx = index;
@@ -86,13 +92,13 @@ namespace cAlgo
             {
                 if (depth > zone.MaxDepth)
                     zone.MaxDepth = depth;
-                if (!zone.InsideLast && countTouch)
+                // The indexed path does not visit untouched zones each bar.
+                // Store the last entered bar so consecutive in-zone bars still count as
+                // one touch, while a later re-entry after any gap counts as a new touch.
+                if (countTouch && zone.LastEnteredIdx != index - 1)
                     zone.TouchCount++;
-                zone.InsideLast = true;
+                zone.LastEnteredIdx = index;
             }
-            else
-            {
-                zone.InsideLast = false;
             }
 
             if (zone.State == SznpState.Filled)

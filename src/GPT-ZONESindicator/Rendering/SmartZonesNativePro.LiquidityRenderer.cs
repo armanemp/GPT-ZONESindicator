@@ -8,7 +8,7 @@ namespace cAlgo
     {
         private void RenderEqualAndSweeps()
         {
-            int cap = LiquidityMaxVisible > 0 ? LiquidityMaxVisible : int.MaxValue;
+            int equalCap = EqualMaxVisible > 0 ? EqualMaxVisible : int.MaxValue;
             int count = 0;
 
             for (int k = _eqs.Count - 1; k >= 0; k--)
@@ -44,7 +44,7 @@ namespace cAlgo
                 DateTime end = item.T2 <= item.T1 ? item.T1.Add(_barSpan) : item.T2;
                 bool inViewport = ItemLineIntersectsViewport(item, end)
                     || ItemLabelIntersectsViewport(item.LabelTime, item.LabelY);
-                if (inViewport && count < cap)
+                if (inViewport && count < equalCap)
                 {
                     count++;
                     SyncItem(item, true);
@@ -55,6 +55,7 @@ namespace cAlgo
                 }
             }
 
+            int sweepCap = SweepMaxVisible > 0 ? SweepMaxVisible : int.MaxValue;
             count = 0;
             for (int k = _sweeps.Count - 1; k >= 0; k--)
             {
@@ -85,7 +86,7 @@ namespace cAlgo
                 DateTime end = item.T2 <= item.T1 ? item.T1.Add(_barSpan) : item.T2;
                 bool inViewport = ItemLineIntersectsViewport(item, end)
                     || ItemLabelIntersectsViewport(item.LabelTime, item.LabelY);
-                if (inViewport && count < cap)
+                if (inViewport && count < sweepCap)
                 {
                     count++;
                     SyncItem(item, true);

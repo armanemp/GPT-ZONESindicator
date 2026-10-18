@@ -58,19 +58,12 @@ namespace cAlgo
             }
 
             bool hasLabel = !string.IsNullOrEmpty(item.Label);
-            if (hasLabel && !item.TextOnly)
-            {
-                TrackLineLabel(item);
-                item.LabelH = HorizontalAlignment.Left;
-                item.RenderLabelTime = LineLabelAnchorTime();
-                item.RenderLabelY = ResolveLineLabelY(item.LabelY);
-            }
-            else
-            {
-                UntrackLineLabel(item);
-                item.RenderLabelTime = item.LabelTime;
-                item.RenderLabelY = item.LabelY;
-            }
+            // Line labels remain attached to the logical point selected by each line type:
+            // BOS/CHoCH at the break level, equal levels at their midpoint, and references
+            // at their own endpoint. Only zone rectangles use the 40-bar right margin.
+            UntrackLineLabel(item);
+            item.RenderLabelTime = item.LabelTime;
+            item.RenderLabelY = item.LabelY;
 
             DateTime end = item.T2 <= item.T1 ? item.T1.Add(_barSpan) : item.T2;
 

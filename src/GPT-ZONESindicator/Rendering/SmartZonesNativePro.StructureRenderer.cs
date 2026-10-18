@@ -35,9 +35,14 @@ namespace cAlgo
                 StructureSwingRenderState renderState;
                 _marketStructureRenderingState.BySwing.TryGetValue(swing, out renderState);
 
-                bool wantLevel = swing.Broken
-                    ? (!swing.SilentBreak && (swing.Choch ? showChoch : showBos))
-                    : showActive;
+                bool wantLevel = StructureSwingVisibilityEvaluator.ShouldShowLevel(
+                    swing.Broken,
+                    swing.Swept,
+                    swing.SilentBreak,
+                    swing.Choch,
+                    showBos,
+                    showChoch,
+                    showActive);
                 DateTime lineEnd = swing.Broken ? swing.BreakTime : _futureTime;
                 bool inViewport = wantLevel
                     && TimePriceIntersectsViewport(swing.Time, lineEnd, swing.Price);

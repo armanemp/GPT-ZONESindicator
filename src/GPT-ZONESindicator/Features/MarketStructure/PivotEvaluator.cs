@@ -40,28 +40,41 @@ namespace cAlgo
             result.IsReady = true;
             double pivotHigh = highAt(pivotIndex);
             double pivotLow = lowAt(pivotIndex);
-            bool isHigh = true;
-            bool isLow = true;
+            bool isHigh = IsFinite(pivotHigh);
+            bool isLow = IsFinite(pivotLow);
 
             for (int offset = 1; offset <= leftBars && (isHigh || isLow); offset++)
             {
-                if (highAt(pivotIndex - offset) >= pivotHigh)
+                double leftHigh = highAt(pivotIndex - offset);
+                double leftLow = lowAt(pivotIndex - offset);
+
+                // NaN comparisons are always false; explicitly reject malformed price
+                // samples instead of accidentally accepting them as an extreme.
+                if (!IsFinite(leftHigh) || leftHigh >= pivotHigh)
                     isHigh = false;
-                if (lowAt(pivotIndex - offset) <= pivotLow)
+                if (!IsFinite(leftLow) || leftLow <= pivotLow)
                     isLow = false;
             }
 
             for (int offset = 1; offset <= rightBars && (isHigh || isLow); offset++)
             {
-                if (highAt(pivotIndex + offset) > pivotHigh)
+                double rightHigh = highAt(pivotIndex + offset);
+                double rightLow = lowAt(pivotIndex + offset);
+
+                if (!IsFinite(rightHigh) || rightHigh > pivotHigh)
                     isHigh = false;
-                if (lowAt(pivotIndex + offset) < pivotLow)
+                if (!IsFinite(rightLow) || rightLow < pivotLow)
                     isLow = false;
             }
 
             result.IsHigh = isHigh;
             result.IsLow = isLow;
             return result;
+        }
+
+        private static bool IsFinite(double value)
+        {
+            return !double.IsNaN(value) && !double.IsInfinity(value);
         }
     }
 }

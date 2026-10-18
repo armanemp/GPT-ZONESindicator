@@ -39,6 +39,5 @@ namespace cAlgo
 
             return best;
         }
-        }
     }
 }

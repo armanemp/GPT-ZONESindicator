@@ -9,7 +9,7 @@
     <AssemblyName>GPT-ZONESindicator</AssemblyName>
     <AlgoName>GPT-ZONESindicator</AlgoName>
     <AlgoBuild>true</AlgoBuild>
-    <AlgoPublish>false</AlgoPublish>
+    <AlgoPublish>true</AlgoPublish>
   </PropertyGroup>
 
   <ItemGroup>

@@ -143,9 +143,8 @@ namespace cAlgo
 
         private void SyncEngine(Engine engine, bool showBos, bool showChoch, bool showMarks, bool showActive)
         {
-            if (!showBos && !showChoch && !showMarks && !showActive)
-                return;
-
+            // Process every feature even when all its visibility switches are off, so
+            // objects created by a prior settings state are removed rather than left behind.
             int cap = StructMaxVisible > 0 ? StructMaxVisible : int.MaxValue;
             int levelCount = 0;
             int markCount = 0;

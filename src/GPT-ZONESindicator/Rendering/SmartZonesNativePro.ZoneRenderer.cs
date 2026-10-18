@@ -428,14 +428,13 @@ namespace cAlgo
 
         private Color ZoneMidlineColor(Zone zone)
         {
-            // Derive the line from the actual current zone hue, then lighten RGB by
-            // a subtle 14%. Keep line opacity configurable so the midpoint is visible
-            // without competing with candles.
+            // Midline RGB always matches the zone exactly; only alpha is independently
+            // configurable so the same hue remains legible over candle bodies.
             Color source = ZoneColor(zone);
-            ZoneMidlineRgb lighter = ZoneMidlineColorEvaluator.Lighten(
+            ZoneMidlineRgb matching = ZoneMidlineColorEvaluator.Match(
                 source.R, source.G, source.B);
             byte alpha = (byte)Math.Max(0, Math.Min(255, Math.Round(MidlineOpacity * 2.55)));
-            return Color.FromArgb(alpha, lighter.R, lighter.G, lighter.B);
+            return Color.FromArgb(alpha, matching.R, matching.G, matching.B);
         }
 
         private static string KindTag(Zone zone)
@@ -535,7 +534,7 @@ namespace cAlgo
                         labelText,
                         end,
                         (zone.Upper + zone.Lower) * 0.5,
-                        LightenForVisibility(WithOpacity(color, 100)));
+                        WithOpacity(color, 100));
                     label.FontSize = Math.Max(11, LabelFontSize + 2);
                     label.FontFamily = "Segoe UI Light";
                     label.IsBold = false;
@@ -581,7 +580,7 @@ namespace cAlgo
                 if (zone.Mid != null && zone.Mid.IsAlive)
                     zone.Mid.Color = ZoneMidlineColor(zone);
                 if (zone.Lbl != null && zone.Lbl.IsAlive)
-                    zone.Lbl.Color = LightenForVisibility(WithOpacity(color, 100));
+                    zone.Lbl.Color = WithOpacity(color, 100);
             }
 
             if (commentChanged)

@@ -6,6 +6,11 @@ namespace cAlgo
 {
     public partial class SmartZonesNativePro
     {
+        private DateTime M15CloseTimeAt(int index)
+        {
+            return _m15Bars.OpenTimes[index].AddMinutes(15);
+        }
+
         private DateTime ComputeFutureZoneTime()
         {
             if (Bars.Count <= 0)
@@ -175,10 +180,10 @@ namespace cAlgo
                 return;
 
             DateTime chartCloseTime = CloseTimeOf(chartIndex);
-            while (_lastM15Processed + 1 < _m15Bars.Count - 1)
+            while (_lastM15Processed + 1 < _m15Bars.Count)
             {
                 int m15Index = _lastM15Processed + 1;
-                DateTime m15CloseTime = _m15Bars.OpenTimes[m15Index + 1];
+                DateTime m15CloseTime = M15CloseTimeAt(m15Index);
                 if (!HigherTimeframeTimingEvaluator.IsClosed(m15CloseTime, chartCloseTime))
                     break;
 
@@ -524,10 +529,10 @@ namespace cAlgo
         {
             if (!ShowM15Zones || _m15Bars == null
                 || confirmingChartIndex < _startIdx
-                || m15Index + 1 >= _m15Bars.Count)
+                || m15Index < 0 || m15Index >= _m15Bars.Count)
                 return;
 
-            DateTime m15CloseTime = _m15Bars.OpenTimes[m15Index + 1];
+            DateTime m15CloseTime = M15CloseTimeAt(m15Index);
             if (m15CloseTime < _m15ZoneStartTime)
                 return;
 

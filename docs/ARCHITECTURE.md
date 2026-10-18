@@ -48,6 +48,7 @@ The indicator is a single cTrader Automate type, `cAlgo.SmartZonesNativePro`. Th
 6. Historical HTF levels must use a completed HTF bar; never read future HTF data.
 7. Full rendering is driven by closed-bar updates; zone-only viewport reconciliation runs on chart viewport events and reuses cached comments/labels when zone state has not changed.
 8. Zone lifecycle updates use indexed price-overlap candidates plus indexed far-edge break candidates. Preserve the exact `UpdateZone` break predicates for CandleClose, BodyBeyond, and WickBeyond; do not skip gaps that cross a whole zone. Touch counts must still detect re-entry after an arbitrary number of untouched bars.
+9. Once any zone kind enters `Broken`, it is terminal and must never be rendered again, even if legacy broken-history settings are enabled. The renderer must remove existing rectangle/midline/label objects on the same render reconciliation, while internal records may remain for diagnostics and breaker lineage.
 
 ## Build
 

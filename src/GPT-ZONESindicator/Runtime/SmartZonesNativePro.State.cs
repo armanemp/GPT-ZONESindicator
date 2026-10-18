@@ -25,6 +25,7 @@ namespace cAlgo
             public double Atr, Momentum, StructFactor;
             public int Confluence;
             public bool Major;
+            public bool IsHigherTimeframe;
             public int ParentId = -1, ChildId = -1;
             public double Score;
             public bool Want, Shown;
@@ -88,6 +89,13 @@ namespace cAlgo
             public int Trend;
         }
 
+        private sealed class HigherTimeframeSwing
+        {
+            public int Index;
+            public double Price;
+            public bool High, Broken;
+        }
+
         private sealed class EqCluster
         {
             public bool High;
@@ -131,6 +139,15 @@ namespace cAlgo
         }
 
         private Func<int, double> _highPriceAt, _lowPriceAt, _openPriceAt, _closePriceAt;
+        private Bars _m15Bars;
+        private int _m15StartIndex, _lastM15Processed = -1;
+        private DateTime _m15ZoneStartTime;
+        private double _m15TrSum;
+        private int _m15Trend, _m15LastBullBreak = -1, _m15LastBearBreak = -1;
+        private HigherTimeframeSwing _m15LastHigh, _m15LastLow;
+        private readonly List<double> _m15Atr = new List<double>();
+        private readonly List<HigherTimeframeSwing> _m15Swings = new List<HigherTimeframeSwing>();
+        private readonly List<HigherTimeframeSwing> _m15OpenSwings = new List<HigherTimeframeSwing>();
         private string _prefix = "SZNP_";
         private double _pip = 0.01, _tick = 0.01;
         private TimeSpan _barSpan = TimeSpan.FromMinutes(5);

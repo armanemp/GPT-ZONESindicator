@@ -45,10 +45,14 @@ namespace cAlgo
             public DateTime T1, T2;
             public Color Col;
             public int Thick = 1;
-            public LineStyle Style = LineStyle.Solid;
+            public LineStyle Style = LineStyle.Dots;
             public string Label;
             public DateTime LabelTime;
             public double LabelY;
+            public DateTime RenderLabelTime;
+            public double RenderLabelY;
+            public bool ExtendToInfinity;
+            public bool LabelLayoutTracked;
             public HorizontalAlignment LabelH = HorizontalAlignment.Center;
             public VerticalAlignment LabelV = VerticalAlignment.Bottom;
             public bool Follow, Dead, Shown;
@@ -175,7 +179,9 @@ namespace cAlgo
         private readonly List<Item> _refItems = new List<Item>();
         private readonly List<HtfTrack> _htf = new List<HtfTrack>();
         private readonly List<SessionTrack> _sess = new List<SessionTrack>();
-        private readonly Dictionary<long, ChartHorizontalLine> _round = new Dictionary<long, ChartHorizontalLine>();
+        private readonly Dictionary<long, Item> _round = new Dictionary<long, Item>();
+        private readonly List<Item> _lineLabelItems = new List<Item>();
+        private readonly List<double> _occupiedLineLabelPrices = new List<double>();
         private long _roundCenter = long.MinValue;
         private double _roundStepUsed;
         private ChartStaticText _status;

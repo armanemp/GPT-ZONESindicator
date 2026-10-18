@@ -39,6 +39,7 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 - [x] Reject non-finite pivot or neighboring high/low samples and malformed High/Low ranges so NaN/Infinity or High below Low cannot be accepted as a market-structure swing.
 - [x] Ensure swept and silently-broken swing levels cannot remain visible as active structure levels; isolate and regression-test the visibility decision for BOS/CHoCH and active levels.
 - [x] Ignore non-finite close/swing prices in structure-break evaluation so malformed values cannot manufacture BOS/CHoCH events.
+- [x] Make the minimum swing-distance filter order-independent when a bar qualifies as both a high and a low pivot; evaluate both against prior engine state and reject undersized dual-pivot pairs symmetrically.
 - [x] Test BOS vs CHoCH classification from neutral, bullish and bearish trend states (pure evaluator regression tests pass in CI).
 - [ ] Test full equal-high/equal-low cluster merge/lifecycle (pair tolerance, separation, range cleanliness and backward-scan early exits have deterministic tests; duplicate sweep suppression predicate is now covered).
 - [x] Extract and test high/low sweep predicates for Wick/Body measurement, minimum penetration, close-back return and exact threshold behavior (CI passed; exhaustive swing/equal-level end-to-end replay remains outstanding).

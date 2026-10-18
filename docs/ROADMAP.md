@@ -36,6 +36,7 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 ## Phase 3 — Structure and liquidity correctness
 
 - [x] Extract and test pivot confirmation delay, lookback eligibility, and the existing asymmetric left/right tie rules (CI passed; chart replay remains outstanding).
+- [x] Reject non-finite pivot or neighboring high/low samples so NaN/Infinity cannot be accepted as a market-structure swing; deterministic regression cases cover invalid center and neighbor values.
 - [x] Test BOS vs CHoCH classification from neutral, bullish and bearish trend states (pure evaluator regression tests pass in CI).
 - [ ] Test full equal-high/equal-low cluster merge/lifecycle (pair tolerance, separation, range cleanliness and backward-scan early exits have deterministic tests; duplicate sweep suppression predicate is now covered).
 - [x] Extract and test high/low sweep predicates for Wick/Body measurement, minimum penetration, close-back return and exact threshold behavior (CI passed; exhaustive swing/equal-level end-to-end replay remains outstanding).

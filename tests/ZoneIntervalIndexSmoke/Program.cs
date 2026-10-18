@@ -433,6 +433,102 @@ namespace ZoneIntervalIndexSmoke
             Assert(rejectedBounds, "Breaker specs must reject non-positive-width bounds.");
         }
 
+        private static void VerifyStructureBreakClassification()
+        {
+            Assert(!StructureBreakEvaluator.IsLevelCrossed(true, 100.0, 100.0),
+                "A bullish close exactly at a swing high is not a cross.");
+            Assert(StructureBreakEvaluator.IsLevelCrossed(true, 100.01, 100.0),
+                "A bullish close above swing high is a cross.");
+            Assert(!StructureBreakEvaluator.IsLevelCrossed(true, 99.99, 100.0),
+                "A close below swing high is not a bullish cross.");
+
+            Assert(!StructureBreakEvaluator.IsLevelCrossed(false, 100.0, 100.0),
+                "A bearish close exactly at a swing low is not a cross.");
+            Assert(StructureBreakEvaluator.IsLevelCrossed(false, 99.99, 100.0),
+                "A bearish close below swing low is a cross.");
+            Assert(!StructureBreakEvaluator.IsLevelCrossed(false, 100.01, 100.0),
+                "A close above swing low is not a bearish cross.");
+
+            StructureBreakClassification neutralBull = StructureBreakEvaluator.Classify(0, true);
+            Assert(!neutralBull.IsChangeOfCharacter && neutralBull.NextTrend == 1,
+                "A first bullish break from neutral establishes bullish trend without CHoCH.");
+
+            StructureBreakClassification bullContinuation = StructureBreakEvaluator.Classify(1, true);
+            Assert(!bullContinuation.IsChangeOfCharacter && bullContinuation.NextTrend == 1,
+                "A bullish break during bullish trend is continuation/BOS.");
+
+            StructureBreakClassification bullReversal = StructureBreakEvaluator.Classify(-1, true);
+            Assert(bullReversal.IsChangeOfCharacter && bullReversal.NextTrend == 1,
+                "A bullish break against bearish trend is CHoCH and sets bullish trend.");
+
+            StructureBreakClassification bearContinuation = StructureBreakEvaluator.Classify(-1, false);
+            Assert(!bearContinuation.IsChangeOfCharacter && bearContinuation.NextTrend == -1,
+                "A bearish break during bearish trend is continuation/BOS.");
+
+            StructureBreakClassification bearReversal = StructureBreakEvaluator.Classify(1, false);
+            Assert(bearReversal.IsChangeOfCharacter && bearReversal.NextTrend == -1,
+                "A bearish break against bullish trend is CHoCH and sets bearish trend.");
+            
+            StructureBreakClassification neutralBear = StructureBreakEvaluator.Classify(0, false);
+            Assert(!neutralBear.IsChangeOfCharacter && neutralBear.NextTrend == -1,
+                "A first bearish break from neutral establishes bearish trend without CHoCH.");
+        }
+
+        private static bool Sweep(
+            bool highLevel,
+            double level,
+            double high,
+            double low,
+            double open,
+            double close,
+            double minPenetration,
+            double minReturn,
+            SznpSweepMeasure measure)
+        {
+            return LiquiditySweepEvaluator.IsSweep(
+                highLevel, level, high, low, open, close,
+                minPenetration, minReturn, measure);
+        }
+
+        private static void VerifyLiquiditySweepPredicates()
+        {
+            // High-liquidity sweep: price pierces above the level then closes back below.
+            Assert(Sweep(true, 100.0, 101.2, 99.2, 99.5, 99.4, 0.5, 0.3, SznpSweepMeasure.Wick),
+                "Wick-measured high sweep should qualify.");
+            Assert(!Sweep(true, 100.0, 101.2, 99.2, 99.5, 99.4, 0.5, 0.3, SznpSweepMeasure.Body),
+                "A wick-only excursion must not qualify in body-measure mode.");
+            Assert(Sweep(true, 100.0, 101.0, 99.0, 100.8, 99.4, 0.5, 0.3, SznpSweepMeasure.Body),
+                "Body-measured high sweep should qualify when the body pierced the level.");
+            Assert(Sweep(true, 100.0, 100.5, 99.0, 99.4, 99.5, 0.5, 0.5, SznpSweepMeasure.Wick),
+                "Exact minimum penetration and return thresholds should qualify.");
+            Assert(!Sweep(true, 100.0, 100.49, 99.0, 99.4, 99.5, 0.5, 0.1, SznpSweepMeasure.Wick),
+                "Penetration below the minimum must be rejected.");
+            Assert(!Sweep(true, 100.0, 101.0, 99.0, 99.5, 99.9, 0.5, 0.2, SznpSweepMeasure.Wick),
+                "Insufficient close-back return must be rejected.");
+            Assert(!Sweep(true, 100.0, 101.0, 99.0, 99.5, 100.0, 0.5, 0.0, SznpSweepMeasure.Wick),
+                "A candle that does not close below a high level is not a sweep.");
+            Assert(!Sweep(true, 100.0, 100.0, 99.0, 99.5, 99.4, 0.0, 0.0, SznpSweepMeasure.Wick),
+                "Zero penetration must fail even when configured minimum is zero.");
+
+            // Low-liquidity sweep is the mirrored predicate.
+            Assert(Sweep(false, 100.0, 101.0, 98.8, 100.5, 100.7, 0.5, 0.3, SznpSweepMeasure.Wick),
+                "Wick-measured low sweep should qualify.");
+            Assert(!Sweep(false, 100.0, 101.0, 98.8, 100.5, 100.7, 0.5, 0.3, SznpSweepMeasure.Body),
+                "A wick-only lower excursion must not qualify in body-measure mode.");
+            Assert(Sweep(false, 100.0, 101.0, 99.0, 99.2, 100.7, 0.5, 0.3, SznpSweepMeasure.Body),
+                "Body-measured low sweep should qualify when the body pierced the level.");
+            Assert(Sweep(false, 100.0, 101.0, 99.5, 100.5, 100.5, 0.5, 0.5, SznpSweepMeasure.Wick),
+                "Exact low-sweep penetration and return thresholds should qualify.");
+            Assert(!Sweep(false, 100.0, 101.0, 99.51, 100.5, 100.7, 0.5, 0.1, SznpSweepMeasure.Wick),
+                "Low-sweep penetration below the minimum must be rejected.");
+            Assert(!Sweep(false, 100.0, 101.0, 98.8, 100.5, 100.1, 0.5, 0.2, SznpSweepMeasure.Wick),
+                "Insufficient close-above return must be rejected.");
+            Assert(!Sweep(false, 100.0, 101.0, 98.8, 100.5, 100.0, 0.5, 0.0, SznpSweepMeasure.Wick),
+                "A candle that does not close above a low level is not a sweep.");
+            Assert(!Sweep(false, 100.0, 101.0, 100.0, 100.5, 100.7, 0.0, 0.0, SznpSweepMeasure.Wick),
+                "Zero lower penetration must fail even when configured minimum is zero.");
+        }
+
         private static int Main()
         {
             try
@@ -443,12 +539,16 @@ namespace ZoneIntervalIndexSmoke
                 VerifyLifecycleSequenceAndTouchCounts();
                 VerifyInvalidLifecycleInput();
                 VerifyBreakerFactory();
+                VerifyStructureBreakClassification();
+                VerifyLiquiditySweepPredicates();
 
                 Console.WriteLine("PASS: interval index boundary/mutation tests and "
                     + _queryCount + " seeded differential queries over 50,000 operations.");
                 Console.WriteLine("PASS: bullish/bearish CandleClose, BodyBeyond and WickBeyond predicates.");
                 Console.WriteLine("PASS: Fresh/Touched/Partial/Filled/Broken transitions and touch re-entry.");
                 Console.WriteLine("PASS: breaker direction, parent identity, preserved bounds/factors and confirmation timestamp.");
+                Console.WriteLine("PASS: BOS/CHoCH classification and strict swing-cross boundaries.");
+                Console.WriteLine("PASS: high/low liquidity sweep predicates for Wick/Body measure and thresholds.");
                 return 0;
             }
             catch (Exception exception)

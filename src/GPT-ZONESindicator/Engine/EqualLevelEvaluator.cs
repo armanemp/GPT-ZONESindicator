@@ -31,7 +31,7 @@ namespace cAlgo
             if (highAt == null) throw new ArgumentNullException(nameof(highAt));
             if (lowAt == null) throw new ArgumentNullException(nameof(lowAt));
             if (minBarsApart < 0) throw new ArgumentOutOfRangeException(nameof(minBarsApart));
-            if (maxBarsApart < minBarsApart) throw new ArgumentOutOfRangeException(nameof(maxBarsApart));
+            if (maxBarsApart < 0) throw new ArgumentOutOfRangeException(nameof(maxBarsApart));
 
             EqualLevelPairEvaluation result = new EqualLevelPairEvaluation();
             if (candidateHigh != swingHigh)

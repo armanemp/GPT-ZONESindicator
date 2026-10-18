@@ -438,7 +438,7 @@ namespace ZoneIntervalIndexSmoke
         private static void VerifyEqualLevelPairRules()
         {
             double[] highs = { 99.0, 100.9, 100.5, 100.9, 99.0, 99.0, 99.0, 99.0 };
-            double[] lows  = { 98.0, 99.1, 99.5, 99.1, 98.0, 98.0, 98.0, 98.0 };
+            double[] lows  = { 98.0, 99.1, 99.5, 99.1, 99.3, 99.2, 98.0, 98.0 };
             Func<int, double> highAt = delegate (int index) { return highs[index]; };
             Func<int, double> lowAt = delegate (int index) { return lows[index]; };
 

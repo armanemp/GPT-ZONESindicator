@@ -22,54 +22,35 @@ namespace cAlgo
         /// </summary>
         private void UpdateZone(Zone zone, int index, bool countTouch)
         {
-            if (zone.State == SznpState.Broken)
+            ZoneLifecycleResult result = ZoneLifecycleEvaluator.Evaluate(new ZoneLifecycleInput
+            {
+                Index = index,
+                Bull = zone.Bull,
+                Lower = zone.Lower,
+                Upper = zone.Upper,
+                Open = O(index),
+                High = H(index),
+                Low = L(index),
+                Close = C(index),
+                BreakMode = ModeFor(zone.Kind),
+                State = zone.State,
+                MaxDepth = zone.MaxDepth,
+                TouchCount = zone.TouchCount,
+                LastEnteredIndex = zone.LastEnteredIdx,
+                PartialFillPct = PartialFillPct,
+                CountTouch = countTouch
+            });
+
+            if (!result.Processed)
                 return;
 
-            double size = zone.Upper - zone.Lower;
-            if (size <= 0)
-                return;
+            zone.MaxDepth = result.MaxDepth;
+            zone.TouchCount = result.TouchCount;
+            zone.LastEnteredIdx = result.LastEnteredIndex;
+            zone.State = result.State;
 
-            double high = H(index);
-            double low = L(index);
-            double open = O(index);
-            double close = C(index);
-            SznpBreakMode breakMode = ModeFor(zone.Kind);
-            bool entered, fullyFilled, broken;
-            double depth;
-
-            if (zone.Bull)
+            if (result.BrokeNow)
             {
-                entered = low < zone.Upper;
-                depth = entered ? Math.Min(zone.Upper - low, size) : 0.0;
-                fullyFilled = low <= zone.Lower;
-
-                switch (breakMode)
-                {
-                    case SznpBreakMode.CandleClose: broken = close < zone.Lower; break;
-                    case SznpBreakMode.BodyBeyond: broken = Math.Max(open, close) < zone.Lower; break;
-                    default: broken = low < zone.Lower; break;
-                }
-            }
-            else
-            {
-                entered = high > zone.Lower;
-                depth = entered ? Math.Min(high - zone.Lower, size) : 0.0;
-                fullyFilled = high >= zone.Upper;
-
-                switch (breakMode)
-                {
-                    case SznpBreakMode.CandleClose: broken = close > zone.Upper; break;
-                    case SznpBreakMode.BodyBeyond: broken = Math.Min(open, close) > zone.Upper; break;
-                    default: broken = high > zone.Upper; break;
-                }
-            }
-
-            if (broken)
-            {
-                if (depth > zone.MaxDepth)
-                    zone.MaxDepth = depth;
-
-                zone.State = SznpState.Broken;
                 zone.BreakIdx = index;
                 zone.BreakTime = CloseTimeOf(index);
 
@@ -88,34 +69,10 @@ namespace cAlgo
                 return;
             }
 
-            if (entered)
+            if (result.FilledNow)
             {
-                if (depth > zone.MaxDepth)
-                    zone.MaxDepth = depth;
-                // The indexed path does not visit untouched zones each bar.
-                // Store the last entered bar so consecutive in-zone bars still count as
-                // one touch, while a later re-entry after any gap counts as a new touch.
-                if (countTouch && zone.LastEnteredIdx != index - 1)
-                    zone.TouchCount++;
-                zone.LastEnteredIdx = index;
-            }
-
-            if (zone.State == SznpState.Filled)
-                return;
-
-            if (fullyFilled)
-            {
-                zone.State = SznpState.Filled;
                 zone.FillIdx = index;
                 zone.FillTime = CloseTimeOf(index);
-                return;
-            }
-
-            if (zone.MaxDepth > 0)
-            {
-                zone.State = zone.MaxDepth / size >= PartialFillPct / 100.0
-                    ? SznpState.Partial
-                    : SznpState.Touched;
             }
         }
 

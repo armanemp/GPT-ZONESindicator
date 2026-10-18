@@ -396,50 +396,46 @@ namespace cAlgo
 
             int first = index - 2;
             int middle = index - 1;
-            double firstHigh = _higherTimeframeState.Bars.HighPrices[first];
-            double firstLow = _higherTimeframeState.Bars.LowPrices[first];
-            double thirdHigh = _higherTimeframeState.Bars.HighPrices[index];
-            double thirdLow = _higherTimeframeState.Bars.LowPrices[index];
+            FairValueGapEvaluation evaluation = FairValueGapDetectorEvaluator.Evaluate(new FairValueGapInput
+            {
+                OriginIndex = FindMainIndexAtOrBefore(_higherTimeframeState.Bars.OpenTimes[first]),
+                ConfirmationIndex = confirmingChartIndex,
+                FirstCandleTime = _higherTimeframeState.Bars.OpenTimes[first],
+                ConfirmationCandleTime = _higherTimeframeState.Bars.OpenTimes[index],
+                TickSize = _tick,
+                PipSize = _pip,
+                Atr = atr,
+                MinSizePips = FvgMinSizePips,
+                MinSizeAtr = FvgMinSizeAtr,
+                RequireDisplacement = FvgRequireDisplacement,
+                MinBodyAtr = FvgMinBodyAtr,
+                MinBodyRatio = FvgMinBodyRatio,
+                MatchDirection = FvgMatchDirection,
+                StartMode = FvgStartMode,
+                FirstHigh = _higherTimeframeState.Bars.HighPrices[first],
+                FirstLow = _higherTimeframeState.Bars.LowPrices[first],
+                MiddleOpen = _higherTimeframeState.Bars.OpenPrices[middle],
+                MiddleClose = _higherTimeframeState.Bars.ClosePrices[middle],
+                MiddleHigh = _higherTimeframeState.Bars.HighPrices[middle],
+                MiddleLow = _higherTimeframeState.Bars.LowPrices[middle],
+                ThirdHigh = _higherTimeframeState.Bars.HighPrices[index],
+                ThirdLow = _higherTimeframeState.Bars.LowPrices[index]
+            });
 
-            bool bullish = thirdLow > firstHigh;
-            bool bearish = thirdHigh < firstLow;
-            if (!bullish && !bearish)
+            if (!evaluation.Detected || !evaluation.Accepted)
                 return;
-
-            double lower = bullish ? firstHigh : thirdHigh;
-            double upper = bullish ? thirdLow : firstLow;
-            double size = upper - lower;
-            double minSize = Math.Max(FvgMinSizePips * _pip, FvgMinSizeAtr * atr);
-            if (size < _tick * 0.5 || size < minSize)
-                return;
-
-            double open = _higherTimeframeState.Bars.OpenPrices[middle];
-            double close = _higherTimeframeState.Bars.ClosePrices[middle];
-            double body = Math.Abs(close - open);
-            double range = _higherTimeframeState.Bars.HighPrices[middle] - _higherTimeframeState.Bars.LowPrices[middle];
-
-            if (FvgRequireDisplacement
-                && (body < FvgMinBodyAtr * atr
-                    || range <= 0
-                    || body / range < FvgMinBodyRatio
-                    || (FvgMatchDirection && (bullish ? close <= open : close >= open))))
-                return;
-
-            DateTime zoneStart = FvgStartMode == SznpStartMode.FirstCandle
-                ? _higherTimeframeState.Bars.OpenTimes[first]
-                : _higherTimeframeState.Bars.OpenTimes[index];
 
             AddM15Zone(new Zone
             {
                 Kind = SznpKind.Fvg,
-                Bull = bullish,
-                Lower = lower,
-                Upper = upper,
-                OriginIdx = FindMainIndexAtOrBefore(_higherTimeframeState.Bars.OpenTimes[first]),
+                Bull = evaluation.Bullish,
+                Lower = evaluation.Lower,
+                Upper = evaluation.Upper,
+                OriginIdx = evaluation.OriginIndex,
                 ConfirmIdx = confirmingChartIndex,
-                StartTime = zoneStart,
+                StartTime = evaluation.StartTime,
                 Atr = atr,
-                Momentum = body / atr,
+                Momentum = evaluation.Momentum,
                 StructFactor = M15StructureFactor(index),
                 IsHigherTimeframe = true
             }, index, confirmingChartIndex);
@@ -450,76 +446,29 @@ namespace cAlgo
             if (index < 1 || confirmingChartIndex < _startIdx)
                 return;
 
-            double previousClose = _higherTimeframeState.Bars.ClosePrices[index - 1];
-            double currentOpen = _higherTimeframeState.Bars.OpenPrices[index];
-            double minSize = Math.Max(
-                Math.Max(GapMinSizePips * _pip, GapMinSizeAtr * atr),
-                _tick);
-
-            bool wantOpenClose = GapMethod != SznpGapMethod.RangeGap;
-            bool wantRange = GapMethod != SznpGapMethod.OpenCloseGap;
-            bool hasOpenClose = false;
-            bool openCloseBull = false;
-            bool hasRange = false;
-            bool rangeBull = false;
-            double openCloseLower = 0, openCloseUpper = 0, rangeLower = 0, rangeUpper = 0;
-
-            if (wantOpenClose)
+            PriceGapEvaluation evaluation = PriceGapDetectorEvaluator.Evaluate(new PriceGapInput
             {
-                if (currentOpen > previousClose)
-                {
-                    hasOpenClose = true;
-                    openCloseBull = true;
-                    openCloseLower = previousClose;
-                    openCloseUpper = currentOpen;
-                }
-                else if (currentOpen < previousClose)
-                {
-                    hasOpenClose = true;
-                    openCloseBull = false;
-                    openCloseLower = currentOpen;
-                    openCloseUpper = previousClose;
-                }
+                PipSize = _pip,
+                TickSize = _tick,
+                Atr = atr,
+                MinSizePips = GapMinSizePips,
+                MinSizeAtr = GapMinSizeAtr,
+                Method = GapMethod,
+                Combine = GapCombine,
+                PreviousClose = _higherTimeframeState.Bars.ClosePrices[index - 1],
+                CurrentOpen = _higherTimeframeState.Bars.OpenPrices[index],
+                PreviousHigh = _higherTimeframeState.Bars.HighPrices[index - 1],
+                PreviousLow = _higherTimeframeState.Bars.LowPrices[index - 1],
+                CurrentHigh = _higherTimeframeState.Bars.HighPrices[index],
+                CurrentLow = _higherTimeframeState.Bars.LowPrices[index]
+            });
 
-                if (hasOpenClose && openCloseUpper - openCloseLower < minSize)
-                    hasOpenClose = false;
-            }
-
-            if (wantRange)
-            {
-                double previousHigh = _higherTimeframeState.Bars.HighPrices[index - 1];
-                double previousLow = _higherTimeframeState.Bars.LowPrices[index];
-                if (previousLow > previousHigh)
-                {
-                    hasRange = true;
-                    rangeBull = true;
-                    rangeLower = previousHigh;
-                    rangeUpper = previousLow;
-                }
-                else if (_higherTimeframeState.Bars.HighPrices[index] < _higherTimeframeState.Bars.LowPrices[index - 1])
-                {
-                    hasRange = true;
-                    rangeBull = false;
-                    rangeLower = _higherTimeframeState.Bars.HighPrices[index];
-                    rangeUpper = _higherTimeframeState.Bars.LowPrices[index - 1];
-                }
-
-                if (hasRange && rangeUpper - rangeLower < minSize)
-                    hasRange = false;
-            }
-
-            if (hasOpenClose && hasRange)
-            {
-                if (GapCombine == SznpGapCombine.PreferRangeGap)
-                    hasOpenClose = false;
-                else if (GapCombine == SznpGapCombine.PreferOpenCloseGap)
-                    hasRange = false;
-            }
-
-            if (hasOpenClose)
-                CreateM15Gap(index, confirmingChartIndex, atr, openCloseBull, openCloseLower, openCloseUpper);
-            if (hasRange)
-                CreateM15Gap(index, confirmingChartIndex, atr, rangeBull, rangeLower, rangeUpper);
+            if (evaluation.HasOpenClose)
+                CreateM15Gap(index, confirmingChartIndex, atr, evaluation.OpenCloseBullish,
+                    evaluation.OpenCloseLower, evaluation.OpenCloseUpper);
+            if (evaluation.HasRange)
+                CreateM15Gap(index, confirmingChartIndex, atr, evaluation.RangeBullish,
+                    evaluation.RangeLower, evaluation.RangeUpper);
         }
 
         private void CreateM15Gap(

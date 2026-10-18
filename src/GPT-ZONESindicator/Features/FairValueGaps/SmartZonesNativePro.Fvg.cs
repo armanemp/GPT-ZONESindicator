@@ -8,81 +8,60 @@ namespace cAlgo
         {
             int first = index - 2;
             int middle = index - 1;
-
-            double firstHigh = H(first);
-            double firstLow = L(first);
-            double thirdHigh = H(index);
-            double thirdLow = L(index);
-
-            bool bullish = thirdLow > firstHigh;
-            bool bearish = thirdHigh < firstLow;
-            if (!bullish && !bearish)
-                return;
-
-            double lower = bullish ? firstHigh : thirdHigh;
-            double upper = bullish ? thirdLow : firstLow;
-            double size = upper - lower;
-
-            if (size < _tick * 0.5)
+            FairValueGapEvaluation evaluation = FairValueGapDetectorEvaluator.Evaluate(new FairValueGapInput
             {
-                Reject("fvg: below tick");
+                OriginIndex = first,
+                ConfirmationIndex = index,
+                FirstCandleTime = T(first),
+                ConfirmationCandleTime = T(index),
+                TickSize = _tick,
+                PipSize = _pip,
+                Atr = atr,
+                MinSizePips = FvgMinSizePips,
+                MinSizeAtr = FvgMinSizeAtr,
+                RequireDisplacement = FvgRequireDisplacement,
+                MinBodyAtr = FvgMinBodyAtr,
+                MinBodyRatio = FvgMinBodyRatio,
+                MatchDirection = FvgMatchDirection,
+                StartMode = FvgStartMode,
+                FirstHigh = H(first),
+                FirstLow = L(first),
+                MiddleOpen = O(middle),
+                MiddleClose = C(middle),
+                MiddleHigh = H(middle),
+                MiddleLow = L(middle),
+                ThirdHigh = H(index),
+                ThirdLow = L(index)
+            });
+
+            if (!evaluation.Detected)
+                return;
+            if (!evaluation.Accepted)
+            {
+                if (!string.IsNullOrEmpty(evaluation.Rejection))
+                    Reject(evaluation.Rejection);
                 return;
             }
 
-            double minSize = Math.Max(FvgMinSizePips * _pip, FvgMinSizeAtr * atr);
-            if (size < minSize)
-            {
-                Reject("fvg: min size");
-                return;
-            }
-
-            double middleOpen = O(middle);
-            double middleClose = C(middle);
-            double body = Math.Abs(middleClose - middleOpen);
-            double range = H(middle) - L(middle);
-
-            if (FvgRequireDisplacement)
-            {
-                if (body < FvgMinBodyAtr * atr)
-                {
-                    Reject("fvg: displacement body");
-                    return;
-                }
-
-                if (range <= 0 || body / range < FvgMinBodyRatio)
-                {
-                    Reject("fvg: body/range ratio");
-                    return;
-                }
-
-                if (FvgMatchDirection && (bullish ? middleClose <= middleOpen : middleClose >= middleOpen))
-                {
-                    Reject("fvg: displacement direction");
-                    return;
-                }
-            }
-
-            if (IsDuplicate(SznpKind.Fvg, bullish, lower, upper))
+            if (IsDuplicate(SznpKind.Fvg, evaluation.Bullish, evaluation.Lower, evaluation.Upper))
             {
                 Reject("fvg: duplicate");
                 return;
             }
 
-            Zone zone = new Zone
+            AddZone(new Zone
             {
                 Kind = SznpKind.Fvg,
-                Bull = bullish,
-                Lower = lower,
-                Upper = upper,
-                OriginIdx = first,
-                ConfirmIdx = index,
-                StartTime = FvgStartMode == SznpStartMode.FirstCandle ? T(first) : T(index),
+                Bull = evaluation.Bullish,
+                Lower = evaluation.Lower,
+                Upper = evaluation.Upper,
+                OriginIdx = evaluation.OriginIndex,
+                ConfirmIdx = evaluation.ConfirmationIndex,
+                StartTime = evaluation.StartTime,
                 Atr = atr,
-                Momentum = body / atr,
-                StructFactor = StructFactorFor(bullish, index)
-            };
-
-            AddZone(zone);
+                Momentum = evaluation.Momentum,
+                StructFactor = StructFactorFor(evaluation.Bullish, index)
+            });
         }
     }
 }

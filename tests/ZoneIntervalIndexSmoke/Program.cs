@@ -1280,6 +1280,127 @@ namespace ZoneIntervalIndexSmoke
                 + " zones across CandleClose, BodyBeyond, WickBeyond, gap-crossing and touch re-entry cases.");
         }
 
+        private static void VerifyFairValueGapDetector()
+        {
+            DateTime firstTime = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            FairValueGapInput input = new FairValueGapInput
+            {
+                OriginIndex = 10,
+                ConfirmationIndex = 12,
+                FirstCandleTime = firstTime,
+                ConfirmationCandleTime = firstTime.AddMinutes(10),
+                TickSize = 0.01,
+                PipSize = 0.01,
+                Atr = 2.0,
+                MinSizePips = 2.0,
+                MinSizeAtr = 0.1,
+                RequireDisplacement = false,
+                MatchDirection = true,
+                MinBodyAtr = 0.3,
+                MinBodyRatio = 0.5,
+                StartMode = SznpStartMode.FirstCandle,
+                FirstHigh = 100.0,
+                FirstLow = 98.0,
+                MiddleOpen = 100.0,
+                MiddleClose = 101.0,
+                MiddleHigh = 101.5,
+                MiddleLow = 99.5,
+                ThirdHigh = 102.0,
+                ThirdLow = 101.0
+            };
+
+            FairValueGapEvaluation bullish = FairValueGapDetectorEvaluator.Evaluate(input);
+            Assert(bullish.Detected && bullish.Accepted && bullish.Bullish,
+                "FVG evaluator must accept a valid bullish three-candle gap.");
+            Assert(Math.Abs(bullish.Lower - 100.0) < 1e-9
+                && Math.Abs(bullish.Upper - 101.0) < 1e-9,
+                "Bullish FVG bounds must match first high and third low.");
+            Assert(Math.Abs(bullish.Momentum - 0.5) < 1e-9 && bullish.StartTime == firstTime,
+                "FVG evaluator must preserve momentum and selected start time.");
+
+            input.FirstHigh = 102.0;
+            input.FirstLow = 101.0;
+            input.MiddleOpen = 100.0;
+            input.MiddleClose = 99.0;
+            input.ThirdHigh = 100.0;
+            input.ThirdLow = 99.0;
+            FairValueGapEvaluation bearish = FairValueGapDetectorEvaluator.Evaluate(input);
+            Assert(bearish.Detected && bearish.Accepted && !bearish.Bullish,
+                "FVG evaluator must accept a valid bearish three-candle gap.");
+            Assert(Math.Abs(bearish.Lower - 100.0) < 1e-9
+                && Math.Abs(bearish.Upper - 101.0) < 1e-9,
+                "Bearish FVG bounds must match third high and first low.");
+
+            input.FirstHigh = 100.0;
+            input.FirstLow = 98.0;
+            input.ThirdHigh = 102.0;
+            input.ThirdLow = 99.0;
+            FairValueGapEvaluation absent = FairValueGapDetectorEvaluator.Evaluate(input);
+            Assert(!absent.Detected, "FVG evaluator must reject candles with no three-candle gap.");
+
+            input.ThirdLow = 100.004;
+            FairValueGapEvaluation belowTick = FairValueGapDetectorEvaluator.Evaluate(input);
+            Assert(belowTick.Detected && !belowTick.Accepted && belowTick.Rejection == "fvg: below tick",
+                "FVG evaluator must reject gaps smaller than half a tick.");
+
+            input.ThirdLow = 100.1;
+            FairValueGapEvaluation belowMinimum = FairValueGapDetectorEvaluator.Evaluate(input);
+            Assert(!belowMinimum.Accepted && belowMinimum.Rejection == "fvg: min size",
+                "FVG evaluator must apply the configured pip/ATR size floor.");
+
+            input.ThirdLow = 101.0;
+            input.RequireDisplacement = true;
+            input.MinBodyAtr = 0.75;
+            FairValueGapEvaluation weakDisplacement = FairValueGapDetectorEvaluator.Evaluate(input);
+            Assert(!weakDisplacement.Accepted && weakDisplacement.Rejection == "fvg: displacement body",
+                "FVG evaluator must reject insufficient middle-candle displacement.");
+        }
+
+        private static void VerifyPriceGapDetector()
+        {
+            PriceGapInput input = new PriceGapInput
+            {
+                PipSize = 0.01,
+                TickSize = 0.01,
+                Atr = 2.0,
+                MinSizePips = 2.0,
+                MinSizeAtr = 0.1,
+                Method = SznpGapMethod.Both,
+                Combine = SznpGapCombine.KeepBoth,
+                PreviousClose = 100.0,
+                CurrentOpen = 101.0,
+                PreviousHigh = 100.5,
+                PreviousLow = 99.5,
+                CurrentHigh = 102.5,
+                CurrentLow = 102.0
+            };
+
+            PriceGapEvaluation both = PriceGapDetectorEvaluator.Evaluate(input);
+            Assert(both.HasOpenClose && both.HasRange && both.OpenCloseBullish && both.RangeBullish,
+                "Price gap evaluator must detect both valid bullish gap definitions.");
+            Assert(Math.Abs(both.OpenCloseLower - 100.0) < 1e-9
+                && Math.Abs(both.OpenCloseUpper - 101.0) < 1e-9
+                && Math.Abs(both.RangeLower - 100.5) < 1e-9
+                && Math.Abs(both.RangeUpper - 102.0) < 1e-9,
+                "Price gap evaluator must preserve candidate boundaries.");
+
+            input.Combine = SznpGapCombine.PreferRangeGap;
+            PriceGapEvaluation preferRange = PriceGapDetectorEvaluator.Evaluate(input);
+            Assert(!preferRange.HasOpenClose && preferRange.HasRange,
+                "PreferRangeGap must keep only the range gap when both candidates exist.");
+
+            input.Combine = SznpGapCombine.PreferOpenCloseGap;
+            PriceGapEvaluation preferOpenClose = PriceGapDetectorEvaluator.Evaluate(input);
+            Assert(preferOpenClose.HasOpenClose && !preferOpenClose.HasRange,
+                "PreferOpenCloseGap must keep only the open/close gap when both candidates exist.");
+
+            input.Combine = SznpGapCombine.KeepBoth;
+            input.CurrentOpen = 100.05;
+            PriceGapEvaluation minimum = PriceGapDetectorEvaluator.Evaluate(input);
+            Assert(minimum.RejectedOpenCloseMinimum,
+                "Price gap evaluator must report an open/close gap rejected by the configured size floor.");
+        }
+
         private static int Main()
         {
             try
@@ -1302,6 +1423,8 @@ namespace ZoneIntervalIndexSmoke
                 VerifyDuplicateSweepSuppressionPredicate();
                 VerifyStructureBreakClassification();
                 VerifyLiquiditySweepPredicates();
+                VerifyFairValueGapDetector();
+                VerifyPriceGapDetector();
 
                 Console.WriteLine("PASS: interval index boundary/mutation tests and "
                     + _queryCount + " seeded differential queries over 50,000 operations.");
@@ -1310,6 +1433,8 @@ namespace ZoneIntervalIndexSmoke
                 Console.WriteLine("PASS: breaker direction, parent identity, preserved bounds/factors and confirmation timestamp.");
                 Console.WriteLine("PASS: BOS/CHoCH classification and strict swing-cross boundaries.");
                 Console.WriteLine("PASS: high/low liquidity sweep predicates for Wick/Body measure and thresholds.");
+                Console.WriteLine("PASS: shared FVG detector rules, thresholds and start-time semantics.");
+                Console.WriteLine("PASS: shared price-gap detector rules, combine modes and minimum-size filters.");
                 return 0;
             }
             catch (Exception exception)

@@ -8,6 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="../../src/GPT-ZONESindicator/Features/FairValueGaps/FairValueGapDetectorEvaluator.cs" Link="FairValueGapDetectorEvaluator.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Features/PriceGaps/PriceGapDetectorEvaluator.cs" Link="PriceGapDetectorEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Features/ZoneLifecycle/ZoneIntervalIndex.cs" Link="ZoneIntervalIndex.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Features/HigherTimeframe/HigherTimeframeTimingEvaluator.cs" Link="HigherTimeframeTimingEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Engine/FutureBarTimeEvaluator.cs" Link="FutureBarTimeEvaluator.cs" />

@@ -2,7 +2,7 @@ name: Build cTrader indicator
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, "phase-*/**"]
   push:
     branches: [main, "feature/**", "phase-*/**"]
   workflow_dispatch:

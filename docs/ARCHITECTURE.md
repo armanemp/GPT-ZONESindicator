@@ -15,6 +15,7 @@ The indicator is a single cTrader Automate type, `cAlgo.SmartZonesNativePro`. Th
 | `Runtime/SmartZonesNativePro.Helpers.cs` | OHLC/ATR, color, naming, object cleanup, diagnostics and DST-date helpers |
 | `Engine/SmartZonesNativePro.Structure.cs` | Confirmed pivots, BOS/CHoCH and structure-context updates |
 | `Engine/SmartZonesNativePro.ZoneRegistration.cs` | Duplicate keys, zone registration and confluence bookkeeping |
+| `Engine/SmartZonesNativePro.ZoneLifecycleIndex.cs` | Interval-tree lookup for overlapping zones and ordered break-candidate indexes, without dropping logical zone history |
 | `Engine/SmartZonesNativePro.Gaps.cs` | Three-candle FVGs and separately configured price gaps |
 | `Engine/SmartZonesNativePro.OrderBlocks.cs` | Structure-triggered order-block candidate detection |
 | `Engine/SmartZonesNativePro.Liquidity.cs` | Equal highs/lows, sweep detection and sweep event records |
@@ -41,6 +42,7 @@ The indicator is a single cTrader Automate type, `cAlgo.SmartZonesNativePro`. Th
 5. Swing levels are only confirmed after the configured right-hand bars close.
 6. Historical HTF levels must use a completed HTF bar; never read future HTF data.
 7. Full rendering is driven by closed-bar updates; zone-only viewport reconciliation runs on chart viewport events and reuses cached comments/labels when zone state has not changed.
+8. Zone lifecycle updates use indexed price-overlap candidates plus indexed far-edge break candidates. Preserve the exact `UpdateZone` break predicates for CandleClose, BodyBeyond, and WickBeyond; do not skip gaps that cross a whole zone. Touch counts must still detect re-entry after an arbitrary number of untouched bars.
 
 ## Build
 

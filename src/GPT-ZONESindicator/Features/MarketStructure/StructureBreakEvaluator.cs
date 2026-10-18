@@ -11,6 +11,10 @@ namespace cAlgo
     {
         public static bool IsLevelCrossed(bool swingHigh, double close, double swingPrice)
         {
+            // Invalid numeric input must not manufacture a BOS/CHoCH event.
+            if (!IsFinite(close) || !IsFinite(swingPrice))
+                return false;
+
             return swingHigh ? close > swingPrice : close < swingPrice;
         }
 
@@ -21,6 +25,11 @@ namespace cAlgo
                 IsChangeOfCharacter = bullishBreak ? priorTrend < 0 : priorTrend > 0,
                 NextTrend = bullishBreak ? 1 : -1
             };
+        }
+
+        private static bool IsFinite(double value)
+        {
+            return !double.IsNaN(value) && !double.IsInfinity(value);
         }
     }
 }

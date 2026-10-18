@@ -57,13 +57,13 @@ namespace cAlgo
             }
 
             bool hasLabel = !string.IsNullOrEmpty(item.Label);
-            // Lines and their descriptive labels share one fixed endpoint forty chart bars
-            // beyond the latest candle. The stored T2/LabelTime retain event semantics.
+            // Keep the line's visual endpoint separate from its label's semantic location.
+            // A future endpoint must never drag BOS/CHoCH, EQH/EQL or sweep labels to the right.
             DateTime end = item.TextOnly
                 ? (item.T2 <= item.T1 ? item.T1.Add(_barSpan) : item.T2)
                 : (_futureTime <= item.T1 ? item.T1.Add(_barSpan) : _futureTime);
-            DateTime labelTime = item.TextOnly ? item.LabelTime : end;
-            Color visibleColor = LightenForVisibility(item.Col);
+            DateTime labelTime = item.LabelTime;
+            Color visibleColor = item.Col;
 
             if (item.Shown)
             {
@@ -226,7 +226,9 @@ namespace cAlgo
                 item.Col = WithOpacity(swing.High ? _cSwingHigh : _cSwingLow, StructOpacity);
                 item.Label = (major ? "Major " : "Internal ")
                     + (swing.High ? "Swing High" : "Swing Low");
-                item.LabelTime = _lastBarTime;
+                // Spread active swing tags along their own level, instead of stacking all
+                // of them on the currently forming candle.
+                item.LabelTime = MidTime(item.T1, _lastBarTime);
                 item.LabelY = swing.Price;
                 item.LabelH = HorizontalAlignment.Left;
                 item.LabelV = swing.High ? VerticalAlignment.Bottom : VerticalAlignment.Top;

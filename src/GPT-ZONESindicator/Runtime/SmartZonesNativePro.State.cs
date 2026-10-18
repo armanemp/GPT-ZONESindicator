@@ -130,7 +130,7 @@ namespace cAlgo
         private DateTime _futureTime;
         private int _startIdx, _lastProcessed;
         private DateTime _firstOpenTime;
-        private bool _rebuildPending, _histLoading, _renderDirty;
+        private bool _rebuildPending, _histLoading, _renderDirty, _viewportDirty;
         private int _histRequests, _errorCount, _nextId = 1;
         private double _lastClose;
         private DateTime _lastBarTime;

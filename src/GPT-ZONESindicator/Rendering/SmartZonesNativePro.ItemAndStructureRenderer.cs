@@ -7,10 +7,10 @@ namespace cAlgo
 {
     public partial class SmartZonesNativePro
     {
-        private void MakeItemText(Item item)
+        private void MakeItemText(Item item, DateTime labelTime, Color visibleColor)
         {
             ChartText text = Chart.DrawText(
-                item.Name + "_t", item.Label, item.LabelTime, item.LabelY, item.Col);
+                item.Name + "_t", item.Label, labelTime, item.LabelY, visibleColor);
             text.FontSize = Math.Max(11, LabelFontSize + 2);
             text.FontFamily = "Segoe UI Light";
             text.IsBold = false;
@@ -57,7 +57,13 @@ namespace cAlgo
             }
 
             bool hasLabel = !string.IsNullOrEmpty(item.Label);
-            DateTime end = item.T2 <= item.T1 ? item.T1.Add(_barSpan) : item.T2;
+            // Lines and their descriptive labels share one fixed endpoint forty chart bars
+            // beyond the latest candle. The stored T2/LabelTime retain event semantics.
+            DateTime end = item.TextOnly
+                ? (item.T2 <= item.T1 ? item.T1.Add(_barSpan) : item.T2)
+                : (_futureTime <= item.T1 ? item.T1.Add(_barSpan) : _futureTime);
+            DateTime labelTime = item.TextOnly ? item.LabelTime : end;
+            Color visibleColor = LightenForVisibility(item.Col);
 
             if (item.Shown)
             {
@@ -72,7 +78,7 @@ namespace cAlgo
                 if (!item.TextOnly)
                 {
                     ChartTrendLine line = Chart.DrawTrendLine(
-                        item.Name, item.T1, item.Y, end, item.Y, item.Col, item.Thick, item.Style);
+                        item.Name, item.T1, item.Y, end, item.Y, visibleColor, item.Thick, item.Style);
                     line.ExtendToInfinity = item.ExtendToInfinity;
                     line.IsInteractive = ObjectsInteractive;
                     item.Line = line;
@@ -80,7 +86,7 @@ namespace cAlgo
                 }
 
                 if (hasLabel)
-                    MakeItemText(item);
+                    MakeItemText(item, labelTime, visibleColor);
 
                 item.Shown = true;
                 SnapItem(item, end);
@@ -104,21 +110,21 @@ namespace cAlgo
                 item.Line.Time2 = end;
                 item.Line.Y1 = item.Y;
                 item.Line.Y2 = item.Y;
-                item.Line.Color = item.Col;
+                item.Line.Color = visibleColor;
             }
 
             if (hasLabel)
             {
                 if (item.Txt == null)
                 {
-                    MakeItemText(item);
+                    MakeItemText(item, labelTime, visibleColor);
                 }
                 else
                 {
                     item.Txt.Text = item.Label;
-                    item.Txt.Time = item.LabelTime;
+                    item.Txt.Time = labelTime;
                     item.Txt.Y = item.LabelY;
-                    item.Txt.Color = item.Col;
+                    item.Txt.Color = visibleColor;
                 }
             }
             else if (item.Txt != null)

@@ -13,9 +13,21 @@ namespace cAlgo
                 _featurePipeline.Render(true);
         }
 
-        private static int CompareScoreDesc(Zone a, Zone b)
+        private ZoneRenderState GetZoneRenderState(Zone zone)
         {
-            int comparison = b.Score.CompareTo(a.Score);
+            ZoneRenderState view;
+            if (!_zoneRenderStates.TryGetValue(zone.Id, out view))
+            {
+                view = new ZoneRenderState();
+                _zoneRenderStates.Add(zone.Id, view);
+            }
+
+            return view;
+        }
+
+        private int CompareScoreDesc(Zone a, Zone b)
+        {
+            int comparison = GetZoneRenderState(b).Score.CompareTo(GetZoneRenderState(a).Score);
             return comparison != 0 ? comparison : b.ConfirmIdx.CompareTo(a.ConfirmIdx);
         }
 
@@ -153,34 +165,27 @@ namespace cAlgo
             double price,
             double atrNow,
             int nowIndex,
-            bool hasViewport,
-            bool globalSelection,
             DateTime viewStart,
             DateTime viewEnd,
             double viewTop,
             double viewBottom,
             bool needScore)
         {
-            zone.Want = ZoneWanted(zone, price, atrNow);
-            if (!zone.Want)
+            // Always filter by visible time/price before ranking or applying quotas.
+            if (!ZoneWanted(zone, price, atrNow)
+                || !ZoneIntersectsViewport(zone, viewStart, viewEnd, viewTop, viewBottom))
                 return false;
 
-            if (hasViewport && !globalSelection
-                && !ZoneIntersectsViewport(zone, viewStart, viewEnd, viewTop, viewBottom))
-            {
-                zone.Want = false;
-                return false;
-            }
-
+            double score = zone.Score;
             if (needScore && zone.State != SznpState.Broken)
-                zone.Score = ComputeScore(zone, nowIndex, price, atrNow);
+                score = ComputeScore(zone, nowIndex, price, atrNow);
 
-            if (MinScore > 0 && zone.Score < MinScore)
-            {
-                zone.Want = false;
+            if (MinScore > 0 && score < MinScore)
                 return false;
-            }
 
+            ZoneRenderState view = GetZoneRenderState(zone);
+            view.Score = score;
+            view.Want = true;
             _cand.Add(zone);
             return true;
         }
@@ -196,17 +201,14 @@ namespace cAlgo
             bool hasViewport = TryGetZoneViewport(
                 out viewStart, out viewEnd, out viewTop, out viewBottom);
 
-            // Global modes must inspect the complete logical history to preserve their ranking semantics.
-            bool globalSelection = DisplayMode == SznpDisplayMode.TopRanked
-                || MaxZonesPerKind > 0;
+            // A transient invalid viewport must not trigger a full-history drawing burst.
+            // Existing views are reconciled on the next scroll/zoom/resize or valid render.
+            if (!hasViewport)
+                return;
 
-            // In the usual viewport/all-zones mode, use the lifecycle interval index to
-            // find zones intersecting visible prices instead of scanning all historical zones.
-            // Explicit terminal-history display falls back to the complete collection so those
-            // opt-in history records remain available.
             bool indexedViewportSelection = ZoneViewportSelectionPolicy.UseActiveZoneIndex(
                 hasViewport,
-                globalSelection,
+                false, // ranking and per-kind budgets now operate on visible candidates only
                 ShowFilledZones,
                 ShowBrokenZones,
                 ShowObHistoryOfBreakers);
@@ -218,10 +220,12 @@ namespace cAlgo
                 || OverlapDeclutter
                 || ShowZoneLabels;
 
-            // Retire the previous viewport selection first. The tracked set contains only
-            // zones that were wanted/shown last time, not every historical record.
             for (int k = 0; k < _renderTracked.Count; k++)
-                _renderTracked[k].Want = false;
+            {
+                ZoneRenderState previous;
+                if (_zoneRenderStates.TryGetValue(_renderTracked[k].Id, out previous))
+                    previous.Want = false;
+            }
 
             _cand.Clear();
             if (indexedViewportSelection)
@@ -233,8 +237,7 @@ namespace cAlgo
                 {
                     TryAddRenderCandidate(
                         _renderQueryScratch[k], price, atrNow, nowIndex,
-                        hasViewport, globalSelection, viewStart, viewEnd,
-                        viewTop, viewBottom, needScore);
+                        viewStart, viewEnd, viewTop, viewBottom, needScore);
                 }
             }
             else
@@ -243,42 +246,28 @@ namespace cAlgo
                 {
                     TryAddRenderCandidate(
                         _zones[k], price, atrNow, nowIndex,
-                        hasViewport, globalSelection, viewStart, viewEnd,
-                        viewTop, viewBottom, needScore);
+                        viewStart, viewEnd, viewTop, viewBottom, needScore);
                 }
             }
 
+            // Ranking and per-kind limits apply only to zones intersecting the viewport.
             int perKind = MaxZonesPerKind > 0 ? MaxZonesPerKind : int.MaxValue;
             if (DisplayMode == SznpDisplayMode.TopRanked)
                 perKind = Math.Min(perKind, TopRankedCount);
-
             if (perKind != int.MaxValue)
                 LimitPerKind(perKind);
-
-            // Global ranking is preserved, but only viewport-intersecting rectangles are instantiated.
-            if (hasViewport && globalSelection)
-            {
-                for (int k = 0; k < _cand.Count; k++)
-                {
-                    Zone zone = _cand[k];
-                    if (zone.Want && !ZoneIntersectsViewport(
-                        zone, viewStart, viewEnd, viewTop, viewBottom))
-                        zone.Want = false;
-                }
-            }
 
             if (OverlapDeclutter)
                 Declutter();
 
-            // Render budget only: keep every detected zone in the logical state/history.
-            // Lower-ranked zones are hidden as chart objects, never removed from _zones/_alive.
+            // This is a chart-object budget only: it never deletes/mutates logical zones.
             _hiddenByBudget = 0;
             if (MaxChartObjects > 0)
             {
                 _tmp.Clear();
                 for (int k = 0; k < _cand.Count; k++)
                 {
-                    if (_cand[k].Want)
+                    if (GetZoneRenderState(_cand[k]).Want)
                         _tmp.Add(_cand[k]);
                 }
 
@@ -286,20 +275,19 @@ namespace cAlgo
                 {
                     _tmp.Sort(CompareScoreDesc);
                     for (int k = MaxChartObjects; k < _tmp.Count; k++)
-                        _tmp[k].Want = false;
-
+                        GetZoneRenderState(_tmp[k]).Want = false;
                     _hiddenByBudget = _tmp.Count - MaxChartObjects;
                 }
             }
 
-            // Track only the previous and current viewport candidates. This avoids
-            // synchronizing thousands of off-screen historical records on every new bar.
+            // Only zones in the previous/current viewport retain native chart-object handles.
             for (int k = 0; k < _cand.Count; k++)
             {
                 Zone zone = _cand[k];
-                if ((zone.Want || zone.Shown) && !zone.RenderTracked)
+                ZoneRenderState view = GetZoneRenderState(zone);
+                if ((view.Want || view.Shown) && !view.RenderTracked)
                 {
-                    zone.RenderTracked = true;
+                    view.RenderTracked = true;
                     _renderTracked.Add(zone);
                 }
             }
@@ -307,33 +295,38 @@ namespace cAlgo
             int shown = 0;
             int write = 0;
             int trackedCount = _renderTracked.Count;
-            // Keep older visible zones first so their label positions are reserved before
-            // newer overlapping M5/M15 zones are laid out.
-            _renderTracked.Sort(delegate (Zone a, Zone b) { return a.Id.CompareTo(b.Id); });
-
-            PrepareZoneLabelRows();
+            if (ShowZoneLabels)
+            {
+                _renderTracked.Sort(delegate (Zone a, Zone b) { return a.Id.CompareTo(b.Id); });
+                PrepareZoneLabelRows();
+            }
+            else
+            {
+                _zoneLabelRows.Clear();
+            }
 
             for (int k = 0; k < trackedCount; k++)
             {
                 Zone zone = _renderTracked[k];
                 SyncZone(zone, refreshMetadata);
+                ZoneRenderState view = GetZoneRenderState(zone);
 
-                if (zone.Shown)
+                if (view.Shown)
                     shown++;
 
-                if (zone.Want || zone.Shown)
+                if (view.Want || view.Shown)
                 {
                     _renderTracked[write++] = zone;
                 }
                 else
                 {
-                    zone.RenderTracked = false;
+                    view.RenderTracked = false;
+                    _zoneRenderStates.Remove(zone.Id);
                 }
             }
 
             if (write < _renderTracked.Count)
                 _renderTracked.RemoveRange(write, _renderTracked.Count - write);
-
             _shownZones = shown;
         }
 
@@ -345,7 +338,7 @@ namespace cAlgo
                 for (int k = 0; k < _cand.Count; k++)
                 {
                     Zone zone = _cand[k];
-                    if (zone.Want && (int)zone.Kind == kind)
+                    if (GetZoneRenderState(zone).Want && (int)zone.Kind == kind)
                         _tmp.Add(zone);
                 }
 
@@ -364,7 +357,7 @@ namespace cAlgo
             _tmp.Clear();
             for (int k = 0; k < _cand.Count; k++)
             {
-                if (_cand[k].Want)
+                if (GetZoneRenderState(_cand[k]).Want)
                     _tmp.Add(_cand[k]);
             }
 
@@ -402,7 +395,7 @@ namespace cAlgo
                 }
 
                 if (drop)
-                    zone.Want = false;
+                    GetZoneRenderState(zone).Want = false;
                 else
                     _acc.Add(zone);
             }
@@ -459,8 +452,9 @@ namespace cAlgo
 
         private string LabelText(Zone zone)
         {
-            return zone.Score > 0
-                ? KindTag(zone) + " " + ((int)Math.Round(zone.Score)).ToString(CultureInfo.InvariantCulture)
+            double score = GetZoneRenderState(zone).Score;
+            return score > 0
+                ? KindTag(zone) + " " + ((int)Math.Round(score)).ToString(CultureInfo.InvariantCulture)
                 : KindTag(zone);
         }
 
@@ -560,10 +554,10 @@ namespace cAlgo
 
         private void SyncZone(Zone zone, bool refreshMetadata)
         {
-            if (!zone.Want)
+            ZoneRenderState view = GetZoneRenderState(zone);
+            if (!view.Want)
             {
-                if (zone.Shown)
-                    RemoveZoneObjects(zone);
+                if (view.Shown) RemoveZoneObjects(zone);
                 return;
             }
 
@@ -571,32 +565,38 @@ namespace cAlgo
             DateTime end = ZoneEndTime(zone);
             double labelY = ComputeZoneLabelY(zone, end);
             Color color = ZoneColor(zone);
+            string name = _prefix + "Z" + zone.Id.ToString(CultureInfo.InvariantCulture);
 
-            bool missingRectangle = zone.Rect == null || !zone.Rect.IsAlive;
-            bool missingMidline = ShowMidline && (zone.Mid == null || !zone.Mid.IsAlive);
-            bool missingLabel = ShowZoneLabels && (zone.Lbl == null || !zone.Lbl.IsAlive);
+            // A live settings change from extra objects to rectangle-only mode must
+            // actively remove the old children, not merely stop creating new ones.
+            if (!ShowMidline && view.Midline != null)
+            {
+                KillObject(view.Midline, name + "_m");
+                view.Midline = null;
+            }
+            if (!ShowZoneLabels && view.Label != null)
+            {
+                KillObject(view.Label, name + "_t");
+                view.Label = null;
+            }
 
-            // Reconcile the entire zone view if any enabled child object was removed.
-            if (zone.Shown && (missingRectangle || missingMidline || missingLabel))
+            bool missingRectangle = view.Rectangle == null || !view.Rectangle.IsAlive;
+            bool missingMidline = ShowMidline && (view.Midline == null || !view.Midline.IsAlive);
+            bool missingLabel = ShowZoneLabels && (view.Label == null || !view.Label.IsAlive);
+
+            // Reconcile the full view if any currently enabled child has gone missing.
+            if (view.Shown && (missingRectangle || missingMidline || missingLabel))
                 RemoveZoneObjects(zone);
 
-            bool createView = !zone.Shown;
-            string comment = refreshMetadata || createView
-                ? ZoneComment(zone)
-                : zone.AppComment;
-            string labelText = !ShowZoneLabels
-                ? null
-                : (refreshMetadata || createView ? LabelText(zone) : zone.AppLabelText);
+            bool createView = !view.Shown;
+            string comment = refreshMetadata || createView ? ZoneComment(zone) : view.AppliedComment;
+            string labelText = !ShowZoneLabels ? null
+                : (refreshMetadata || createView ? LabelText(zone) : view.AppliedLabelText);
 
-            if (!zone.Shown)
+            if (!view.Shown)
             {
-                string name = _prefix + "Z" + zone.Id.ToString(CultureInfo.InvariantCulture);
-                int borderThickness = zone.IsHigherTimeframe
-                    ? Math.Max(1, ZoneBorderThickness)
-                    : ZoneBorderThickness;
-                LineStyle borderStyle = zone.IsHigherTimeframe
-                    ? LineStyle.Dots
-                    : LineStyle.Solid;
+                int borderThickness = zone.IsHigherTimeframe ? Math.Max(1, ZoneBorderThickness) : ZoneBorderThickness;
+                LineStyle borderStyle = zone.IsHigherTimeframe ? LineStyle.Dots : LineStyle.Solid;
                 ChartRectangle rectangle = Chart.DrawRectangle(
                     name, start, zone.Upper, end, zone.Lower, color, borderThickness, borderStyle);
 
@@ -604,7 +604,7 @@ namespace cAlgo
                 rectangle.IsInteractive = ObjectsInteractive;
                 rectangle.ZIndex = ZoneZIndex;
                 rectangle.Comment = comment;
-                zone.Rect = rectangle;
+                view.Rectangle = rectangle;
                 Reg(rectangle);
 
                 if (ShowMidline)
@@ -616,104 +616,95 @@ namespace cAlgo
                     midline.ExtendToInfinity = false;
                     midline.IsInteractive = ObjectsInteractive;
                     midline.ZIndex = ZoneZIndex + 1;
-                    zone.Mid = midline;
+                    view.Midline = midline;
                     Reg(midline);
                 }
 
                 if (ShowZoneLabels)
                 {
                     ChartText label = Chart.DrawText(
-                        name + "_t",
-                        labelText,
-                        end,
-                        labelY,
-                        WithOpacity(color, 100));
+                        name + "_t", labelText, end, labelY, WithOpacity(color, 100));
                     label.FontSize = Math.Max(11, LabelFontSize + 2);
                     label.FontFamily = "Segoe UI Light";
                     label.IsBold = false;
                     label.HorizontalAlignment = HorizontalAlignment.Left;
                     label.VerticalAlignment = VerticalAlignment.Center;
                     label.IsInteractive = ObjectsInteractive;
-                    zone.Lbl = label;
+                    view.Label = label;
                     Reg(label);
                 }
 
-                zone.Shown = true;
-                zone.AppT2 = end;
-                zone.AppLabelY = labelY;
-                zone.AppCol = color;
-                zone.AppComment = comment;
-                zone.AppLabelText = labelText;
+                view.Shown = true;
+                view.AppliedEndTime = end;
+                view.AppliedLabelY = labelY;
+                view.AppliedColor = color;
+                view.AppliedComment = comment;
+                view.AppliedLabelText = labelText;
                 return;
             }
 
-            bool timeChanged = zone.AppT2 != end;
-            bool colorChanged = !SameColor(zone.AppCol, color);
-            bool commentChanged = !string.Equals(zone.AppComment, comment, StringComparison.Ordinal);
-            bool labelChanged = ShowZoneLabels
-                && !string.Equals(zone.AppLabelText, labelText, StringComparison.Ordinal);
+            bool timeChanged = view.AppliedEndTime != end;
+            bool colorChanged = !SameColor(view.AppliedColor, color);
+            bool commentChanged = !string.Equals(view.AppliedComment, comment, StringComparison.Ordinal);
+            bool labelChanged = ShowZoneLabels && !string.Equals(view.AppliedLabelText, labelText, StringComparison.Ordinal);
 
             if (timeChanged)
             {
-                zone.Rect.Time2 = end;
-                if (zone.Mid != null && zone.Mid.IsAlive)
-                    zone.Mid.Time2 = end;
-                if (zone.Lbl != null && zone.Lbl.IsAlive)
+                view.Rectangle.Time2 = end;
+                if (view.Midline != null && view.Midline.IsAlive) view.Midline.Time2 = end;
+                if (view.Label != null && view.Label.IsAlive)
                 {
-                    zone.Lbl.Time = end;
-                    zone.Lbl.Y = labelY;
-                    zone.AppLabelY = labelY;
+                    view.Label.Time = end;
+                    view.Label.Y = labelY;
+                    view.AppliedLabelY = labelY;
                 }
-                zone.AppT2 = end;
+                view.AppliedEndTime = end;
             }
 
             if (colorChanged)
             {
-                zone.Rect.Color = color;
-                zone.AppCol = color;
-
-                if (zone.Mid != null && zone.Mid.IsAlive)
-                    zone.Mid.Color = ZoneMidlineColor(zone);
-                if (zone.Lbl != null && zone.Lbl.IsAlive)
-                    zone.Lbl.Color = WithOpacity(color, 100);
+                view.Rectangle.Color = color;
+                view.AppliedColor = color;
+                if (view.Midline != null && view.Midline.IsAlive) view.Midline.Color = ZoneMidlineColor(zone);
+                if (view.Label != null && view.Label.IsAlive) view.Label.Color = WithOpacity(color, 100);
             }
 
-            if (ShowZoneLabels && Math.Abs(zone.AppLabelY - labelY) > Math.Max(1e-12, _tick * 0.1))
+            if (ShowZoneLabels && Math.Abs(view.AppliedLabelY - labelY) > Math.Max(1e-12, _tick * 0.1))
             {
-                if (zone.Lbl != null && zone.Lbl.IsAlive)
-                    zone.Lbl.Y = labelY;
-                zone.AppLabelY = labelY;
+                if (view.Label != null && view.Label.IsAlive) view.Label.Y = labelY;
+                view.AppliedLabelY = labelY;
             }
 
             if (commentChanged)
             {
-                zone.Rect.Comment = comment;
-                zone.AppComment = comment;
+                view.Rectangle.Comment = comment;
+                view.AppliedComment = comment;
             }
 
-            if (labelChanged && zone.Lbl != null && zone.Lbl.IsAlive)
+            if (labelChanged && view.Label != null && view.Label.IsAlive)
             {
-                zone.Lbl.Text = labelText;
-                zone.AppLabelText = labelText;
+                view.Label.Text = labelText;
+                view.AppliedLabelText = labelText;
             }
         }
 
         private void RemoveZoneObjects(Zone zone)
         {
-            string name = _prefix + "Z" + zone.Id.ToString(CultureInfo.InvariantCulture);
-            KillObject(zone.Rect, name);
-            if (zone.Mid != null)
-                KillObject(zone.Mid, name + "_m");
-            if (zone.Lbl != null)
-                KillObject(zone.Lbl, name + "_t");
+            ZoneRenderState view;
+            if (!_zoneRenderStates.TryGetValue(zone.Id, out view)) return;
 
-            zone.Rect = null;
-            zone.Mid = null;
-            zone.Lbl = null;
-            zone.AppComment = null;
-            zone.AppLabelText = null;
-            zone.AppLabelY = 0;
-            zone.Shown = false;
+            string name = _prefix + "Z" + zone.Id.ToString(CultureInfo.InvariantCulture);
+            KillObject(view.Rectangle, name);
+            if (view.Midline != null) KillObject(view.Midline, name + "_m");
+            if (view.Label != null) KillObject(view.Label, name + "_t");
+
+            view.Rectangle = null;
+            view.Midline = null;
+            view.Label = null;
+            view.AppliedComment = null;
+            view.AppliedLabelText = null;
+            view.AppliedLabelY = 0;
+            view.Shown = false;
         }
     }
 }

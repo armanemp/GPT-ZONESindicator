@@ -429,7 +429,7 @@ namespace cAlgo
         private Color ZoneMidlineColor(Zone zone)
         {
             // Derive the line from the actual current zone hue, then darken RGB by
-            // a restrained 26%. Keep line opacity configurable and the 1px dashed
+            // a subtle 12%. Keep line opacity configurable and the 1px dashed
             // style subtle so the midpoint is legible without competing with candles.
             Color source = ZoneColor(zone);
             ZoneMidlineRgb darker = ZoneMidlineColorEvaluator.Darken(

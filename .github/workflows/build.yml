@@ -26,10 +26,10 @@ jobs:
           dotnet-version: 6.0.x
 
       - name: Restore
-        run: dotnet restore .\GPT-ZONESindicator.csproj
+        run: dotnet restore GPT-ZONESindicator.csproj
 
       - name: Build
-        run: dotnet build .\GPT-ZONESindicator.csproj --configuration Release --no-restore
+        run: dotnet build GPT-ZONESindicator.csproj --configuration Release --no-restore
 
       - name: Verify packaged algo artifact
         shell: bash

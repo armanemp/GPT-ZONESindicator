@@ -8,6 +8,7 @@ namespace cAlgo
     {
         private void RenderAll()
         {
+            _occupiedLineLabelPrices.Clear();
             RenderZones(true);
             RenderStructure();
             RenderEqualAndSweeps();
@@ -527,7 +528,9 @@ namespace cAlgo
                         start,
                         zone.Upper,
                         WithOpacity(_midBase[(int)zone.Kind], 90));
-                    label.FontSize = LabelFontSize;
+                    label.FontSize = Math.Max(11, LabelFontSize + 2);
+                    label.FontFamily = "Segoe UI Light";
+                    label.IsBold = false;
                     label.HorizontalAlignment = HorizontalAlignment.Left;
                     label.VerticalAlignment = VerticalAlignment.Top;
                     label.IsInteractive = ObjectsInteractive;

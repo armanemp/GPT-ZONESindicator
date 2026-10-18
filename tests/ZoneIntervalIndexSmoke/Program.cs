@@ -370,6 +370,69 @@ namespace ZoneIntervalIndexSmoke
                 "Invalid input must preserve touch count and depth.");
         }
 
+        private static void VerifyBreakerFactory()
+        {
+            DateTime confirmedAt = new DateTime(2026, 10, 18, 12, 30, 0, DateTimeKind.Utc);
+            ZoneBreakerInput input = new ZoneBreakerInput
+            {
+                ParentId = 42,
+                ParentBull = true,
+                Lower = 1.1000,
+                Upper = 1.1050,
+                OriginIndex = 5,
+                ConfirmationIndex = 17,
+                ConfirmationTime = confirmedAt,
+                Atr = 0.0035,
+                Momentum = 1.8,
+                StructFactor = 0.75,
+                Major = true
+            };
+
+            ZoneBreakerSpec spec = ZoneBreakerFactory.Create(input);
+            Assert(spec.ParentId == 42, "Breaker spec must preserve parent zone identity.");
+            Assert(!spec.Bull, "A breaker must reverse the parent zone direction.");
+            Assert(spec.Lower == input.Lower && spec.Upper == input.Upper,
+                "A breaker must preserve the parent's immutable price boundaries.");
+            Assert(spec.OriginIndex == input.OriginIndex
+                && spec.ConfirmationIndex == input.ConfirmationIndex,
+                "Breaker origin and confirmation indices must be preserved.");
+            Assert(spec.StartTime == confirmedAt,
+                "Breaker start time must equal the closed-bar confirmation time.");
+            Assert(spec.Atr == input.Atr && spec.Momentum == input.Momentum
+                && spec.StructFactor == input.StructFactor && spec.Major == input.Major,
+                "Breaker scoring/context inputs must be carried from the parent.");
+
+            input.ParentBull = false;
+            ZoneBreakerSpec bullishBreaker = ZoneBreakerFactory.Create(input);
+            Assert(bullishBreaker.Bull,
+                "Breaking a bearish order block must create a bullish breaker.");
+
+            bool rejectedParent = false;
+            try
+            {
+                input.ParentId = 0;
+                ZoneBreakerFactory.Create(input);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                rejectedParent = true;
+            }
+            Assert(rejectedParent, "Breaker specs must reject missing parent identity.");
+
+            bool rejectedBounds = false;
+            try
+            {
+                input.ParentId = 42;
+                input.Lower = input.Upper;
+                ZoneBreakerFactory.Create(input);
+            }
+            catch (ArgumentException)
+            {
+                rejectedBounds = true;
+            }
+            Assert(rejectedBounds, "Breaker specs must reject non-positive-width bounds.");
+        }
+
         private static int Main()
         {
             try
@@ -379,11 +442,13 @@ namespace ZoneIntervalIndexSmoke
                 VerifyBreakModePredicates();
                 VerifyLifecycleSequenceAndTouchCounts();
                 VerifyInvalidLifecycleInput();
+                VerifyBreakerFactory();
 
                 Console.WriteLine("PASS: interval index boundary/mutation tests and "
                     + _queryCount + " seeded differential queries over 50,000 operations.");
                 Console.WriteLine("PASS: bullish/bearish CandleClose, BodyBeyond and WickBeyond predicates.");
                 Console.WriteLine("PASS: Fresh/Touched/Partial/Filled/Broken transitions and touch re-entry.");
+                Console.WriteLine("PASS: breaker direction, parent identity, preserved bounds/factors and confirmation timestamp.");
                 return 0;
             }
             catch (Exception exception)

@@ -165,7 +165,7 @@ namespace cAlgo
             return HigherTimeframeTimingEvaluator.FindClosedIndex(
                 Bars.Count,
                 closeTime,
-                delegate (int index) { return Bars.OpenTimes[index]; });
+                delegate (int index) { return CloseTimeOf(index); });
         }
 
         private double M15AtrAt(int index)

@@ -7,7 +7,8 @@
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <RootNamespace>cAlgo</RootNamespace>
     <AssemblyName>GPT-ZONESindicator</AssemblyName>
-    <AlgoName>GPT-ZONESindicator</AlgoName>
+    <IndicatorArtifactName>GPT-ZONESindicator</IndicatorArtifactName>
+    <AlgoName>$(IndicatorArtifactName)</AlgoName>
     <AlgoBuild>true</AlgoBuild>
     <AlgoPublish>true</AlgoPublish>
   </PropertyGroup>
@@ -22,4 +23,46 @@
   <ItemGroup>
     <Compile Remove="tests/**/*.cs" />
   </ItemGroup>
+
+
+  <!-- cTrader.Automate can derive the .algo filename from the containing workspace/solution
+       rather than AlgoName on some Windows setups. Normalize the package output and the
+       standard cTrader Indicators publish path to the repository's explicit artifact name. -->
+  <Target Name="NormalizeCTraderArtifactName"
+          AfterTargets="Build"
+          Condition="'$(AlgoBuild)' == 'true' and '$(DesignTimeBuild)' != 'true'">
+    <PropertyGroup>
+      <_CanonicalAlgoPath>$(TargetDir)$(IndicatorArtifactName).algo</_CanonicalAlgoPath>
+      <_IndicatorPublishDir>$([System.IO.Path]::Combine($([System.Environment]::GetFolderPath('MyDocuments')), 'cAlgo/Sources/Indicators'))</_IndicatorPublishDir>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <_NonCanonicalAlgo Include="$(TargetDir)*.algo" Exclude="$(_CanonicalAlgoPath)" />
+    </ItemGroup>
+
+    <Error Condition="'@(_NonCanonicalAlgo->Count())' != '0' and '@(_NonCanonicalAlgo->Count())' != '1'"
+           Text="Cannot safely normalize the cTrader artifact name: expected at most one non-canonical .algo file in $(TargetDir), found @(_NonCanonicalAlgo->Count())." />
+    <Error Condition="!Exists('$(_CanonicalAlgoPath)') and '@(_NonCanonicalAlgo)' == ''"
+           Text="cTrader did not produce an .algo artifact in $(TargetDir)." />
+
+    <Copy SourceFiles="@(_NonCanonicalAlgo)"
+          DestinationFiles="$(_CanonicalAlgoPath)"
+          SkipUnchangedFiles="false"
+          Condition="'@(_NonCanonicalAlgo)' != ''" />
+
+    <MakeDir Directories="$(_IndicatorPublishDir)" />
+    <Copy SourceFiles="$(_CanonicalAlgoPath)"
+          DestinationFiles="$(_IndicatorPublishDir)/$(IndicatorArtifactName).algo"
+          SkipUnchangedFiles="false" />
+
+    <ItemGroup>
+      <_MisnamedPublishedAlgo Include="@(_NonCanonicalAlgo->'$(_IndicatorPublishDir)/%(Filename)%(Extension)')" />
+    </ItemGroup>
+    <Delete Files="@(_NonCanonicalAlgo)" Condition="'@(_NonCanonicalAlgo)' != ''" />
+    <Delete Files="@(_MisnamedPublishedAlgo)" Condition="'@(_MisnamedPublishedAlgo)' != ''" />
+
+    <Message Importance="high" Text="Final cTrader indicator artifact: $(_CanonicalAlgoPath)" />
+    <Message Importance="high" Text="Published cTrader indicator: $(_IndicatorPublishDir)/$(IndicatorArtifactName).algo" />
+  </Target>
+
 </Project>

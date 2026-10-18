@@ -505,6 +505,36 @@ namespace ZoneIntervalIndexSmoke
 
 
 
+        private static void VerifyHigherTimeframeTiming()
+        {
+            DateTime[] m5OpenTimes =
+            {
+                new DateTime(2026, 10, 19, 9, 0, 0),
+                new DateTime(2026, 10, 19, 9, 5, 0),
+                new DateTime(2026, 10, 19, 9, 10, 0),
+                new DateTime(2026, 10, 19, 9, 15, 0),
+                new DateTime(2026, 10, 19, 9, 20, 0)
+            };
+
+            DateTime m15Close = new DateTime(2026, 10, 19, 9, 15, 0);
+            Assert(HigherTimeframeTimingEvaluator.IsClosed(m15Close, m15Close),
+                "An M15 candle should be eligible exactly when the matching M5 close is reached.");
+            Assert(!HigherTimeframeTimingEvaluator.IsClosed(
+                    m15Close, m15Close.AddTicks(-1)),
+                "An M15 candle must not be processed even a tick before its close.");
+            Assert(HigherTimeframeTimingEvaluator.FindClosedIndex(
+                    m5OpenTimes.Length, m15Close,
+                    delegate (int index) { return m5OpenTimes[index]; }) == 2,
+                "M15 confirmation at 09:15 must map to the M5 candle that just closed at 09:15.");
+            Assert(HigherTimeframeTimingEvaluator.FindClosedIndex(
+                    m5OpenTimes.Length, m15Close.AddTicks(-1),
+                    delegate (int index) { return m5OpenTimes[index]; }) == 1,
+                "Before 09:15, the index mapping must stop at the prior closed M5 candle.");
+
+            Console.WriteLine("PASS: M15 confirmation waits for a closed candle and maps to the exact M5 close.");
+        }
+
+
         private static void VerifyLineLabelLayout()
         {
             List<double> occupied = new List<double>();
@@ -1248,6 +1278,7 @@ namespace ZoneIntervalIndexSmoke
                 VerifyBreakerFactory();
                 VerifyZoneMidlineColor();
                 VerifyLineLabelLayout();
+                VerifyHigherTimeframeTiming();
                 VerifyPivotConfirmationAndTieRules();
                 VerifyEqualLevelPairRules();
                 VerifyOrderBlockRules();

@@ -52,26 +52,11 @@ namespace cAlgo
                     break;
             }
 
-            switch (zone.State)
-            {
-                case SznpState.Fresh:
-                    break;
-                case SznpState.Touched:
-                case SznpState.Partial:
-                    if (!ShowTouchedZones) return false;
-                    break;
-                case SznpState.Filled:
-                    if (!ShowFilledZones) return false;
-                    break;
-                default:
-                    bool breakerHistory = zone.Kind == SznpKind.OrderBlock
-                        && zone.ChildId > 0
-                        && ShowObHistoryOfBreakers
-                        && ShowBreaker;
-                    if (!ShowBrokenZones && !breakerHistory)
-                        return false;
-                    break;
-            }
+            // Broken zones are never valid chart areas. Their logical records stay in
+            // history for lifecycle diagnostics and breaker-parent lineage, but display
+            // switches cannot resurrect their rectangles, midlines, or labels.
+            if (!ZoneVisibilityPolicy.ShouldRender(zone.State, ShowTouchedZones, ShowFilledZones))
+                return false;
 
             if (DisplayMode == SznpDisplayMode.FreshOnly && zone.State != SznpState.Fresh)
                 return false;
@@ -208,9 +193,7 @@ namespace cAlgo
 
             bool indexedViewportSelection = ZoneViewportSelectionPolicy.UseActiveZoneIndex(
                 hasViewport,
-                ShowFilledZones,
-                ShowBrokenZones,
-                ShowObHistoryOfBreakers);
+                ShowFilledZones);
 
             bool needScore = MinScore > 0
                 || DisplayMode == SznpDisplayMode.TopRanked

@@ -561,6 +561,30 @@ namespace ZoneIntervalIndexSmoke
         }
 
 
+        private static void VerifyZoneViewportSelectionPolicy()
+        {
+            Assert(ZoneViewportSelectionPolicy.UseActiveZoneIndex(
+                    true, false, false, false, false),
+                "Active-only viewport rendering should use the interval index.");
+            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(
+                    true, false, true, false, false),
+                "Enabling filled zones must fall back to the full zone history.");
+            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(
+                    true, false, false, true, false),
+                "Enabling broken zones must fall back to the full zone history.");
+            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(
+                    true, false, false, false, true),
+                "Enabling breaker-parent history must fall back to the full zone history.");
+            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(
+                    true, true, false, false, false),
+                "Global ranking modes must preserve full-history selection semantics.");
+            Assert(!ZoneViewportSelectionPolicy.UseActiveZoneIndex(
+                    false, false, false, false, false),
+                "Without a valid viewport, rendering must not claim active-index viewport mode.");
+
+            Console.WriteLine("PASS: terminal-zone visibility selects the full history instead of the active-only index.");
+        }
+
         private static void VerifyZoneMidlineColor()
         {
             ZoneMidlineRgb source = ZoneMidlineColorEvaluator.Match(22, 160, 166);
@@ -1268,6 +1292,7 @@ namespace ZoneIntervalIndexSmoke
                 VerifyInvalidLifecycleInput();
                 VerifyBreakerFactory();
                 VerifyZoneMidlineColor();
+                VerifyZoneViewportSelectionPolicy();
                 VerifyHigherTimeframeTiming();
                 VerifyFutureBarTime();
                 VerifyPivotConfirmationAndTieRules();

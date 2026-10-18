@@ -22,7 +22,7 @@ namespace cAlgo
 
         private void SetupM15Bars()
         {
-            if (!ShowM15Zones)
+            if (!DetectM15Zones)
                 return;
 
             try
@@ -197,7 +197,7 @@ namespace cAlgo
         /// </summary>
         private void ProcessClosedM15Bars(int chartIndex)
         {
-            if (!ShowM15Zones || _m15Bars == null || _m15Bars.Count < 4 || chartIndex < 0)
+            if (!DetectM15Zones || _m15Bars == null || _m15Bars.Count < 4 || chartIndex < 0)
                 return;
 
             DateTime chartCloseTime = CloseTimeOf(chartIndex);
@@ -548,7 +548,7 @@ namespace cAlgo
 
         private void AddM15Zone(Zone zone, int m15Index, int confirmingChartIndex)
         {
-            if (!ShowM15Zones || _m15Bars == null
+            if (!DetectM15Zones || _m15Bars == null
                 || confirmingChartIndex < _startIdx
                 || m15Index < 0 || m15Index >= _m15Bars.Count)
                 return;

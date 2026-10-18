@@ -36,7 +36,7 @@ The indicator is a single cTrader Automate type, `cAlgo.SmartZonesNativePro`. Th
 
 1. Detection is based on closed bars. Do not read the forming candle as a confirmed signal.
 2. A zone's `Lower` and `Upper` boundaries are fixed after creation.
-3. Hiding a zone or hitting a drawing budget never deletes the logical zone or alters its lifecycle state.
+3. Hiding a zone or hitting the default 300-rectangle rendering budget never deletes the logical zone or alters its lifecycle state; set the budget to `0` for unlimited drawing.
 4. Historical discovery and live discovery must converge to the same state when supplied the same closed-bar sequence.
 5. Swing levels are only confirmed after the configured right-hand bars close.
 6. Historical HTF levels must use a completed HTF bar; never read future HTF data.

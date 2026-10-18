@@ -76,7 +76,7 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 
 **Exit gate:** CI build passes and a cTrader chart acceptance/replay check confirms visual and logical parity. Native chart objects are created only for the active viewport in the ordinary mode; no custom canvas replacement is claimed.
 
-## Phase 7 — Release acceptance
+## Phase 8 — Release acceptance
 
 - [ ] Run the same closed-bar sequence through history replay and live/demo operation and compare resulting logical states.
 - [ ] Verify behavior on at least one time-based chart and one symbol with a different pip/tick configuration.

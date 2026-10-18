@@ -37,7 +37,7 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 - [x] Test BOS vs CHoCH classification from neutral, bullish and bearish trend states (pure evaluator regression tests pass in CI).
 - [ ] Test full equal-high/equal-low cluster merge/lifecycle and duplicate sweep suppression (pair tolerance, separation, range cleanliness and backward-scan early exits now have deterministic tests).
 - [x] Extract and test high/low sweep predicates for Wick/Body measurement, minimum penetration, close-back return and exact threshold behavior (CI passed; exhaustive swing/equal-level end-to-end replay remains outstanding).
-- [x] Extract and test order-block source filters, full/body bounds, oversize fallback and minimum-size behavior (CI pending for this commit; end-to-end source-candle discovery remains outstanding).
+- [x] Extract and test order-block source filters, full/body bounds, oversize fallback and minimum-size behavior (CI passed; end-to-end source-candle discovery remains outstanding).
 
 ## Phase 4 — Reference levels and time handling
 

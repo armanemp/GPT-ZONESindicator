@@ -63,17 +63,12 @@ namespace cAlgo
 
             _featurePipeline.AddRenderer(
                 "BOS and CHoCH",
-                delegate
-                {
-                    return ShowMajorBos || ShowMajorChoch || ShowMajorSwings || ShowMajorActiveLevels
-                        || ShowInternalBos || ShowInternalChoch || ShowInternalSwings
-                        || ShowInternalActiveLevels;
-                },
+                delegate { return true; },
                 delegate (bool refreshMetadata) { RenderStructure(); });
 
             _featurePipeline.AddRenderer(
                 "Equal levels and sweeps",
-                delegate { return ShowEqual || ShowSweeps; },
+                delegate { return true; },
                 delegate (bool refreshMetadata) { RenderEqualAndSweeps(); });
 
             _featurePipeline.AddRenderer(
@@ -83,12 +78,12 @@ namespace cAlgo
 
             _featurePipeline.AddRenderer(
                 "Psychological levels",
-                delegate { return ShowRoundLevels; },
+                delegate { return true; },
                 delegate (bool refreshMetadata) { RenderRound(); });
 
             _featurePipeline.AddRenderer(
                 "Status",
-                delegate { return ShowStatusText; },
+                delegate { return true; },
                 delegate (bool refreshMetadata) { RenderStatus(); });
         }
 

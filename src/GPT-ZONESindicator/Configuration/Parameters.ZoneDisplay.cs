@@ -9,13 +9,13 @@ namespace cAlgo
         [Parameter("Display mode", Group = G15, DefaultValue = SznpDisplayMode.AllInLookback)]
         public SznpDisplayMode DisplayMode { get; set; }
 
-        [Parameter("Top-ranked count per kind (TopRanked mode)", Group = G15, DefaultValue = 10, MinValue = 1, MaxValue = 100000)]
+        [Parameter("Top-ranked count per kind in viewport (TopRanked mode)", Group = G15, DefaultValue = 10, MinValue = 1, MaxValue = 100000)]
         public int TopRankedCount { get; set; }
 
         [Parameter("Min importance score (0-100)", Group = G15, DefaultValue = 0, MinValue = 0, MaxValue = 100)]
         public double MinScore { get; set; }
 
-        [Parameter("Max zones per kind (0 = unlimited)", Group = G15, DefaultValue = 0, MinValue = 0, MaxValue = 100000)]
+        [Parameter("Max visible zones per kind (0 = unlimited)", Group = G15, DefaultValue = 0, MinValue = 0, MaxValue = 100000)]
         public int MaxZonesPerKind { get; set; }
 
         [Parameter("Near-price distance (ATR multiple, NearPrice mode)", Group = G15, DefaultValue = 15, MinValue = 0.5, Step = 0.5)]
@@ -39,10 +39,10 @@ namespace cAlgo
         [Parameter("Filled / broken zone opacity (%)", Group = G15, DefaultValue = 22, MinValue = 0, MaxValue = 100)]
         public double BrokenOpacity { get; set; }
 
-        [Parameter("Show zone labels", Group = G15, DefaultValue = true)]
+        [Parameter("Show zone labels (extra chart objects)", Group = G15, DefaultValue = false)]
         public bool ShowZoneLabels { get; set; }
 
-        [Parameter("Show zone midline", Group = G15, DefaultValue = true)]
+        [Parameter("Show zone midline (extra chart object)", Group = G15, DefaultValue = false)]
         public bool ShowMidline { get; set; }
     }
 }

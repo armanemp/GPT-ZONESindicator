@@ -20,6 +20,5 @@ namespace cAlgo
                 return TimeSpan.FromDays(14);
             }
         }
-        }
     }
 }

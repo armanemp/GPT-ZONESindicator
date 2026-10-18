@@ -76,10 +76,28 @@ namespace cAlgo
             }
         }
 
-        // An OB is discovered only when its structure-break candle closes. Its lifecycle
-        // therefore starts on the next closed bar; replaying earlier candles can create a
-        // speculative breaker before the parent OB was confirmed and invalidate it again
-        // during the same historical impulse.
+        /// <summary>
+        /// Replays historical candles for modules, such as the M15 overlay, whose zones are
+        /// intentionally reconstructed from a higher-timeframe source candle.
+        /// Main-timeframe OB detection does not call this: those zones become actionable only
+        /// after their own structure-break confirmation.
+        /// </summary>
+        private void ReplayZone(Zone zone, int from, int to)
+        {
+            for (int index = from; index <= to; index++)
+            {
+                UpdateZone(zone, index, true);
+                if (zone.State != SznpState.Broken)
+                    continue;
+
+                if (zone.ChildId > 0)
+                    ReplayZone(_zones[zone.ChildId - 1], index + 1, to);
+                return;
+            }
+        }
+
+        // Main-timeframe OB lifecycle starts on the next closed bar after its structure
+        // confirmation; pre-confirmation price action must not create a speculative breaker.
         private void OnZoneBroken(Zone zone, int index)
         {
             zone.Score = ComputeScore(zone, index, C(index), AtrAt(index));

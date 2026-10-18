@@ -93,9 +93,11 @@ namespace cAlgo
             SznpState parentState,
             int childId,
             bool hasMatchingBreakerChild,
-            bool showParentHistory)
+            bool showParentHistory,
+            bool showBreaker)
         {
             return showParentHistory
+                && showBreaker
                 && parentKind == SznpKind.OrderBlock
                 && parentState == SznpState.Broken
                 && childId > 0

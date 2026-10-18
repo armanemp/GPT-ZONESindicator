@@ -77,7 +77,7 @@ namespace cAlgo
             if (item.Shown)
             {
                 bool lineGone = !item.TextOnly && (item.Line == null || !item.Line.IsAlive);
-                bool textGone = hasLabel && item.Txt != null && !item.Txt.IsAlive;
+                bool textGone = hasLabel && (item.Txt == null || !item.Txt.IsAlive);
                 if (lineGone || textGone)
                     RemoveItem(item);
             }
@@ -289,7 +289,7 @@ namespace cAlgo
             item.Y = swing.Price;
             item.T1 = swing.Time;
             item.Thick = StructThickness;
-            item.Style = major ? StructStyle : InternalStyle;
+            item.Style = LineStyle.Dots;
 
             if (swing.Broken)
             {
@@ -363,7 +363,7 @@ namespace cAlgo
                     item.T1 = cluster.FirstTime;
                     item.T2 = ended ? cluster.EndTime : _futureTime;
                     item.Thick = 1;
-                    item.Style = LiquidityStyle;
+                    item.Style = LineStyle.Dots;
                     item.Col = WithOpacity(_cLiquidity, StructOpacity);
                     item.Label = (cluster.High ? "EQH" : "EQL")
                         + (cluster.Count > 2 ? " x" + cluster.Count.ToString(CultureInfo.InvariantCulture) : "");

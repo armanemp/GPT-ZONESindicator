@@ -31,7 +31,7 @@ namespace cAlgo
         [Parameter("Zone extension into the future (days)", Group = G02, DefaultValue = 365, MinValue = 1, MaxValue = 3650)]
         public int ExtensionDays { get; set; }
 
-        [Parameter("Max zone rectangles on chart (0 = unlimited)", Group = G02, DefaultValue = 0, MinValue = 0, MaxValue = 100000)]
+        [Parameter("Max zone rectangles shown (0 = unlimited)", Group = G02, DefaultValue = 300, MinValue = 0, MaxValue = 100000)]
         public int MaxChartObjects { get; set; }
 
         [Parameter("Zone Z-index (negative = behind)", Group = G02, DefaultValue = -100)]

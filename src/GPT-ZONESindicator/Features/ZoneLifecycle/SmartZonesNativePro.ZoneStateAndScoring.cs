@@ -107,7 +107,9 @@ namespace cAlgo
                 || orderBlock.Kind != SznpKind.OrderBlock
                 || orderBlock.State != SznpState.Broken
                 || orderBlock.BreakIdx != index
-                || orderBlock.ChildId > 0)
+                || orderBlock.ChildId > 0
+                || orderBlock.ConfirmIdx < 0
+                || index <= orderBlock.ConfirmIdx)
             {
                 Reject("breaker: parent not eligible");
                 return;
@@ -123,7 +125,9 @@ namespace cAlgo
                 Lower = orderBlock.Lower,
                 Upper = orderBlock.Upper,
                 OriginIndex = orderBlock.OriginIdx,
+                ParentConfirmationIndex = orderBlock.ConfirmIdx,
                 ConfirmationIndex = index,
+                ParentConfirmationTime = orderBlock.ConfirmTime,
                 ConfirmationTime = CloseTimeOf(index),
                 Atr = orderBlock.Atr,
                 Momentum = orderBlock.Momentum,

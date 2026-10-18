@@ -35,9 +35,9 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 
 - [x] Extract and test pivot confirmation delay, lookback eligibility, and the existing asymmetric left/right tie rules (CI passed; chart replay remains outstanding).
 - [x] Test BOS vs CHoCH classification from neutral, bullish and bearish trend states (pure evaluator regression tests pass in CI).
-- [ ] Test full equal-high/equal-low cluster merge/lifecycle and duplicate sweep suppression (pair tolerance, separation, range cleanliness and backward-scan early exits now have deterministic tests).
+- [ ] Test full equal-high/equal-low cluster merge/lifecycle (pair tolerance, separation, range cleanliness and backward-scan early exits have deterministic tests; duplicate sweep suppression predicate is now covered).
 - [x] Extract and test high/low sweep predicates for Wick/Body measurement, minimum penetration, close-back return and exact threshold behavior (CI passed; exhaustive swing/equal-level end-to-end replay remains outstanding).
-- [x] Extract and test order-block source filters, full/body bounds, oversize fallback and minimum-size behavior (CI passed; end-to-end source-candle discovery remains outstanding).
+- [x] Extract and test order-block source filters, source-candle/extreme discovery, full/body bounds, oversize fallback and minimum-size behavior (CI pending for this commit; full end-to-end discovery/replay remains outstanding).
 
 ## Phase 4 — Reference levels and time handling
 

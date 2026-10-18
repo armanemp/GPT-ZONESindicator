@@ -12,6 +12,8 @@
     <Compile Include="../../src/GPT-ZONESindicator/Engine/PivotEvaluator.cs" Link="PivotEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Engine/EqualLevelEvaluator.cs" Link="EqualLevelEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Engine/OrderBlockRules.cs" Link="OrderBlockRules.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Engine/OrderBlockCandidateEvaluator.cs" Link="OrderBlockCandidateEvaluator.cs" />
+    <Compile Include="../../src/GPT-ZONESindicator/Engine/LiquiditySweepDuplicateEvaluator.cs" Link="LiquiditySweepDuplicateEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Engine/ZoneBreakCandidateIndex.cs" Link="ZoneBreakCandidateIndex.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Engine/ZoneLifecycleEvaluator.cs" Link="ZoneLifecycleEvaluator.cs" />
     <Compile Include="../../src/GPT-ZONESindicator/Engine/ZoneBreakerFactory.cs" Link="ZoneBreakerFactory.cs" />

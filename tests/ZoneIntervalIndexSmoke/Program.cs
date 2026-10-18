@@ -485,6 +485,70 @@ namespace ZoneIntervalIndexSmoke
             Console.WriteLine("PASS: equal-high/low pair tolerance, clean-range, separation and early-exit predicates.");
         }
 
+
+        private static void VerifyOrderBlockCandidateSearch()
+        {
+            double[] highs = { 110, 109, 108, 115, 112, 111, 120 };
+            double[] lows = { 100, 98, 95, 99, 97, 96, 105 };
+            double[] opens = { 105, 106, 104, 101, 103, 104, 110 };
+            double[] closes = { 106, 104, 105, 103, 104, 105, 115 };
+            Func<int, double> highAt = delegate (int index) { return highs[index]; };
+            Func<int, double> lowAt = delegate (int index) { return lows[index]; };
+            Func<int, double> openAt = delegate (int index) { return opens[index]; };
+            Func<int, double> closeAt = delegate (int index) { return closes[index]; };
+
+            OrderBlockCandidateSearch bullish = OrderBlockCandidateEvaluator.Find(
+                true, 0, 6, highAt, lowAt, openAt, closeAt);
+            Assert(bullish.ExtremeIndex == 2 && bullish.CandidateIndex == 1,
+                "Bullish OB search must choose the leg's lowest low then scan backward to the nearest bearish candle.");
+
+            OrderBlockCandidateSearch bearish = OrderBlockCandidateEvaluator.Find(
+                false, 0, 6, highAt, lowAt,
+                delegate (int index) { return opens[index]; },
+                delegate (int index) { return closes[index]; });
+            Assert(bearish.ExtremeIndex == 3 && bearish.CandidateIndex == 3,
+                "Bearish OB search must choose the leg's highest high and select the qualifying bullish candle at that extreme.");
+
+            double[] allBullishCloses = { 2, 3, 4, 5 };
+            double[] allBullishOpens = { 1, 2, 3, 4 };
+            OrderBlockCandidateSearch none = OrderBlockCandidateEvaluator.Find(
+                true, 0, 3,
+                delegate (int index) { return 10.0 + index; },
+                delegate (int index) { return 5.0 - index; },
+                delegate (int index) { return allBullishOpens[index]; },
+                delegate (int index) { return allBullishCloses[index]; });
+            Assert(none.CandidateIndex == -1,
+                "OB search must report no candidate when no opposite candle exists between swing and extreme.");
+
+            OrderBlockCandidateSearch shortLeg = OrderBlockCandidateEvaluator.Find(
+                true, 2, 3, highAt, lowAt, openAt, closeAt);
+            Assert(shortLeg.ExtremeIndex == -1 && shortLeg.CandidateIndex == -1,
+                "OB search must not inspect legs shorter than the minimum two-bar separation.");
+
+            Console.WriteLine("PASS: order-block extreme discovery, opposite-candle selection and negative cases.");
+        }
+
+        private static void VerifyDuplicateSweepSuppressionPredicate()
+        {
+            DateTime barTime = new DateTime(2026, 10, 18, 13, 30, 0, DateTimeKind.Utc);
+            DateTime nextBar = barTime.AddMinutes(5);
+
+            Assert(LiquiditySweepDuplicateEvaluator.IsDuplicate(
+                true, 100.0, barTime, true, 100.004, barTime, 0.01),
+                "Same-direction same-bar levels closer than one tick must be duplicates.");
+            Assert(!LiquiditySweepDuplicateEvaluator.IsDuplicate(
+                true, 100.0, barTime, true, 100.01, barTime, 0.01),
+                "A separation exactly equal to one tick must not be a duplicate.");
+            Assert(!LiquiditySweepDuplicateEvaluator.IsDuplicate(
+                true, 100.0, barTime, false, 100.004, barTime, 0.01),
+                "Opposite-direction sweeps must not be merged.");
+            Assert(!LiquiditySweepDuplicateEvaluator.IsDuplicate(
+                true, 100.0, nextBar, true, 100.004, barTime, 0.01),
+                "Sweeps on different bars must not be merged.");
+
+            Console.WriteLine("PASS: same-bar duplicate sweep suppression direction, time and tick thresholds.");
+        }
+
         private static void VerifyOrderBlockRules()
         {
             Assert(OrderBlockRules.IsSourceAllowed(SznpStructureSource.MajorAndInternal, true)
@@ -1065,6 +1129,8 @@ namespace ZoneIntervalIndexSmoke
                 VerifyPivotConfirmationAndTieRules();
                 VerifyEqualLevelPairRules();
                 VerifyOrderBlockRules();
+                VerifyOrderBlockCandidateSearch();
+                VerifyDuplicateSweepSuppressionPredicate();
                 VerifyStructureBreakClassification();
                 VerifyLiquiditySweepPredicates();
 

@@ -12,6 +12,8 @@ namespace cAlgo
             long t0 = Stopwatch.GetTimestamp();
             _highPriceAt = H;
             _lowPriceAt = L;
+            _openPriceAt = O;
+            _closePriceAt = C;
             string tag = string.IsNullOrWhiteSpace(InstanceTag) ? "SZNP" : InstanceTag.Trim();
             _prefix = tag + "_";
             _pip = Symbol.PipSize > 0 ? Symbol.PipSize : 0.0001;

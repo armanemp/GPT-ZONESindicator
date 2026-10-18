@@ -29,27 +29,16 @@ namespace cAlgo
                 return;
             }
 
-            int extremeIndex = swingIndex;
-            double extreme = bullish ? L(swingIndex) : H(swingIndex);
-            for (int k = swingIndex; k < breakIndex; k++)
-            {
-                double value = bullish ? L(k) : H(k);
-                if (bullish ? value < extreme : value > extreme)
-                {
-                    extreme = value;
-                    extremeIndex = k;
-                }
-            }
+            OrderBlockCandidateSearch search = OrderBlockCandidateEvaluator.Find(
+                bullish,
+                swingIndex,
+                breakIndex,
+                _highPriceAt,
+                _lowPriceAt,
+                _openPriceAt,
+                _closePriceAt);
 
-            int candidate = -1;
-            for (int k = extremeIndex; k >= swingIndex; k--)
-            {
-                if (bullish ? C(k) < O(k) : C(k) > O(k))
-                {
-                    candidate = k;
-                    break;
-                }
-            }
+            int candidate = search.CandidateIndex;
 
             if (candidate < 0)
             {

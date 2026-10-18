@@ -183,7 +183,10 @@ namespace cAlgo
                 if (previous.T2 != endTime)
                     break;
 
-                if (previous.Bull == bull && Math.Abs(previous.Level - level) < _tick)
+                if (LiquiditySweepDuplicateEvaluator.IsDuplicate(
+                    bull, level, endTime,
+                    previous.Bull, previous.Level, previous.T2,
+                    _tick))
                     return;
             }
 

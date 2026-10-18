@@ -13,9 +13,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: src/GPT-ZONESindicator
     steps:
       - name: Check out source
         uses: actions/checkout@v4

@@ -940,6 +940,39 @@ namespace ZoneIntervalIndexSmoke
                 "A first bearish break from neutral establishes bearish trend without CHoCH.");
         }
 
+        private static void VerifyStructureSwingDistance()
+        {
+            Assert(StructureSwingDistanceEvaluator.IsFarEnough(110.0, true, 90.0, 15.0),
+                "A candidate high with enough distance from the prior opposite swing should pass.");
+            Assert(StructureSwingDistanceEvaluator.IsFarEnough(108.0, true, 200.0, 15.0),
+                "A candidate low must be compared with the prior high, not a high from the same candle.");
+            Assert(!StructureSwingDistanceEvaluator.IsFarEnough(108.0, true, 110.0, 15.0),
+                "A candidate closer than the configured minimum to its comparison swing must fail.");
+            Assert(StructureSwingDistanceEvaluator.IsFarEnough(110.0, true, 95.0, 15.0),
+                "A swing exactly at the minimum distance must pass.");
+            Assert(StructureSwingDistanceEvaluator.IsFarEnough(110.0, false, 0.0, 15.0),
+                "The first swing of a direction should not require a prior opposite swing.");
+            Assert(!StructureSwingDistanceEvaluator.IsFarEnough(double.NaN, false, 0.0, 0.0),
+                "A non-finite candidate price must fail distance validation.");
+            Assert(!StructureSwingDistanceEvaluator.IsFarEnough(110.0, true, double.PositiveInfinity, 15.0),
+                "A non-finite opposite swing price must fail distance validation.");
+
+            Assert(StructureSwingDistanceEvaluator.RejectDualPivotPair(
+                    true, true, 110.0, 108.0, 15.0),
+                "Dual high/low pivots closer than the minimum must be rejected together.");
+            Assert(!StructureSwingDistanceEvaluator.RejectDualPivotPair(
+                    true, true, 110.0, 95.0, 15.0),
+                "Dual pivots exactly at the minimum range must not be rejected.");
+            Assert(!StructureSwingDistanceEvaluator.RejectDualPivotPair(
+                    true, false, 110.0, 108.0, 15.0),
+                "A single pivot candidate must not be rejected by the dual-pivot rule.");
+            Assert(!StructureSwingDistanceEvaluator.RejectDualPivotPair(
+                    true, true, 110.0, 108.0, 0.0),
+                "Dual pivots remain allowed when the minimum-distance filter is disabled.");
+
+            Console.WriteLine("PASS: order-independent swing distance filtering and deterministic dual-pivot rejection.");
+        }
+
         private static void VerifyStructureSwingVisibility()
         {
             Assert(StructureSwingVisibilityEvaluator.ShouldShowLevel(
@@ -1554,6 +1587,7 @@ namespace ZoneIntervalIndexSmoke
                 VerifyDuplicateSweepSuppressionPredicate();
                 VerifyStructureBreakClassification();
                 VerifyStructureSwingVisibility();
+                VerifyStructureSwingDistance();
                 VerifyLiquiditySweepPredicates();
                 VerifyFairValueGapDetector();
                 VerifyPriceGapDetector();
@@ -1566,6 +1600,7 @@ namespace ZoneIntervalIndexSmoke
                 Console.WriteLine("PASS: breaker direction, parent identity, preserved bounds/factors and confirmation timestamp.");
                 Console.WriteLine("PASS: BOS/CHoCH classification and strict swing-cross boundaries.");
                 Console.WriteLine("PASS: swept and silently-broken swing levels are not rendered as active levels.");
+                Console.WriteLine("PASS: order-independent swing distance filtering and deterministic dual-pivot rejection.");
                 Console.WriteLine("PASS: high/low liquidity sweep predicates for Wick/Body measure and thresholds.");
                 Console.WriteLine("PASS: shared FVG detector rules, thresholds and start-time semantics.");
                 Console.WriteLine("PASS: shared price-gap detector rules, combine modes and minimum-size filters.");

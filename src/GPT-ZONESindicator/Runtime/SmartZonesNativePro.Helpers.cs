@@ -15,9 +15,20 @@ namespace cAlgo
 
         private DateTime CloseTimeOf(int i)
         {
-            return i + 1 < Bars.Count
-                ? Bars.OpenTimes[i + 1]
-                : Bars.OpenTimes[i].Add(_barSpan);
+            DateTime barOpen = Bars.OpenTimes[i];
+            DateTime nominalClose = barOpen.Add(_barSpan);
+            if (i + 1 < Bars.Count)
+            {
+                DateTime nextOpen = Bars.OpenTimes[i + 1];
+                TimeSpan delta = nextOpen - barOpen;
+                TimeSpan maximumContinuousStep = _barSpan.Add(
+                    TimeSpan.FromTicks(Math.Max(1L, _barSpan.Ticks / 10L)));
+                if (delta > TimeSpan.Zero && delta <= maximumContinuousStep)
+                    return nextOpen;
+            }
+
+            // A weekend or market closure is not the duration of the previous candle.
+            return nominalClose;
         }
 
         private double AtrAt(int i)

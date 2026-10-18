@@ -41,6 +41,7 @@ This roadmap is intentionally split into small reviewable phases. Do not mark a 
 - [x] Ignore non-finite close/swing prices in structure-break evaluation so malformed values cannot manufacture BOS/CHoCH events.
 - [x] Make the minimum swing-distance filter order-independent when a bar qualifies as both a high and a low pivot; evaluate both against prior engine state and reject undersized dual-pivot pairs symmetrically.
 - [x] Test BOS vs CHoCH classification from neutral, bullish and bearish trend states (pure evaluator regression tests pass in CI).
+- [ ] Run the expanded Market Structure regression suite on the latest branch, confirm Release build/test output, then verify major/internal swings, dual-pivot cases, swept-level removal and BOS/CHoCH placement on a live cTrader chart.
 - [ ] Test full equal-high/equal-low cluster merge/lifecycle (pair tolerance, separation, range cleanliness and backward-scan early exits have deterministic tests; duplicate sweep suppression predicate is now covered).
 - [x] Extract and test high/low sweep predicates for Wick/Body measurement, minimum penetration, close-back return and exact threshold behavior (CI passed; exhaustive swing/equal-level end-to-end replay remains outstanding).
 - [x] Extract and test order-block source filters, source-candle/extreme discovery, full/body bounds, oversize fallback and minimum-size behavior (CI passed; full end-to-end discovery/replay remains outstanding).

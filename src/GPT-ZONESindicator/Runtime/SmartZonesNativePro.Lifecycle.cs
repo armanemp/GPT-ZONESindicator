@@ -59,6 +59,8 @@ namespace cAlgo
                     _higherTimeframeState.Bars.HistoryLoaded -= OnM15HistoryChanged;
                     _higherTimeframeState.Bars.Reloaded -= OnM15HistoryChanged;
                 }
+
+                DestroyZoneCanvasOverlay();
                 RemoveOwnObjects();
             }
             catch (Exception)

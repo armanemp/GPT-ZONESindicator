@@ -186,14 +186,204 @@ namespace ZoneIntervalIndexSmoke
             }
         }
 
+        private static ZoneLifecycleInput NewLifecycleInput(
+            bool bull,
+            SznpBreakMode mode,
+            double open,
+            double high,
+            double low,
+            double close)
+        {
+            return new ZoneLifecycleInput
+            {
+                Index = 1,
+                Bull = bull,
+                Lower = 100.0,
+                Upper = 105.0,
+                Open = open,
+                High = high,
+                Low = low,
+                Close = close,
+                BreakMode = mode,
+                State = SznpState.Fresh,
+                MaxDepth = 0.0,
+                TouchCount = 0,
+                LastEnteredIndex = -1,
+                PartialFillPct = 50.0,
+                CountTouch = true
+            };
+        }
+
+        private static ZoneLifecycleInput CarryForward(
+            ZoneLifecycleInput previous,
+            ZoneLifecycleResult result,
+            int nextIndex)
+        {
+            previous.Index = nextIndex;
+            previous.State = result.State;
+            previous.MaxDepth = result.MaxDepth;
+            previous.TouchCount = result.TouchCount;
+            previous.LastEnteredIndex = result.LastEnteredIndex;
+            return previous;
+        }
+
+        private static void AssertBreak(
+            bool bull,
+            SznpBreakMode mode,
+            double open,
+            double high,
+            double low,
+            double close,
+            bool expected,
+            string scenario)
+        {
+            ZoneLifecycleInput input = NewLifecycleInput(bull, mode, open, high, low, close);
+            ZoneLifecycleResult result = ZoneLifecycleEvaluator.Evaluate(input);
+            Assert(result.Processed, scenario + ": a valid active zone should be processed.");
+            Assert(result.BrokeNow == expected,
+                scenario + ": expected BrokeNow=" + expected + " but got " + result.BrokeNow + ".");
+        }
+
+        private static void VerifyBreakModePredicates()
+        {
+            // Bullish zone [100,105]: each mode has a boundary/equality case and a
+            // beyond-boundary case. This also checks strict-vs-inclusive comparisons.
+            AssertBreak(true, SznpBreakMode.CandleClose, 102, 103, 99, 101, false,
+                "Bull CandleClose ignores a lower wick when close is above lower bound");
+            AssertBreak(true, SznpBreakMode.CandleClose, 102, 103, 100, 100, false,
+                "Bull CandleClose equality is not a break");
+            AssertBreak(true, SznpBreakMode.CandleClose, 101, 102, 98, 99, true,
+                "Bull CandleClose closes beyond lower bound");
+
+            AssertBreak(true, SznpBreakMode.BodyBeyond, 99, 101, 98, 100, false,
+                "Bull BodyBeyond equality is not a break");
+            AssertBreak(true, SznpBreakMode.BodyBeyond, 99, 99.6, 98, 99.5, true,
+                "Bull BodyBeyond body is strictly below lower bound");
+
+            AssertBreak(true, SznpBreakMode.WickBeyond, 102, 103, 100, 101, false,
+                "Bull WickBeyond equality is not a break");
+            AssertBreak(true, SznpBreakMode.WickBeyond, 102, 103, 99.99, 101, true,
+                "Bull WickBeyond lower wick crosses boundary");
+
+            // Bearish zone [100,105].
+            AssertBreak(false, SznpBreakMode.CandleClose, 104, 105, 103, 105, false,
+                "Bear CandleClose equality is not a break");
+            AssertBreak(false, SznpBreakMode.CandleClose, 104, 107, 104, 106, true,
+                "Bear CandleClose closes beyond upper bound");
+
+            AssertBreak(false, SznpBreakMode.BodyBeyond, 106, 107, 104, 105, false,
+                "Bear BodyBeyond equality is not a break");
+            AssertBreak(false, SznpBreakMode.BodyBeyond, 106, 107, 105.1, 105.1, true,
+                "Bear BodyBeyond body is strictly above upper bound");
+
+            AssertBreak(false, SznpBreakMode.WickBeyond, 104, 105, 103, 104.5, false,
+                "Bear WickBeyond equality is not a break");
+            AssertBreak(false, SznpBreakMode.WickBeyond, 104, 105.01, 103, 104.5, true,
+                "Bear WickBeyond upper wick crosses boundary");
+        }
+
+        private static void VerifyLifecycleSequenceAndTouchCounts()
+        {
+            ZoneLifecycleInput input = NewLifecycleInput(
+                true, SznpBreakMode.CandleClose, 104.5, 104.9, 104.0, 104.6);
+            input.Index = 10;
+
+            ZoneLifecycleResult result = ZoneLifecycleEvaluator.Evaluate(input);
+            Assert(result.State == SznpState.Touched, "First shallow entry should mark zone Touched.");
+            Assert(result.TouchCount == 1, "First entry should count as one touch.");
+            Assert(Math.Abs(result.MaxDepth - 1.0) < 1e-9, "First entry should record depth 1.0.");
+
+            input = CarryForward(input, result, 11);
+            input.Open = 104.2;
+            input.High = 104.7;
+            input.Low = 103.8;
+            input.Close = 104.1;
+            result = ZoneLifecycleEvaluator.Evaluate(input);
+            Assert(result.State == SznpState.Touched, "A second shallow bar should remain Touched.");
+            Assert(result.TouchCount == 1, "Consecutive entry bars must count as one touch.");
+
+            input = CarryForward(input, result, 12);
+            input.Open = 105.4;
+            input.High = 106.0;
+            input.Low = 105.2;
+            input.Close = 105.8;
+            result = ZoneLifecycleEvaluator.Evaluate(input);
+            Assert(result.State == SznpState.Touched, "An outside bar must preserve the current state.");
+            Assert(result.TouchCount == 1, "Leaving the zone must not create a touch.");
+            Assert(result.LastEnteredIndex == 11, "Outside bars must not overwrite the last-entry index.");
+
+            input = CarryForward(input, result, 13);
+            input.Open = 103.0;
+            input.High = 104.0;
+            input.Low = 102.0;
+            input.Close = 103.5;
+            result = ZoneLifecycleEvaluator.Evaluate(input);
+            Assert(result.State == SznpState.Partial, "Re-entry past the threshold should mark Partial.");
+            Assert(result.TouchCount == 2, "Re-entry after a full outside bar must count as a new touch.");
+            Assert(Math.Abs(result.MaxDepth - 3.0) < 1e-9, "Maximum penetration should be retained.");
+
+            input = CarryForward(input, result, 14);
+            input.Open = 101.0;
+            input.High = 102.0;
+            input.Low = 99.5;
+            input.Close = 101.5;
+            result = ZoneLifecycleEvaluator.Evaluate(input);
+            Assert(result.FilledNow && result.State == SznpState.Filled,
+                "Crossing the far boundary without the configured close-break should fill the zone.");
+            Assert(Math.Abs(result.MaxDepth - 5.0) < 1e-9, "Full fill should cap depth at zone size.");
+            Assert(result.TouchCount == 2, "Consecutive fill bar must not add a touch.");
+
+            input = CarryForward(input, result, 15);
+            input.Open = 99.0;
+            input.High = 101.0;
+            input.Low = 98.0;
+            input.Close = 99.0;
+            result = ZoneLifecycleEvaluator.Evaluate(input);
+            Assert(result.BrokeNow && result.State == SznpState.Broken,
+                "A Filled zone must still become Broken when its break predicate occurs.");
+            Assert(result.TouchCount == 2, "A break candle returns before touch counting.");
+            Assert(result.LastEnteredIndex == 14, "A break candle must not rewrite last-entry index.");
+
+            input = CarryForward(input, result, 16);
+            input.Open = 101.0;
+            input.High = 103.0;
+            input.Low = 102.0;
+            input.Close = 102.5;
+            result = ZoneLifecycleEvaluator.Evaluate(input);
+            Assert(!result.Processed && result.State == SznpState.Broken,
+                "Broken zones are terminal and must not be processed again.");
+        }
+
+        private static void VerifyInvalidLifecycleInput()
+        {
+            ZoneLifecycleInput input = NewLifecycleInput(
+                true, SznpBreakMode.CandleClose, 102, 103, 101, 102);
+            input.Lower = 105;
+            input.Upper = 100;
+            input.TouchCount = 4;
+            input.MaxDepth = 1.25;
+
+            ZoneLifecycleResult result = ZoneLifecycleEvaluator.Evaluate(input);
+            Assert(!result.Processed, "An invalid-size zone must not be processed.");
+            Assert(result.State == input.State, "Invalid input must preserve lifecycle state.");
+            Assert(result.TouchCount == 4 && Math.Abs(result.MaxDepth - 1.25) < 1e-9,
+                "Invalid input must preserve touch count and depth.");
+        }
+
         private static int Main()
         {
             try
             {
                 VerifyBoundaryAndMutationCases();
                 VerifyRandomizedQueries();
-                Console.WriteLine("PASS: boundary, removal, clear, invalid-input and "
-                    + _queryCount + " randomized/reference interval queries.");
+                VerifyBreakModePredicates();
+                VerifyLifecycleSequenceAndTouchCounts();
+                VerifyInvalidLifecycleInput();
+
+                Console.WriteLine("PASS: interval index boundary/mutation tests and "
+                    + _queryCount + " seeded differential queries over 50,000 operations.");
+                Console.WriteLine("PASS: bullish/bearish CandleClose, BodyBeyond and WickBeyond predicates.");
+                Console.WriteLine("PASS: Fresh/Touched/Partial/Filled/Broken transitions and touch re-entry.");
                 return 0;
             }
             catch (Exception exception)

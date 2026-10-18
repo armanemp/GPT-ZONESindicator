@@ -93,13 +93,13 @@ namespace cAlgo
         [Parameter("Show zone labels", Group = G15, DefaultValue = false)]
         public bool ShowZoneLabels { get; set; }
 
-        [Parameter("Show zone midline", Group = G15, DefaultValue = false)]
+        [Parameter("Show zone midline", Group = G15, DefaultValue = true)]
         public bool ShowMidline { get; set; }
 
-        [Parameter("FVG bullish", Group = G16, DefaultValue = "#0F6B55")]
+        [Parameter("FVG bullish", Group = G16, DefaultValue = "#0A4E3E")]
         public string FvgBullColor { get; set; }
 
-        [Parameter("FVG bearish", Group = G16, DefaultValue = "#7A1030")]
+        [Parameter("FVG bearish", Group = G16, DefaultValue = "#5E0C25")]
         public string FvgBearColor { get; set; }
 
         [Parameter("Price gap bullish", Group = G16, DefaultValue = "#9A7B2F")]
@@ -108,16 +108,16 @@ namespace cAlgo
         [Parameter("Price gap bearish", Group = G16, DefaultValue = "#7A4F2A")]
         public string GapBearColor { get; set; }
 
-        [Parameter("Order block bullish", Group = G16, DefaultValue = "#1F5A8A")]
+        [Parameter("Order block bullish", Group = G16, DefaultValue = "#19486E")]
         public string ObBullColor { get; set; }
 
-        [Parameter("Order block bearish", Group = G16, DefaultValue = "#5A4A3E")]
+        [Parameter("Order block bearish", Group = G16, DefaultValue = "#483B32")]
         public string ObBearColor { get; set; }
 
-        [Parameter("Breaker bullish", Group = G16, DefaultValue = "#0E6E73")]
+        [Parameter("Breaker bullish", Group = G16, DefaultValue = "#16A0A6")]
         public string BreakerBullColor { get; set; }
 
-        [Parameter("Breaker bearish", Group = G16, DefaultValue = "#4B3A67")]
+        [Parameter("Breaker bearish", Group = G16, DefaultValue = "#8064B5")]
         public string BreakerBearColor { get; set; }
 
         [Parameter("Filled zone", Group = G16, DefaultValue = "#3A4452")]
@@ -141,7 +141,7 @@ namespace cAlgo
         [Parameter("Breaker midline", Group = G17, DefaultValue = "#4CB3B8")]
         public string BreakerMidColor { get; set; }
 
-        [Parameter("Midline opacity (%)", Group = G17, DefaultValue = 70, MinValue = 0, MaxValue = 100)]
+        [Parameter("Midline opacity (%)", Group = G17, DefaultValue = 85, MinValue = 0, MaxValue = 100)]
         public double MidlineOpacity { get; set; }
 
         [Parameter("Bullish BOS", Group = G18, DefaultValue = "#2F8F6B")]
@@ -198,7 +198,7 @@ namespace cAlgo
         [Parameter("Zone midline thickness", Group = G20, DefaultValue = 1, MinValue = 1, MaxValue = 5)]
         public int MidlineThickness { get; set; }
 
-        [Parameter("Zone midline style", Group = G20, DefaultValue = LineStyle.Dots)]
+        [Parameter("Zone midline style", Group = G20, DefaultValue = LineStyle.Lines)]
         public LineStyle MidlineStyle { get; set; }
 
         [Parameter("Zone border thickness (0 = none)", Group = G20, DefaultValue = 0, MinValue = 0, MaxValue = 5)]

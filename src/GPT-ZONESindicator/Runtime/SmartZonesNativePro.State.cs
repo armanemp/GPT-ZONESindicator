@@ -21,6 +21,7 @@ namespace cAlgo
             public double MaxDepth;
             public int LastEnteredIdx = -1;
             public bool Indexed;
+            public bool RenderTracked;
             public double Atr, Momentum, StructFactor;
             public int Confluence;
             public bool Major;
@@ -145,6 +146,8 @@ namespace cAlgo
         private readonly SortedSet<Zone>[] _bearishBreakIndex = new SortedSet<Zone>[4];
         private readonly List<Zone> _overlapScratch = new List<Zone>();
         private readonly List<Zone> _breakScratch = new List<Zone>();
+        private readonly List<Zone> _renderQueryScratch = new List<Zone>();
+        private readonly List<Zone> _renderTracked = new List<Zone>();
         private readonly Dictionary<long, Zone> _dupe = new Dictionary<long, Zone>();
         private readonly Dictionary<int, Zone> _obByCandle = new Dictionary<int, Zone>();
         private Engine _engMajor, _engInt;

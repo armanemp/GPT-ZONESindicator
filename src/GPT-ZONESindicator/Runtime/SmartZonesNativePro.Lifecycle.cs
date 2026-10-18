@@ -117,6 +117,8 @@ namespace cAlgo
             _orderBlockState.PendingSignals.Clear();
             _equalLevelsState.Clusters.Clear();
             _equalLevelsState.OpenClusters.Clear();
+            _equalLevelsState.PendingSwings.Clear();
+            _equalLevelsState.ClusterBySwing.Clear();
             _liquiditySweepState.Events.Clear();
             _referenceLevelState.Items.Clear();
             _psychologicalLevelState.Items.Clear();

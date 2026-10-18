@@ -35,6 +35,11 @@ namespace cAlgo
                 delegate (int index, double atr) { ProcessOrderBlockSignals(index); });
 
             _featurePipeline.AddProcessor(
+                "Equal levels",
+                delegate { return true; },
+                delegate (int index, double atr) { ProcessEqualLevelSignals(index); });
+
+            _featurePipeline.AddProcessor(
                 "Liquidity sweeps",
                 delegate { return DetectSweeps; },
                 delegate (int index, double atr) { ProcessSweeps(index, atr); });

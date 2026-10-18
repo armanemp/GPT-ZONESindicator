@@ -86,7 +86,6 @@ namespace cAlgo
             public bool Broken, SilentBreak, Choch, BreakBull, Swept;
             public int BreakIdx = -1;
             public DateTime BreakTime;
-            public EqCluster Cluster;
             public Item Level, Mark;
         }
 

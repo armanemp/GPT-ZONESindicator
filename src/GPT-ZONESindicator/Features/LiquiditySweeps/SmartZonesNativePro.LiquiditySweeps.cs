@@ -70,7 +70,12 @@ namespace cAlgo
                 if (swing.Broken || swing.Swept || swing.ConfIdx >= index)
                     continue;
 
-                if (SweepEqual && swing.Cluster != null && !swing.Cluster.Swept && !swing.Cluster.Broken)
+                EqCluster equalCluster;
+                if (SweepEqual
+                    && _equalLevelsState.ClusterBySwing.TryGetValue(swing, out equalCluster)
+                    && equalCluster != null
+                    && !equalCluster.Swept
+                    && !equalCluster.Broken)
                     continue;
 
                 if (!IsSweep(swing.High, swing.Price, high, low, open, close, minPenetration, minReturn))

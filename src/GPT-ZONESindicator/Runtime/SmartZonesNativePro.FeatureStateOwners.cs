@@ -26,6 +26,8 @@ namespace cAlgo
         {
             public readonly List<EqCluster> Clusters = new List<EqCluster>();
             public readonly List<EqCluster> OpenClusters = new List<EqCluster>();
+            public readonly List<EqualLevelSignal> PendingSwings = new List<EqualLevelSignal>();
+            public readonly Dictionary<Swing, EqCluster> ClusterBySwing = new Dictionary<Swing, EqCluster>();
         }
 
         private sealed class LiquiditySweepFeatureState

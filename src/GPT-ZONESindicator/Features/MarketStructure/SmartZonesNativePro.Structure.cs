@@ -68,7 +68,18 @@ namespace cAlgo
                 engine.LastLow = swing;
 
             if (DetectEqual && engine.Major == EqUseMajorSwings)
-                CheckEqual(engine, swing, atr);
+            {
+                _equalLevelsState.PendingSwings.Add(new EqualLevelSignal
+                {
+                    Major = engine.Major,
+                    High = swing.High,
+                    Index = swing.Idx,
+                    ConfirmedIndex = swing.ConfIdx,
+                    Time = swing.Time,
+                    Price = swing.Price,
+                    Atr = atr
+                });
+            }
         }
 
         private void CheckBreaks(Engine engine, int index, double atr)

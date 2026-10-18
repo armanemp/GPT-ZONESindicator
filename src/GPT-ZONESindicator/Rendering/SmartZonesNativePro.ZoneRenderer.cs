@@ -292,8 +292,16 @@ namespace cAlgo
             DateTime end = ZoneEndTime(zone);
             Color color = ZoneColor(zone);
 
-            if (zone.Shown && (zone.Rect == null || !zone.Rect.IsAlive))
+            bool missingRectangle = zone.Rect == null || !zone.Rect.IsAlive;
+            bool missingMidline = ShowMidline && (zone.Mid == null || !zone.Mid.IsAlive);
+            bool missingLabel = ShowZoneLabels && (zone.Lbl == null || !zone.Lbl.IsAlive);
+
+            // Reconcile the entire zone view if any enabled child object was removed.
+            if (zone.Shown && (missingRectangle || missingMidline || missingLabel))
                 RemoveZoneObjects(zone);
+
+            string comment = ZoneComment(zone);
+            string labelText = ShowZoneLabels ? LabelText(zone) : null;
 
             if (!zone.Shown)
             {
@@ -304,7 +312,7 @@ namespace cAlgo
                 rectangle.IsFilled = true;
                 rectangle.IsInteractive = ObjectsInteractive;
                 rectangle.ZIndex = ZoneZIndex;
-                rectangle.Comment = ZoneComment(zone);
+                rectangle.Comment = comment;
                 zone.Rect = rectangle;
                 Reg(rectangle);
 
@@ -325,7 +333,7 @@ namespace cAlgo
                 {
                     ChartText label = Chart.DrawText(
                         name + "_t",
-                        LabelText(zone),
+                        labelText,
                         start,
                         zone.Upper,
                         WithOpacity(_midBase[(int)zone.Kind], 90));
@@ -340,23 +348,42 @@ namespace cAlgo
                 zone.Shown = true;
                 zone.AppT2 = end;
                 zone.AppCol = color;
+                zone.AppComment = comment;
+                zone.AppLabelText = labelText;
                 return;
             }
 
-            if (zone.AppT2 == end && SameColor(zone.AppCol, color))
-                return;
+            bool timeChanged = zone.AppT2 != end;
+            bool colorChanged = !SameColor(zone.AppCol, color);
+            bool commentChanged = !string.Equals(zone.AppComment, comment, StringComparison.Ordinal);
+            bool labelChanged = ShowZoneLabels
+                && !string.Equals(zone.AppLabelText, labelText, StringComparison.Ordinal);
 
-            zone.Rect.Time2 = end;
-            zone.Rect.Color = color;
-            zone.Rect.Comment = ZoneComment(zone);
+            if (timeChanged)
+            {
+                zone.Rect.Time2 = end;
+                if (zone.Mid != null && zone.Mid.IsAlive)
+                    zone.Mid.Time2 = end;
+                zone.AppT2 = end;
+            }
 
-            if (zone.Mid != null && zone.Mid.IsAlive)
-                zone.Mid.Time2 = end;
-            if (zone.Lbl != null && zone.Lbl.IsAlive)
-                zone.Lbl.Text = LabelText(zone);
+            if (colorChanged)
+            {
+                zone.Rect.Color = color;
+                zone.AppCol = color;
+            }
 
-            zone.AppT2 = end;
-            zone.AppCol = color;
+            if (commentChanged)
+            {
+                zone.Rect.Comment = comment;
+                zone.AppComment = comment;
+            }
+
+            if (labelChanged && zone.Lbl != null && zone.Lbl.IsAlive)
+            {
+                zone.Lbl.Text = labelText;
+                zone.AppLabelText = labelText;
+            }
         }
 
         private void RemoveZoneObjects(Zone zone)
@@ -371,6 +398,8 @@ namespace cAlgo
             zone.Rect = null;
             zone.Mid = null;
             zone.Lbl = null;
+            zone.AppComment = null;
+            zone.AppLabelText = null;
             zone.Shown = false;
         }
     }

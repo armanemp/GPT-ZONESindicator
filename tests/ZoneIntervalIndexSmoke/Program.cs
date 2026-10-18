@@ -916,6 +916,33 @@ namespace ZoneIntervalIndexSmoke
                 "A first bearish break from neutral establishes bearish trend without CHoCH.");
         }
 
+        private static void VerifyStructureSwingVisibility()
+        {
+            Assert(StructureSwingVisibilityEvaluator.ShouldShowLevel(
+                    false, false, false, false, false, false, true),
+                "An unbroken swing level should render when active levels are enabled.");
+            Assert(!StructureSwingVisibilityEvaluator.ShouldShowLevel(
+                    false, true, false, false, false, false, true),
+                "A swept swing must not remain visible as an active level.");
+            Assert(!StructureSwingVisibilityEvaluator.ShouldShowLevel(
+                    true, false, true, false, true, true, true),
+                "A silently broken swing must not render a BOS/CHoCH line.");
+            Assert(StructureSwingVisibilityEvaluator.ShouldShowLevel(
+                    true, false, false, false, true, false, false),
+                "A broken swing must render BOS when BOS is enabled.");
+            Assert(!StructureSwingVisibilityEvaluator.ShouldShowLevel(
+                    true, false, false, false, false, true, true),
+                "A BOS line must respect its own visibility switch.");
+            Assert(StructureSwingVisibilityEvaluator.ShouldShowLevel(
+                    true, false, false, true, false, true, false),
+                "A broken swing must render CHoCH when CHoCH is enabled.");
+            Assert(!StructureSwingVisibilityEvaluator.ShouldShowLevel(
+                    true, true, false, true, false, true, true),
+                "Swept state must suppress a structure level even if other flags would show it.");
+
+            Console.WriteLine("PASS: structure swing visibility respects swept, silent-break, BOS and CHoCH states.");
+        }
+
         private static bool Sweep(
             bool highLevel,
             double level,
@@ -1502,6 +1529,7 @@ namespace ZoneIntervalIndexSmoke
                 VerifyOrderBlockCandidateSearch();
                 VerifyDuplicateSweepSuppressionPredicate();
                 VerifyStructureBreakClassification();
+                VerifyStructureSwingVisibility();
                 VerifyLiquiditySweepPredicates();
                 VerifyFairValueGapDetector();
                 VerifyPriceGapDetector();
@@ -1513,6 +1541,7 @@ namespace ZoneIntervalIndexSmoke
                 Console.WriteLine("PASS: Fresh/Touched/Partial/Filled/Broken transitions and touch re-entry.");
                 Console.WriteLine("PASS: breaker direction, parent identity, preserved bounds/factors and confirmation timestamp.");
                 Console.WriteLine("PASS: BOS/CHoCH classification and strict swing-cross boundaries.");
+                Console.WriteLine("PASS: swept and silently-broken swing levels are not rendered as active levels.");
                 Console.WriteLine("PASS: high/low liquidity sweep predicates for Wick/Body measure and thresholds.");
                 Console.WriteLine("PASS: shared FVG detector rules, thresholds and start-time semantics.");
                 Console.WriteLine("PASS: shared price-gap detector rules, combine modes and minimum-size filters.");

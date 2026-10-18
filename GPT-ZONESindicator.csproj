@@ -29,7 +29,7 @@
        rather than AlgoName on some Windows setups. Normalize the package output and the
        standard cTrader Indicators publish path to the repository's explicit artifact name. -->
   <Target Name="NormalizeCTraderArtifactName"
-          AfterTargets="Build"
+          AfterTargets="_AlgoBuildAfterBuild"
           Condition="'$(AlgoBuild)' == 'true' and '$(DesignTimeBuild)' != 'true'">
     <PropertyGroup>
       <_CanonicalAlgoPath>$(TargetDir)$(IndicatorArtifactName).algo</_CanonicalAlgoPath>
